@@ -8,7 +8,7 @@ import PoeticRhythm from './components/PoeticRhythm';
 import ProductShowcase from './components/ProductShowcase';
 import UpdatedCTA from './components/UpdatedCTA';
 
-// Add custom glassmorphism effect and animation styles
+// Add custom blockchain-themed effects and animation styles
 const addCustomStyles = () => {
   const style = document.createElement('style');
   style.textContent = `
@@ -23,12 +23,30 @@ const addCustomStyles = () => {
       75% { transform: translateY(8px) rotate(-1deg); }
     }
     
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(0, 162, 255, 0.3); }
+      50% { box-shadow: 0 0 40px rgba(0, 162, 255, 0.6); }
+    }
+    
+    @keyframes blockchain-flow {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100vw); }
+    }
+    
     .animate-float {
       animation: float 4s ease-in-out infinite;
     }
     
     .animate-float-slow {
       animation: float-slow 8s ease-in-out infinite;
+    }
+    
+    .animate-pulse-glow {
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+    
+    .animate-blockchain-flow {
+      animation: blockchain-flow 15s linear infinite;
     }
     
     .glass {
@@ -46,6 +64,17 @@ const addCustomStyles = () => {
     
     .bg-gradient-radial {
       background: radial-gradient(circle, var(--tw-gradient-from) 0%, var(--tw-gradient-to) 70%);
+    }
+    
+    .blockchain-grid {
+      background-image: 
+        linear-gradient(rgba(0, 162, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 162, 255, 0.1) 1px, transparent 1px);
+      background-size: 50px 50px;
+    }
+    
+    .hexagon {
+      clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
     }
   `;
   document.head.appendChild(style);

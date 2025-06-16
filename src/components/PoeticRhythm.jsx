@@ -8,7 +8,7 @@ const PoeticRhythm = () => {
   const [hoverSection, setHoverSection] = useState('');
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   
-  // Track mouse position for interactive elements
+  // Track mouse position for interactive blockchain elements
   const handleMouseMove = (e) => {
     setMousePosition({
       x: e.clientX / window.innerWidth,
@@ -32,7 +32,7 @@ const PoeticRhythm = () => {
       ref={ref}
       className="relative min-h-[200vh] bg-black"
     >
-      {/* Dynamic geometric decorations that follow mouse movement */}
+      {/* Dynamic blockchain network that follows mouse */}
       <div 
         className={`absolute w-64 h-64 rounded-full bg-[#00a2ff]/5 blur-3xl ${animationStarted ? 'opacity-30' : 'opacity-0'} transition-opacity duration-1000 delay-500 pointer-events-none`}
         style={{
@@ -42,12 +42,13 @@ const PoeticRhythm = () => {
         }}
       ></div>
 
-      {/* Magazine Style Elements with enhanced styling */}
+      {/* Magazine Style Elements with blockchain theme */}
       <div className={`absolute top-8 right-8 z-10 ${animationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'} transition-all duration-700 delay-300`}>
         <div className="flex items-center">
           <div className="h-[1px] w-6 bg-gradient-to-r from-[#00a2ff]/40 to-white/20 mr-2"></div>
           <span className="text-white/50 text-sm font-mono tracking-widest">02-03</span>
           <div className="h-[1px] w-6 bg-gradient-to-l from-[#00a2ff]/40 to-white/20 ml-2"></div>
+          <div className="ml-2 w-2 h-2 hexagon bg-[#00a2ff]/30"></div>
         </div>
       </div>
       
@@ -59,47 +60,66 @@ const PoeticRhythm = () => {
         <div className="h-40 w-px bg-gradient-to-b from-transparent via-white/20 to-[#00a2ff]/20"></div>
       </div>
 
-      {/* First Split Section */}
+      {/* First Split Section - Decentralized Identity */}
       <div className="h-screen flex flex-col md:flex-row overflow-hidden">
-        {/* Left Image with decorative elements */}
+        {/* Left Blockchain Visualization */}
         <div className={`w-full md:w-1/2 h-full relative ${animationStarted ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-20'} transition-all duration-1500 ease-out`}>
           <div className="h-full w-full relative overflow-hidden bg-gradient-to-r from-[#050520] to-black">
-            {/* Decorative elements around bottle */}
-            <div className={`absolute top-[30%] left-[30%] w-36 h-36 rounded-full border border-[#00a2ff]/10 opacity-30 ${animationStarted ? 'animate-spin-slow' : ''}`} style={{ animationDuration: '15s' }}></div>
+            {/* Blockchain network visualization */}
+            <div className="absolute inset-0 blockchain-grid opacity-20"></div>
+            
+            {/* Animated blockchain nodes */}
+            <div className={`absolute top-[30%] left-[30%] w-36 h-36 hexagon border border-[#00a2ff]/20 opacity-30 ${animationStarted ? 'animate-spin-slow' : ''}`} style={{ animationDuration: '15s' }}></div>
             <div className={`absolute bottom-[35%] right-[35%] w-24 h-24 rounded-full border border-white/5 opacity-40 ${animationStarted ? 'animate-spin-slow' : ''}`} style={{ animationDuration: '20s', animationDirection: 'reverse' }}></div>
             
-            {/* Subtle glow effect around bottle */}
+            {/* Central identity symbol */}
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[40vh] h-[40vh] rounded-full bg-[#00a2ff]/10 blur-3xl opacity-20"></div>
             
-            <img 
-              src="/assets/images/product-bottle.png" 
-              alt="APOXIAZULE lifestyle" 
-              className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-[80vh] object-contain opacity-90 transition-all duration-700 ease-in-out ${hoverSection === 'first-image' ? 'scale-105' : 'scale-100'}`}
+            {/* Identity visualization */}
+            <div 
+              className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-700 ease-in-out ${hoverSection === 'first-image' ? 'scale-105' : 'scale-100'}`}
               onMouseEnter={() => setHoverSection('first-image')}
               onMouseLeave={() => setHoverSection('')}
-            />
+            >
+              <div className="w-64 h-64 flex items-center justify-center">
+                <div className="relative">
+                  {/* Identity hexagon */}
+                  <div className="w-48 h-48 hexagon bg-gradient-to-br from-[#00a2ff]/20 to-transparent border border-[#00a2ff]/40 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-4xl mb-2">🔐</div>
+                      <div className="text-lg text-[#00a2ff] font-mono">IDENTITY</div>
+                      <div className="text-xs text-[#8aa0ff] mt-2">DECENTRALIZED</div>
+                    </div>
+                  </div>
+                  
+                  {/* Orbiting privacy elements */}
+                  <div className="absolute inset-0 animate-spin-slow" style={{animationDuration: '25s'}}>
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-4 w-4 h-4 bg-[#00a2ff]/60 rounded-full"></div>
+                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-4 w-4 h-4 bg-[#00a2ff]/60 rounded-full"></div>
+                    <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 w-4 h-4 bg-[#00a2ff]/60 rounded-full"></div>
+                    <div className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 w-4 h-4 bg-[#00a2ff]/60 rounded-full"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
             
-            {/* Dynamic texture overlay */}
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxwYXRoIGQ9Ik0wIDBoMzAwdjMwMEgweiIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')] opacity-20 mix-blend-overlay pointer-events-none"></div>
-            
-            {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-r from-black to-transparent opacity-30"></div>
           </div>
           
           {/* Caption that appears on hover */}
           <div className={`absolute bottom-10 left-10 z-10 transition-all duration-500 ${hoverSection === 'first-image' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <p className="text-xs uppercase tracking-widest text-[#00a2ff]/80 font-light">BOTTLED ELEGANCE</p>
+            <p className="text-xs uppercase tracking-widest text-[#00a2ff]/80 font-light">YOUR DIGITAL IDENTITY</p>
           </div>
         </div>
         
-        {/* Right Slogan with enhanced typography */}
+        {/* Right Slogan - Decentralized */}
         <div 
           className={`w-full md:w-1/2 h-full flex items-center justify-center ${animationStarted ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-20'} transition-all duration-1500 delay-300 ease-out relative`}
           onMouseEnter={() => setHoverSection('first-text')}
           onMouseLeave={() => setHoverSection('')}
         >
           <div className="absolute inset-0 flex items-center justify-center overflow-hidden opacity-5">
-            <div className="text-[20rem] font-black text-white/5 select-none rotate-12 transform scale-150">A</div>
+            <div className="text-[20rem] font-black text-white/5 select-none rotate-12 transform scale-150">B</div>
           </div>
           
           <div className="relative">
@@ -112,7 +132,7 @@ const PoeticRhythm = () => {
                   WebkitTextFillColor: 'transparent'
                 }}
               >
-                Cold
+                True
               </span>
               <span 
                 className="block text-[calc(2vw+1.5rem)] md:text-[calc(3vw+2rem)] tracking-tight leading-tight font-extralight"
@@ -121,30 +141,33 @@ const PoeticRhythm = () => {
                   transition: 'text-shadow 0.5s ease-in-out'
                 }}
               >
-                clarity.
+                ownership.
               </span>
             </h2>
             
-            {/* Line that animates on hover */}
+            {/* Animated line */}
             <div 
               className="mt-6 h-[1px] bg-gradient-to-r from-[#00a2ff]/50 to-transparent transition-all duration-700"
               style={{ width: hoverSection === 'first-text' ? '100%' : '30px' }}
             ></div>
             
-            {/* Text that appears on hover */}
+            {/* Hover text */}
             <p className={`mt-4 text-sm text-white/70 max-w-xs transition-all duration-500 ${hoverSection === 'first-text' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              Precisely formulated for those moments when focus matters most.
+              Your identity, your data, your control. Built on blockchain for ultimate security.
             </p>
           </div>
         </div>
       </div>
       
-      {/* Second Split Section */}
+      {/* Second Split Section - Blockchain Security */}
       <div className="h-screen flex flex-col md:flex-row-reverse overflow-hidden">
-        {/* Right Image */}
+        {/* Right Blockchain Security Visualization */}
         <div className={`w-full md:w-1/2 h-full relative ${animationStarted ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-20'} transition-all duration-1500 delay-500 ease-out`}>
           <div className="h-full w-full relative overflow-hidden bg-gradient-to-l from-[#050520] to-black">
-            {/* Hexagonal decorative elements */}
+            {/* Security grid pattern */}
+            <div className="absolute inset-0 blockchain-grid opacity-15"></div>
+            
+            {/* Security shield visualization */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="relative w-[60vh] h-[60vh]">
                 <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full transition-opacity duration-1000 delay-800 ${animationStarted ? 'opacity-15' : 'opacity-0'}`}>
@@ -155,26 +178,44 @@ const PoeticRhythm = () => {
               </div>
             </div>
             
-            <img 
-              src="/assets/images/product-bottle.png" 
-              alt="APOXIAZULE lifestyle" 
-              className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-[80vh] object-contain opacity-90 rotate-12 transition-all duration-700 ${hoverSection === 'second-image' ? 'rotate-0 scale-105' : 'rotate-12 scale-100'}`}
+            {/* Security symbol */}
+            <div 
+              className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-700 ${hoverSection === 'second-image' ? 'rotate-0 scale-105' : 'rotate-12 scale-100'}`}
               onMouseEnter={() => setHoverSection('second-image')}
               onMouseLeave={() => setHoverSection('')}
-            />
+            >
+              <div className="w-64 h-64 flex items-center justify-center">
+                <div className="relative">
+                  {/* Security shield */}
+                  <div className="w-48 h-48 hexagon bg-gradient-to-br from-[#00a2ff]/20 to-transparent border border-[#00a2ff]/40 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-4xl mb-2">🛡️</div>
+                      <div className="text-lg text-[#00a2ff] font-mono">SECURE</div>
+                      <div className="text-xs text-[#8aa0ff] mt-2">BLOCKCHAIN</div>
+                    </div>
+                  </div>
+                  
+                  {/* Security indicators */}
+                  <div className="absolute inset-0">
+                    <div className="absolute top-4 left-4 w-3 h-3 bg-green-400/60 rounded-full animate-pulse"></div>
+                    <div className="absolute top-4 right-4 w-3 h-3 bg-green-400/60 rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></div>
+                    <div className="absolute bottom-4 left-4 w-3 h-3 bg-green-400/60 rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+                    <div className="absolute bottom-4 right-4 w-3 h-3 bg-green-400/60 rounded-full animate-pulse" style={{animationDelay: '1.5s'}}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
             
-            {/* Gradient lighting effects */}
-            <div className="absolute inset-0 bg-gradient-radial from-[#00a2ff]/10 to-transparent opacity-30 mix-blend-overlay" style={{top: '30%', left: '30%', width: '40%', height: '40%'}}></div>
             <div className="absolute inset-0 bg-gradient-to-l from-black to-transparent opacity-30"></div>
           </div>
           
           {/* Caption that appears on hover */}
           <div className={`absolute bottom-10 right-10 z-10 transition-all duration-500 ${hoverSection === 'second-image' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <p className="text-right text-xs uppercase tracking-widest text-[#00a2ff]/80 font-light">ENGINEERED REFINEMENT</p>
+            <p className="text-right text-xs uppercase tracking-widest text-[#00a2ff]/80 font-light">MILITARY-GRADE SECURITY</p>
           </div>
         </div>
         
-        {/* Left Slogan with alternative typography */}
+        {/* Left Slogan - Secure */}
         <div 
           className={`w-full md:w-1/2 h-full flex items-center justify-center ${animationStarted ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-20'} transition-all duration-1500 delay-800 ease-out`}
           onMouseEnter={() => setHoverSection('second-text')}
@@ -188,7 +229,7 @@ const PoeticRhythm = () => {
                   color: '#ffffff'
                 }}
               >
-                Silent
+                Unbreakable
               </span>
               <span 
                 className="block text-[calc(2vw+1.5rem)] md:text-[calc(3vw+2rem)] tracking-tight leading-tight"
@@ -199,28 +240,28 @@ const PoeticRhythm = () => {
                   transition: 'color 0.5s ease-in-out'
                 }}
               >
-                strength.
+                security.
               </span>
             </h2>
             
-            {/* Animated dot decoration */}
+            {/* Animated security indicator */}
             <div 
-              className="mt-6 ml-auto h-3 w-3 rounded-full bg-[#00a2ff]/70 transition-all duration-500"
+              className="mt-6 ml-auto h-3 w-3 hexagon bg-[#00a2ff]/70 transition-all duration-500"
               style={{ 
                 transform: hoverSection === 'second-text' ? 'scale(1.5)' : 'scale(1)',
                 boxShadow: hoverSection === 'second-text' ? '0 0 20px rgba(0, 162, 255, 0.8)' : 'none'
               }}
             ></div>
             
-            {/* Text that appears on hover */}
+            {/* Hover text */}
             <p className={`mt-4 text-sm text-white/70 transition-all duration-500 ${hoverSection === 'second-text' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              The subtle power of precision engineering in every drop.
+              Blockchain-powered security that makes your data truly yours.
             </p>
           </div>
         </div>
       </div>
       
-      {/* Page transition overlay with enhanced animation */}
+      {/* Page transition overlay */}
       <div 
         className={`absolute inset-0 bg-gradient-to-b from-black via-transparent to-black transform ${animationStarted ? 'opacity-0' : 'opacity-100'} transition-all duration-2000 ease-in-out pointer-events-none`}
       ></div>
