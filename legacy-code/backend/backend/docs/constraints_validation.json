@@ -1,0 +1,178 @@
+{
+  "model_constraints": [
+    {
+      "model": "Friendship",
+      "constraint_type": "UniqueConstraint",
+      "fields": [
+        "requester_id",
+        "receiver_id"
+      ],
+      "description": "unique_friendship"
+    },
+    {
+      "model": "GroupMembership",
+      "constraint_type": "UniqueConstraint",
+      "fields": [
+        "group_id",
+        "user_id"
+      ],
+      "description": "unique_group_membership"
+    },
+    {
+      "model": "Like",
+      "constraint_type": "CheckConstraint",
+      "fields": [],
+      "description": "like_has_target"
+    },
+    {
+      "model": "Like",
+      "constraint_type": "UniqueConstraint",
+      "fields": [
+        "user_id",
+        "post_id"
+      ],
+      "description": "unique_post_like"
+    },
+    {
+      "model": "Like",
+      "constraint_type": "UniqueConstraint",
+      "fields": [
+        "user_id",
+        "comment_id"
+      ],
+      "description": "unique_comment_like"
+    },
+    {
+      "model": "Message",
+      "constraint_type": "CheckConstraint",
+      "fields": [],
+      "description": "message_has_recipient"
+    },
+    {
+      "model": "UserAchievement",
+      "constraint_type": "UniqueConstraint",
+      "fields": [
+        "user_id",
+        "achievement_id"
+      ],
+      "description": "unique_user_achievement"
+    }
+  ],
+  "relationship_constraints": [
+    {
+      "from_model": "User",
+      "to_model": "ProfileSettings",
+      "relationship_type": "one-to-one",
+      "description": "Each user has one profile settings record"
+    },
+    {
+      "from_model": "User",
+      "to_model": "Friendship",
+      "relationship_type": "one-to-many",
+      "description": "Users can request or receive multiple friendships"
+    },
+    {
+      "from_model": "User",
+      "to_model": "Group",
+      "relationship_type": "one-to-many",
+      "description": "Users can create multiple groups"
+    },
+    {
+      "from_model": "User",
+      "to_model": "GroupMembership",
+      "relationship_type": "one-to-many",
+      "description": "Users can be members of multiple groups"
+    },
+    {
+      "from_model": "Group",
+      "to_model": "GroupMembership",
+      "relationship_type": "one-to-many",
+      "description": "Groups can have multiple members"
+    },
+    {
+      "from_model": "User",
+      "to_model": "Post",
+      "relationship_type": "one-to-many",
+      "description": "Users can author multiple posts"
+    },
+    {
+      "from_model": "Group",
+      "to_model": "Post",
+      "relationship_type": "one-to-many",
+      "description": "Groups can contain multiple posts"
+    },
+    {
+      "from_model": "User",
+      "to_model": "Comment",
+      "relationship_type": "one-to-many",
+      "description": "Users can author multiple comments"
+    },
+    {
+      "from_model": "Post",
+      "to_model": "Comment",
+      "relationship_type": "one-to-many",
+      "description": "Posts can have multiple comments"
+    },
+    {
+      "from_model": "User",
+      "to_model": "Like",
+      "relationship_type": "one-to-many",
+      "description": "Users can create multiple likes"
+    },
+    {
+      "from_model": "Post",
+      "to_model": "Like",
+      "relationship_type": "one-to-many",
+      "description": "Posts can receive multiple likes"
+    },
+    {
+      "from_model": "Comment",
+      "to_model": "Like",
+      "relationship_type": "one-to-many",
+      "description": "Comments can receive multiple likes"
+    },
+    {
+      "from_model": "User",
+      "to_model": "Story",
+      "relationship_type": "one-to-many",
+      "description": "Users can create multiple stories"
+    },
+    {
+      "from_model": "User",
+      "to_model": "Notification",
+      "relationship_type": "one-to-many",
+      "description": "Users can receive multiple notifications"
+    },
+    {
+      "from_model": "User",
+      "to_model": "Message",
+      "relationship_type": "one-to-many",
+      "description": "Users can send and receive multiple messages"
+    },
+    {
+      "from_model": "Group",
+      "to_model": "Message",
+      "relationship_type": "one-to-many",
+      "description": "Groups can contain multiple messages"
+    },
+    {
+      "from_model": "User",
+      "to_model": "UserAchievement",
+      "relationship_type": "one-to-many",
+      "description": "Users can unlock multiple achievements"
+    },
+    {
+      "from_model": "Achievement",
+      "to_model": "UserAchievement",
+      "relationship_type": "one-to-many",
+      "description": "Achievements can be unlocked by multiple users"
+    },
+    {
+      "from_model": "User",
+      "to_model": "Invite",
+      "relationship_type": "one-to-many",
+      "description": "Users can create multiple invites"
+    }
+  ],
+  "validation_issues": []
+}

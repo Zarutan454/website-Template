@@ -1,0 +1,72 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#06071F"/>
+  <rect x="50" y="50" width="700" height="500" fill="#0a0b2a" rx="10" ry="10"/>
+  
+  <!-- Header -->
+  <rect x="50" y="50" width="700" height="60" fill="#0d0e35" rx="10" ry="10"/>
+  <text x="400" y="85" font-family="Arial" font-size="24" fill="#00a2ff" text-anchor="middle">DAO & Governance</text>
+  
+  <!-- Proposals List -->
+  <rect x="80" y="130" width="250" height="400" fill="#0d0e35" rx="5" ry="5"/>
+  <text x="100" y="160" font-family="Arial" font-size="18" fill="#ffffff" opacity="0.9">Active Proposals</text>
+  
+  <!-- Proposal 1 -->
+  <rect x="90" y="180" width="230" height="70" fill="#00a2ff" opacity="0.2" rx="3" ry="3"/>
+  <text x="110" y="205" font-family="Arial" font-size="14" fill="#ffffff">BSN Treasury Allocation</text>
+  <text x="110" y="225" font-family="Arial" font-size="12" fill="#ffffff" opacity="0.5">Ends in 3 days</text>
+  <rect x="90" y="235" width="230" height="5" fill="#0d0e35" rx="2.5" ry="2.5"/>
+  <rect x="90" y="235" width="160" height="5" fill="#00a2ff" rx="2.5" ry="2.5"/>
+  
+  <!-- Proposal 2 -->
+  <rect x="90" y="260" width="230" height="70" fill="#0a0b2a" rx="3" ry="3"/>
+  <text x="110" y="285" font-family="Arial" font-size="14" fill="#ffffff">Platform Feature Update</text>
+  <text x="110" y="305" font-family="Arial" font-size="12" fill="#ffffff" opacity="0.5">Ends in 5 days</text>
+  <rect x="90" y="315" width="230" height="5" fill="#0d0e35" rx="2.5" ry="2.5"/>
+  <rect x="90" y="315" width="120" height="5" fill="#00a2ff" rx="2.5" ry="2.5"/>
+  
+  <!-- Proposal 3 -->
+  <rect x="90" y="340" width="230" height="70" fill="#0a0b2a" rx="3" ry="3"/>
+  <text x="110" y="365" font-family="Arial" font-size="14" fill="#ffffff">Community Fund Creation</text>
+  <text x="110" y="385" font-family="Arial" font-size="12" fill="#ffffff" opacity="0.5">Ends in 7 days</text>
+  <rect x="90" y="395" width="230" height="5" fill="#0d0e35" rx="2.5" ry="2.5"/>
+  <rect x="90" y="395" width="90" height="5" fill="#00a2ff" rx="2.5" ry="2.5"/>
+  
+  <!-- Proposal 4 -->
+  <rect x="90" y="420" width="230" height="70" fill="#0a0b2a" rx="3" ry="3"/>
+  <text x="110" y="445" font-family="Arial" font-size="14" fill="#ffffff">Governance Structure</text>
+  <text x="110" y="465" font-family="Arial" font-size="12" fill="#ffffff" opacity="0.5">Ends in 10 days</text>
+  <rect x="90" y="475" width="230" height="5" fill="#0d0e35" rx="2.5" ry="2.5"/>
+  <rect x="90" y="475" width="50" height="5" fill="#00a2ff" rx="2.5" ry="2.5"/>
+  
+  <!-- Proposal Detail -->
+  <rect x="350" y="130" width="380" height="400" fill="#0d0e35" rx="5" ry="5"/>
+  
+  <!-- Proposal Header -->
+  <text x="370" y="160" font-family="Arial" font-size="18" fill="#ffffff">BSN Treasury Allocation</text>
+  <text x="370" y="185" font-family="Arial" font-size="14" fill="#ffffff" opacity="0.5">Proposed by: @bsnfounder • 4 days ago</text>
+  
+  <!-- Proposal Description -->
+  <rect x="370" y="200" width="340" height="120" fill="#0a0b2a" rx="3" ry="3"/>
+  <text x="390" y="225" font-family="Arial" font-size="14" fill="#ffffff" opacity="0.8">This proposal suggests allocating 5% of the BSN treasury to fund community development projects over the next 6 months.</text>
+  <text x="390" y="255" font-family="Arial" font-size="14" fill="#ffffff" opacity="0.8">Projects will be selected through community voting and must align with the BSN roadmap.</text>
+  <text x="390" y="285" font-family="Arial" font-size="14" fill="#ffffff" opacity="0.8">Estimated impact: 50,000 BSN tokens.</text>
+  
+  <!-- Voting Stats -->
+  <rect x="370" y="340" width="340" height="100" fill="#0a0b2a" rx="3" ry="3"/>
+  <text x="390" y="365" font-family="Arial" font-size="16" fill="#ffffff">Current Votes</text>
+  
+  <!-- Yes Votes -->
+  <rect x="390" y="380" width="300" height="20" fill="#0d0e35" rx="10" ry="10"/>
+  <rect x="390" y="380" width="210" height="20" fill="#00a2ff" opacity="0.5" rx="10" ry="10"/>
+  <text x="390" y="415" font-family="Arial" font-size="14" fill="#00a2ff">Yes: 70% (350,000 BSN)</text>
+  
+  <!-- No Votes -->
+  <text x="600" y="415" font-family="Arial" font-size="14" fill="#ff4d6a" text-anchor="end">No: 30% (150,000 BSN)</text>
+  
+  <!-- Voting Buttons -->
+  <rect x="370" y="460" width="165" height="50" fill="#00a2ff" rx="25" ry="25"/>
+  <text x="452.5" y="490" font-family="Arial" font-size="16" fill="#ffffff" text-anchor="middle">Vote Yes</text>
+  
+  <rect x="545" y="460" width="165" height="50" fill="#0d0e35" rx="25" ry="25" stroke="#ff4d6a" stroke-width="2"/>
+  <text x="627.5" y="490" font-family="Arial" font-size="16" fill="#ff4d6a" text-anchor="middle">Vote No</text>
+</svg> 

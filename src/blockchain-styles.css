@@ -1,0 +1,231 @@
+/* Blockchain Grid Background */
+.blockchain-grid {
+  background-image: 
+    linear-gradient(rgba(0, 162, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 162, 255, 0.05) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+/* Hexagon Shape */
+.hexagon {
+  position: relative;
+  width: 100px;
+  height: 57.74px; /* height = width * 0.5774 */
+  background-color: transparent;
+  margin: 28.87px 0; /* margin = height / 2 */
+  border-left: solid 1px rgba(0, 162, 255, 0.2);
+  border-right: solid 1px rgba(0, 162, 255, 0.2);
+}
+
+.hexagon:before,
+.hexagon:after {
+  content: "";
+  position: absolute;
+  width: 0;
+  border-left: 50px solid transparent;
+  border-right: 50px solid transparent;
+}
+
+.hexagon:before {
+  bottom: 100%;
+  border-bottom: 28.87px solid rgba(0, 162, 255, 0.1);
+}
+
+.hexagon:after {
+  top: 100%;
+  width: 0;
+  border-top: 28.87px solid rgba(0, 162, 255, 0.1);
+}
+
+/* Pulse Glow Animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+/* Floating Animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float 8s ease-in-out infinite;
+}
+
+/* Subtle Rotation Animation */
+@keyframes subtle-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-subtle-rotate {
+  animation: subtle-rotate 120s linear infinite;
+}
+
+/* Spin Animation */
+.animate-spin-slow {
+  animation: spin 15s linear infinite;
+}
+
+.animate-spin-very-slow {
+  animation: spin 30s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Blockchain Node Connection Effect */
+.node-connection {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(0, 162, 255, 0), rgba(0, 162, 255, 0.5), rgba(0, 162, 255, 0));
+  transform-origin: left center;
+  animation: node-pulse 3s ease-in-out infinite;
+}
+
+@keyframes node-pulse {
+  0%, 100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Data Flow Animation */
+.data-flow {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: rgba(0, 162, 255, 0.8);
+  animation: data-flow 3s linear infinite;
+}
+
+@keyframes data-flow {
+  0% {
+    transform: translateX(0) scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(50%) scale(1);
+  }
+  100% {
+    transform: translateX(100%) scale(0.5);
+    opacity: 0;
+  }
+}
+
+/* Blockchain Block Animation */
+.blockchain-block {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  border: 1px solid rgba(0, 162, 255, 0.3);
+  background-color: rgba(0, 162, 255, 0.05);
+  animation: block-appear 1s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@keyframes block-appear {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Token Glow Effect */
+.token-glow {
+  box-shadow: 0 0 15px rgba(0, 162, 255, 0.5);
+  animation: token-pulse 2s ease-in-out infinite;
+}
+
+@keyframes token-pulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(0, 162, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(0, 162, 255, 0.8);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 162, 255, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 162, 255, 0.5);
+}
+
+/* Loading Spinner */
+.blockchain-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 162, 255, 0.1);
+  border-top: 4px solid rgba(0, 162, 255, 0.8);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Blockchain Button Hover Effect */
+.blockchain-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.blockchain-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 162, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.blockchain-button:hover::before {
+  left: 100%;
+} 

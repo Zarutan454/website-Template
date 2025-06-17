@@ -1,0 +1,3 @@
+@echo off
+echo Starte BSN Datenbank Backend mit Daphne (WebSocket-Unterstützung)...
+daphne -b 0.0.0.0 -p 8000 bsn_social_network.asgi:application 

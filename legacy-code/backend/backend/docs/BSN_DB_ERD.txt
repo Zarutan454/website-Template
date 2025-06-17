@@ -1,0 +1,356 @@
+// BSN Social Network – Entity Relationship Diagram (ERD)
+// Für dbdiagram.io oder ähnliche Tools
+
+Table user {
+  id bigint [pk]
+  username varchar
+  email varchar
+  wallet_address varchar
+  created_at datetime
+  updated_at datetime
+  // ... weitere Felder laut Django AbstractUser
+}
+
+Table profile_settings {
+  user_id bigint [pk, ref: > user.id]
+  is_public boolean
+  notification_preferences json
+  language varchar
+}
+
+Table user_settings {
+  user_id bigint [pk, ref: > user.id]
+  theme varchar
+  email_notifications boolean
+  push_notifications boolean
+  privacy_settings json
+  two_factor_auth_enabled boolean
+  auto_staking boolean
+  updated_at datetime
+}
+
+Table notification_settings {
+  user_id bigint [pk, ref: > user.id]
+  likes boolean
+  comments boolean
+  friend_requests boolean
+  messages boolean
+  group_invites boolean
+  system_notifications boolean
+  token_transactions boolean
+  mining_rewards boolean
+  governance_alerts boolean
+  updated_at datetime
+}
+
+Table friendship {
+  id bigint [pk]
+  requester_id bigint [ref: > user.id]
+  receiver_id bigint [ref: > user.id]
+  status varchar
+  created_at datetime
+}
+
+Table group {
+  id bigint [pk]
+  name varchar
+  description text
+  creator_id bigint [ref: > user.id]
+  privacy varchar
+  created_at datetime
+  updated_at datetime
+}
+
+Table group_membership {
+  id bigint [pk]
+  group_id bigint [ref: > group.id]
+  user_id bigint [ref: > user.id]
+  role varchar
+  joined_at datetime
+}
+
+Table post {
+  id bigint [pk]
+  author_id bigint [ref: > user.id]
+  group_id bigint [ref: > group.id]
+  content text
+  media_url varchar
+  created_at datetime
+  updated_at datetime
+}
+
+Table comment {
+  id bigint [pk]
+  post_id bigint [ref: > post.id]
+  author_id bigint [ref: > user.id]
+  content text
+  created_at datetime
+}
+
+Table like {
+  id bigint [pk]
+  user_id bigint [ref: > user.id]
+  post_id bigint [ref: > post.id]
+  comment_id bigint [ref: > comment.id]
+  created_at datetime
+}
+
+Table story {
+  id bigint [pk]
+  author_id bigint [ref: > user.id]
+  media_url varchar
+  expires_at datetime
+  created_at datetime
+}
+
+Table message {
+  id bigint [pk]
+  sender_id bigint [ref: > user.id]
+  receiver_id bigint [ref: > user.id]
+  group_id bigint [ref: > group.id]
+  content text
+  media_url varchar
+  created_at datetime
+}
+
+Table notification {
+  id bigint [pk]
+  user_id bigint [ref: > user.id]
+  type varchar
+  reference_id int
+  is_read boolean
+  created_at datetime
+}
+
+Table achievement {
+  id bigint [pk]
+  name varchar
+  description text
+  criteria json
+  reward varchar
+}
+
+Table user_achievement {
+  id bigint [pk]
+  user_id bigint [ref: > user.id]
+  achievement_id bigint [ref: > achievement.id]
+  unlocked_at datetime
+}
+
+Table achievement_template {
+  id bigint [pk]
+  name varchar
+  description text
+  criteria json
+  points int
+  token_reward decimal
+  badge_image_url varchar
+  is_active boolean
+  created_at datetime
+}
+
+Table invite {
+  id bigint [pk]
+  code varchar
+  inviter_id bigint [ref: > user.id]
+  invitee_email varchar
+  is_used boolean
+  created_at datetime
+  used_at datetime
+}
+
+Table invite_reward {
+  id bigint [pk]
+  inviter_id bigint [ref: > user.id]
+  invite_id bigint [ref: > invite.id]
+  reward_amount decimal
+  is_claimed boolean
+  claimed_at datetime
+}
+
+Table referral {
+  id bigint [pk]
+  referrer_id bigint [ref: > user.id]
+  referred_id bigint [ref: > user.id]
+  reward_claimed boolean
+  reward_amount decimal
+  created_at datetime
+  rewarded_at datetime
+}
+
+Table wallet {
+  id bigint [pk]
+  user_id bigint [ref: > user.id]
+  balance decimal
+  address varchar
+  private_key_encrypted varchar
+  created_at datetime
+  updated_at datetime
+}
+
+Table token_transaction {
+  id bigint [pk]
+  transaction_hash varchar
+  from_wallet_id bigint [ref: > wallet.id]
+  to_wallet_id bigint [ref: > wallet.id]
+  amount decimal
+  transaction_type varchar
+  status varchar
+  metadata json
+  created_at datetime
+  completed_at datetime
+}
+
+Table mining_progress {
+  id bigint [pk]
+  user_id bigint [ref: > user.id]
+  mining_power decimal
+  last_claim_time datetime
+  accumulated_tokens decimal
+  total_mined decimal
+  streak_days int
+  created_at datetime
+  updated_at datetime
+}
+
+Table nft {
+  id bigint [pk]
+  token_id varchar
+  name varchar
+  description text
+  owner_id bigint [ref: > user.id]
+  creator_id bigint [ref: > user.id]
+  nft_type varchar
+  media_url varchar
+  metadata json
+  rarity varchar
+  is_locked boolean
+  transaction_hash varchar
+  created_at datetime
+}
+
+Table staking {
+  id bigint [pk]
+  user_id bigint [ref: > user.id]
+  amount decimal
+  status varchar
+  staking_period int
+  apy_rate decimal
+  rewards_earned decimal
+  start_date datetime
+  end_date datetime
+  last_reward_claim datetime
+}
+
+Table token_streaming {
+  id bigint [pk]
+  sender_id bigint [ref: > user.id]
+  receiver_id bigint [ref: > user.id]
+  total_amount decimal
+  amount_per_second decimal
+  streamed_amount decimal
+  status varchar
+  start_time datetime
+  end_time datetime
+  last_update_time datetime
+}
+
+Table smart_contract {
+  id bigint [pk]
+  name varchar
+  contract_type varchar
+  address varchar
+  network varchar
+  abi json
+  bytecode text
+  source_code text
+  creator_id bigint [ref: > user.id]
+  transaction_hash varchar
+  deployed_at datetime
+}
+
+Table token_factory {
+  id bigint [pk]
+  name varchar
+  symbol varchar
+  decimals int
+  total_supply decimal
+  token_standard varchar
+  owner_id bigint [ref: > user.id]
+  contract_id bigint [ref: > smart_contract.id]
+  logo_url varchar
+  description text
+  metadata json
+  created_at datetime
+}
+
+Table dao {
+  id bigint [pk]
+  name varchar
+  description text
+  creator_id bigint [ref: > user.id]
+  governance_token varchar
+  status varchar
+  rules json
+  logo_url varchar
+  created_at datetime
+  updated_at datetime
+}
+
+Table dao_membership {
+  id bigint [pk]
+  dao_id bigint [ref: > dao.id]
+  user_id bigint [ref: > user.id]
+  role varchar
+  voting_power decimal
+  joined_at datetime
+}
+
+Table proposal {
+  id bigint [pk]
+  dao_id bigint [ref: > dao.id]
+  creator_id bigint [ref: > user.id]
+  title varchar
+  description text
+  start_date datetime
+  end_date datetime
+  status varchar
+  execution_script json
+  quorum int
+  metadata json
+  created_at datetime
+  updated_at datetime
+}
+
+Table vote {
+  id bigint [pk]
+  proposal_id bigint [ref: > proposal.id]
+  voter_id bigint [ref: > user.id]
+  vote varchar
+  voting_power decimal
+  reason text
+  created_at datetime
+}
+
+Table admin_log {
+  id bigint [pk]
+  admin_id bigint [ref: > user.id]
+  action varchar
+  entity_type varchar
+  entity_id int
+  description text
+  metadata json
+  ip_address varchar
+  created_at datetime
+}
+
+Table event_log {
+  id bigint [pk]
+  event_type varchar
+  level varchar
+  user_id bigint [ref: > user.id]
+  message text
+  metadata json
+  ip_address varchar
+  created_at datetime
+} 

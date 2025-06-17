@@ -1,0 +1,305 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 339 89% 49%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 325 73% 57%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 24 94% 50%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    --radius: 0.5rem;
+  }
+
+  .dark, html[data-theme="dark"] {
+    --background: 20 14.3% 10.1%;
+    --foreground: 0 0% 95%;
+    --card: 24 9.8% 13%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 339 89% 49%;
+    --primary-foreground: 355.7 100% 97.3%;
+    --secondary: 325 73% 57%;
+    --secondary-foreground: 355.7 100% 97.3%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 240 5% 74.9%;
+    --accent: 24 94% 50%;
+    --accent-foreground: 355.7 100% 97.3%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 85.7% 97.3%;
+    --border: 240 3.7% 25.9%;
+    --input: 240 3.7% 25.9%;
+    --ring: 142.4 71.8% 29.2%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold text-foreground;
+  }
+  
+  p, span, li, label, input, textarea {
+    @apply text-foreground;
+  }
+  
+  /* Bessere Fokus-Stile für Barrierefreiheit */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary/50 ring-offset-2 ring-offset-background transition-shadow;
+  }
+}
+
+@layer components {
+  .hide-scrollbar {
+    -ms-overflow-style: none !important;  /* IE and Edge */
+    scrollbar-width: none !important;  /* Firefox */
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none !important; /* Chrome, Safari and Opera */
+    width: 0 !important;
+    height: 0 !important;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-lg hover:border-primary/30;
+  }
+  
+  .btn-gradient {
+    @apply bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity;
+  }
+  
+  .glass-panel {
+    @apply bg-background/5 backdrop-blur-sm border border-border/10 rounded-lg shadow-lg;
+  }
+  
+  .bsn-dark-gradient {
+    @apply border border-gray-800 bg-gradient-to-r from-gray-900 to-gray-800;
+  }
+  
+  .bsn-dark-card {
+    @apply border border-gray-800 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-4 shadow-md;
+  }
+  
+  .bsn-dark-interactive {
+    @apply border border-gray-800 bg-gradient-to-r from-gray-900 to-gray-800 transition-all duration-300 hover:border-gray-700 hover:shadow-lg;
+  }
+  
+  .bsn-button-primary {
+    @apply bg-gradient-to-r from-primary to-secondary text-primary-foreground
+           rounded-full py-2 px-4 hover:opacity-90 transition-opacity;
+  }
+  
+  .bsn-button-secondary {
+    @apply bg-muted text-muted-foreground rounded-full py-2 px-4 
+           border hover:border-primary/30 transition-colors;
+  }
+  
+  .bsn-input {
+    @apply bg-background border-input text-foreground rounded-md p-2 
+           focus:border-primary/50 focus:ring-1 focus:ring-primary/30
+           transition-colors duration-300;
+  }
+  
+  .bsn-sidebar-item {
+    @apply flex items-center space-x-3 px-4 py-2 rounded-lg 
+           hover:bg-muted/50 transition-colors;
+  }
+  
+  .bsn-sidebar-item.active {
+    @apply bg-muted text-primary;
+  }
+  
+  .bsn-heading {
+    @apply text-foreground font-bold;
+  }
+
+  .theme-card {
+    @apply bg-card text-card-foreground border-border 
+           transition-colors duration-300;
+  }
+  
+  .theme-input {
+    @apply bg-background border-input text-foreground 
+           transition-colors duration-300;
+  }
+  
+  .theme-button {
+    @apply bg-muted hover:bg-muted/80 text-muted-foreground 
+           transition-colors duration-300;
+  }
+  
+  .theme-text-primary {
+    @apply text-foreground transition-colors duration-300;
+  }
+  
+  .theme-text-secondary {
+    @apply text-muted-foreground transition-colors duration-300;
+  }
+  
+  .dropdown-menu {
+    @apply bg-popover text-popover-foreground border border-border shadow-lg rounded-md p-1;
+  }
+  
+  .dropdown-item {
+    @apply flex w-full items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground;
+  }
+  
+  .nav-item {
+    @apply text-sm font-medium transition-colors hover:text-primary relative;
+  }
+  
+  .nav-item-active {
+    @apply text-primary;
+  }
+  
+  .nav-item-inactive {
+    @apply text-muted-foreground;
+  }
+  
+  /* Verbesserte Toast-Stile */
+  .bsn-toast {
+    @apply rounded-lg border border-border shadow-lg backdrop-blur-sm;
+  }
+  
+  /* Animation-Klassen */
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-float {
+    animation: floating 3s ease-in-out infinite;
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  
+  /* Interaktive Elemente */
+  .interactive-hover {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+  
+  .interactive-active {
+    @apply transition-all duration-200 active:scale-95;
+  }
+  
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
+  }
+  
+  /* Farben mit erhöhtem Kontrast */
+  .high-contrast-text {
+    @apply text-foreground font-medium;
+  }
+  
+  .high-contrast-border {
+    @apply border border-border/60;
+  }
+  
+  /* Fokus-Animationen */
+  .focus-ring {
+    @apply focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:outline-none;
+  }
+  
+  /* Loading-Animationen */
+  .loading-pulse {
+    @apply animate-pulse bg-muted/50 rounded;
+  }
+  
+  .loading-spin {
+    @apply animate-spin text-primary;
+  }
+}
+
+@keyframes floating {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes glow {
+  from { box-shadow: 0 0 5px rgba(244, 63, 94, 0.2), 0 0 10px rgba(244, 63, 94, 0.1); }
+  to { box-shadow: 0 0 10px rgba(244, 63, 94, 0.3), 0 0 20px rgba(244, 63, 94, 0.2); }
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(50px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-50px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Neue Animation für Pulse-Effekt */
+@keyframes heartPulse {
+  0% { transform: scale(1); }
+  15% { transform: scale(1.3); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.15); }
+  60% { transform: scale(1); }
+}
+
+/* Neue Animation für den "Ich mag"-Effekt */
+.heart-pulse {
+  animation: heartPulse 1s ease-in-out;
+}
+
+/* Verbesserte Toast-Animation */
+@keyframes toastEntrance {
+  0% { opacity: 0; transform: translateY(-20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.toast-entrance {
+  animation: toastEntrance 0.3s ease-out;
+}

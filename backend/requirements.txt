@@ -1,0 +1,40 @@
+# Django & REST Framework
+Django==5.0.2
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+django-filter==23.5
+
+# Authentication
+djangorestframework-simplejwt==5.3.1
+django-allauth==0.60.1
+dj-rest-auth==5.0.1
+
+# Database
+psycopg2-binary==2.9.9
+dj-database-url==2.1.0
+
+# Celery
+celery==5.3.6
+django-celery-beat==2.5.0
+redis==5.0.1
+
+# Web3 & Blockchain
+web3==6.13.0
+eth-account==0.10.0
+
+# API Documentation
+drf-yasg==1.21.7
+
+# Production
+gunicorn==21.2.0
+whitenoise==6.6.0
+
+# Development & Testing
+pytest-django==4.7.0
+pytest-cov==4.1.0
+factory-boy==3.3.0
+black==24.1.1
+flake8==7.0.0
+
+# Environment & Configuration
+python-dotenv==1.0.1

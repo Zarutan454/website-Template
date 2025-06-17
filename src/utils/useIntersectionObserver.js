@@ -1,35 +1,53 @@
 import { useState, useEffect, useRef } from 'react';
 
-const useIntersectionObserver = (options = {}) => {
+const useIntersectionObserver = ({
+  threshold = 0,
+  root = null,
+  rootMargin = '0px',
+  freezeOnceVisible = false,
+}) => {
   const [isIntersecting, setIsIntersecting] = useState(false);
+  const [hasBeenVisible, setHasBeenVisible] = useState(false);
   const elementRef = useRef(null);
 
   useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsIntersecting(entry.isIntersecting);
+        const isElementIntersecting = entry.isIntersecting;
+        
+        // Update state only if:
+        // - Element is newly intersecting, OR
+        // - Element is no longer intersecting AND we're not freezing visibility
+        if (isElementIntersecting || (!isElementIntersecting && !freezeOnceVisible)) {
+          setIsIntersecting(isElementIntersecting);
+        }
+
+        // If element has been visible and we're freezing visibility
+        if (isElementIntersecting && freezeOnceVisible) {
+          setHasBeenVisible(true);
+          observer.unobserve(element);
+        }
       },
-      {
-        root: options.root || null,
-        rootMargin: options.rootMargin || '0px',
-        threshold: options.threshold || 0.1,
-      }
+      { threshold, root, rootMargin }
     );
 
-    const currentElement = elementRef.current;
-
-    if (currentElement) {
-      observer.observe(currentElement);
-    }
+    observer.observe(element);
 
     return () => {
-      if (currentElement) {
-        observer.unobserve(currentElement);
+      if (element) {
+        observer.unobserve(element);
       }
     };
-  }, [options.root, options.rootMargin, options.threshold]);
+  }, [threshold, root, rootMargin, freezeOnceVisible]);
 
-  return [elementRef, isIntersecting];
+  // If we're freezing visibility and element has been visible,
+  // always return true for isIntersecting
+  const returnValue = freezeOnceVisible && hasBeenVisible ? true : isIntersecting;
+
+  return [elementRef, returnValue];
 };
 
 export default useIntersectionObserver;
