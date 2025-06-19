@@ -1,6 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const Footer = () => {
+  const { t } = useTranslation();
   const footerRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const [email, setEmail] = useState('');
@@ -73,17 +75,17 @@ const Footer = () => {
                       WebkitTextFillColor: 'transparent'
                     }}
                   >
-                    Join the Revolution
+                    {t('footer.newsletter.title')}
                   </span>
                   <span className="absolute -bottom-1 left-0 w-1/2 h-[1px] bg-gradient-to-r from-[#00a2ff] to-transparent"></span>
                 </span>
               </h2>
               <p className="text-[#8aa0ff]/80 mb-4">
-                Subscribe to our newsletter and be the first to know about platform updates, token events, and exclusive community offers.
+                {t('footer.newsletter.description', 'Subscribe to our newsletter and be the first to know about platform updates, token events, and exclusive community offers.')}
               </p>
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
-                <span className="text-xs text-[#8aa0ff]">Join 25,000+ blockchain enthusiasts</span>
+                <span className="text-xs text-[#8aa0ff]">{t('footer.newsletter.subscribers', 'Join 25,000+ blockchain enthusiasts')}</span>
               </div>
             </div>
             
@@ -93,7 +95,7 @@ const Footer = () => {
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Your email address" 
+                  placeholder={t('footer.newsletter.placeholder')} 
                   className="bg-[#0d0e2c] border border-[#00a2ff]/20 rounded-l-full py-3 px-5 w-full md:w-80 focus:outline-none focus:border-[#00a2ff]/50 text-white placeholder-white/30"
                   required
                 />
@@ -106,14 +108,14 @@ const Footer = () => {
                       <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                       </svg>
-                      Subscribed
+                      {t('footer.newsletter.success')}
                     </>
                   ) : (
-                    'Subscribe'
+                    t('footer.newsletter.button')
                   )}
                 </button>
               </div>
-              <p className="text-xs text-[#8aa0ff]/50 mt-2">We respect your privacy. Unsubscribe at any time.</p>
+              <p className="text-xs text-[#8aa0ff]/50 mt-2">{t('footer.newsletter.privacy', 'We respect your privacy. Unsubscribe at any time.')}</p>
             </form>
           </div>
         </div>
@@ -150,8 +152,7 @@ const Footer = () => {
             </div>
             <p className="text-[#8aa0ff] font-light text-lg border-t border-[#00a2ff]/20 pt-3 mt-3">Blockchain Social Network</p>
             <p className="text-[#8aa0ff]/70 text-sm max-w-sm">
-              Decentralized social networking platform built on blockchain technology, 
-              empowering users with full control over their data, identity, and digital interactions.
+              {t('footer.description', 'Decentralized social networking platform built on blockchain technology, empowering users with full control over their data, identity, and digital interactions.')}
             </p>
             
             {/* Social Links - Mobile Only */}
@@ -180,47 +181,47 @@ const Footer = () => {
           {/* Platform Links */}
           <div>
             <h3 className="text-sm tracking-wider text-[#8aa0ff] mb-4 font-mono relative inline-block">
-              PLATFORM
+              {t('footer.platformTitle', 'PLATFORM')}
               <span className="absolute -bottom-1 left-0 w-8 h-[1px] bg-[#00a2ff]/50"></span>
             </h3>
             <ul className="space-y-3">
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>Dashboard</a></li>
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>Social Feed</a></li>
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>Token Wallet</a></li>
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>Privacy Settings</a></li>
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>NFT Gallery</a></li>
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>Marketplace</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.platform.dashboard', 'Dashboard')}</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.platform.socialFeed', 'Social Feed')}</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.platform.tokenWallet', 'Token Wallet')}</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.platform.privacySettings', 'Privacy Settings')}</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.platform.nftGallery', 'NFT Gallery')}</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.platform.marketplace', 'Marketplace')}</a></li>
             </ul>
           </div>
           
           {/* Blockchain Features */}
           <div>
             <h3 className="text-sm tracking-wider text-[#8aa0ff] mb-4 font-mono relative inline-block">
-              BLOCKCHAIN
+              {t('footer.blockchainTitle', 'BLOCKCHAIN')}
               <span className="absolute -bottom-1 left-0 w-8 h-[1px] bg-[#00a2ff]/50"></span>
             </h3>
             <ul className="space-y-3">
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>Tokenomics</a></li>
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>Staking</a></li>
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>Governance</a></li>
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>Whitepaper</a></li>
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>Technical Docs</a></li>
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>Smart Contracts</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.blockchain.tokenomics', 'Tokenomics')}</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.blockchain.staking', 'Staking')}</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.blockchain.governance', 'Governance')}</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.blockchain.whitepaper', 'Whitepaper')}</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.blockchain.technicalDocs', 'Technical Docs')}</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.blockchain.smartContracts', 'Smart Contracts')}</a></li>
             </ul>
           </div>
           
           {/* Community Links */}
           <div>
             <h3 className="text-sm tracking-wider text-[#8aa0ff] mb-4 font-mono relative inline-block">
-              COMMUNITY
+              {t('footer.communityTitle', 'COMMUNITY')}
               <span className="absolute -bottom-1 left-0 w-8 h-[1px] bg-[#00a2ff]/50"></span>
             </h3>
             <ul className="space-y-3 mb-6">
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>Blog</a></li>
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>Forum</a></li>
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>Events</a></li>
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>Support</a></li>
-              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>Careers</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.community.blog', 'Blog')}</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.community.forum', 'Forum')}</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.community.events', 'Events')}</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.community.support', 'Support')}</a></li>
+              <li><a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 flex items-center"><span className="w-1 h-1 bg-[#00a2ff]/50 mr-2"></span>{t('footer.community.careers', 'Careers')}</a></li>
             </ul>
             
             {/* Social Links - Desktop Only */}
@@ -248,38 +249,14 @@ const Footer = () => {
         </div>
         
         {/* Legal and Copyright */}
-        <div className={`mt-16 pt-8 border-t border-[#1a1a2f] text-[#8aa0ff]/50 text-sm flex flex-col md:flex-row justify-between transition-all duration-700 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <div className="flex items-center">
-            <div className="w-2 h-2 hexagon bg-[#00a2ff]/30 mr-2"></div>
-            <span>© 2025 BSN Network. All rights reserved.</span>
+        <div className={`mt-16 pt-8 border-t border-[#00a2ff]/10 flex flex-col md:flex-row md:items-center justify-between text-sm text-[#8aa0ff]/60 transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <div className="mb-4 md:mb-0">
+            &copy; {new Date().getFullYear()} BSN. {t('footer.rights')}
           </div>
-          <div className="flex flex-wrap md:space-x-8 mt-4 md:mt-0">
-            <a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 mr-6 md:mr-0 mb-2 md:mb-0">Privacy Policy</a>
-            <a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 mr-6 md:mr-0 mb-2 md:mb-0">Terms of Service</a>
-            <a href="#" className="hover:text-[#00a2ff] transition-colors duration-300 mr-6 md:mr-0 mb-2 md:mb-0">Audit Report</a>
-            <a href="#" className="hover:text-[#00a2ff] transition-colors duration-300">Cookie Policy</a>
-          </div>
-        </div>
-        
-        {/* Blockchain network status */}
-        <div className={`mt-8 pt-6 border-t border-[#00a2ff]/10 flex justify-center transition-all duration-700 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <div className="flex flex-wrap justify-center items-center space-x-2 md:space-x-6 text-xs text-[#8aa0ff]/60">
-            <div className="flex items-center mb-2 md:mb-0">
-              <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
-              <span>Network Status: Online</span>
-            </div>
-            <div className="flex items-center mb-2 md:mb-0">
-              <div className="w-2 h-2 bg-[#00a2ff]/50 rounded-full mr-2"></div>
-              <span>Block Height: 15,432,982</span>
-            </div>
-            <div className="flex items-center mb-2 md:mb-0">
-              <div className="w-2 h-2 bg-[#00a2ff]/50 rounded-full mr-2"></div>
-              <span>Nodes: 1,245</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-[#00a2ff]/50 rounded-full mr-2"></div>
-              <span>Gas: 12 Gwei</span>
-            </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <a href="#" className="hover:text-[#00a2ff] transition-colors duration-300">{t('footer.privacy')}</a>
+            <a href="#" className="hover:text-[#00a2ff] transition-colors duration-300">{t('footer.terms')}</a>
+            <a href="#" className="hover:text-[#00a2ff] transition-colors duration-300">{t('footer.contact')}</a>
           </div>
         </div>
       </div>

@@ -1,121 +1,237 @@
-# BSN Backend
+# BSN Django Backend
 
-Dieses Django-Backend dient als API für die BSN (Blockchain Social Network) Landing-Plattform.
+Ein vollständiges Django-Backend für die BSN (Blockchain Social Network) ICO-Plattform.
 
-## Projektstruktur
+## 🚀 Features
+
+### User Management
+- **Custom User Model** mit erweiterten Profilfeldern
+- **JWT Authentication** für sichere API-Zugriffe
+- **Email Verification** für Benutzerregistrierung
+- **Password Reset** Funktionalität
+- **User Sessions** Tracking
+- **Profile Management** mit erweiterten Einstellungen
+
+### ICO & Token Management
+- **Token Reservations** für ICO-Teilnahme
+- **Multi-Chain Support** (Ethereum, Polygon, BSC, Solana)
+- **Payment Status Tracking** (Pending, Processing, Completed, Failed, Cancelled)
+- **Transaction Hash** Speicherung
+- **Referral System** mit automatischer Kommission-Berechnung
+
+### Faucet System
+- **Test Token Requests** für verschiedene Netzwerke
+- **Admin Approval** Workflow
+- **Request Tracking** mit IP und User Agent
+- **Email Notifications** an Admins
+
+### Referral Program
+- **Unique Referral Codes** für jeden Benutzer
+- **Commission Tracking** (5% Standard)
+- **Token Rewards** Berechnung
+- **Statistics Dashboard** für Referrer
+
+### Newsletter & Communication
+- **Newsletter Subscriptions** mit verschiedenen Kategorien
+- **Contact Form** mit Admin-Assignment
+- **Email Notifications** für neue Anfragen
+- **Unsubscribe** Funktionalität
+
+### Analytics & Statistics
+- **ICO Overview** mit Echtzeit-Statistiken
+- **Daily Statistics** für die letzten 30 Tage
+- **Network Distribution** Analytics
+- **User Growth** Tracking
+- **Financial Metrics** (USD raised, tokens sold)
+
+## 🛠️ Technologie-Stack
+
+- **Django 5.0.2** - Web Framework
+- **Django REST Framework 3.14.0** - API Framework
+- **JWT Authentication** - Sichere Token-basierte Authentifizierung
+- **SQLite** (Development) / **PostgreSQL** (Production)
+- **CORS Support** - Cross-Origin Resource Sharing
+- **Swagger/OpenAPI** - API Dokumentation
+- **Email Integration** - SMTP für Benachrichtigungen
+
+## 📁 Projektstruktur
 
 ```
 backend/
-├── bsn/                   # Django-Hauptprojekt
-│   ├── __init__.py
-│   ├── asgi.py
-│   ├── celery.py          # Celery-Konfiguration
-│   ├── settings.py        # Projekteinstellungen
-│   ├── urls.py            # Haupt-URL-Routing
-│   └── wsgi.py
-├── landing/               # App für Landing-Funktionen
-│   ├── __init__.py
-│   ├── admin.py
-│   ├── apps.py
-│   ├── migrations/
-│   ├── models.py          # Modelle für Faucet, Referral, Token-Reservierung
-│   ├── serializers.py     # API-Serialisierer
-│   ├── tasks.py           # Celery-Tasks
-│   ├── tests/             # Tests für die App
-│   ├── urls.py            # URL-Routing für die App
-│   └── views.py           # API-Views
-├── users/                 # App für Benutzer-Management
-│   ├── __init__.py
-│   ├── admin.py
-│   ├── apps.py
-│   ├── migrations/
-│   ├── models.py          # Erweitertes User-Modell
-│   ├── serializers.py     # User-Serialisierer
-│   ├── tests/             # Tests für die App
-│   ├── urls.py            # URL-Routing für die App
-│   └── views.py           # Auth-Views
-├── manage.py              # Django-Management-Skript
-├── requirements.txt       # Projektabhängigkeiten
-└── .env.example           # Beispiel für Umgebungsvariablen
+├── bsn/                    # Django Projekt-Konfiguration
+│   ├── settings.py        # Hauptkonfiguration
+│   ├── urls.py           # URL-Routing
+│   └── wsgi.py           # WSGI-Konfiguration
+├── users/                 # User Management App
+│   ├── models.py         # User, UserProfile, Sessions, etc.
+│   ├── views.py          # Authentication & Profile Views
+│   ├── serializers.py    # API Serializers
+│   ├── urls.py           # User API Endpoints
+│   └── admin.py          # Admin Interface
+├── landing/              # ICO & Landing Page App
+│   ├── models.py         # TokenReservation, Faucet, Referrals, etc.
+│   ├── views.py          # ICO & Landing Views
+│   ├── serializers.py    # API Serializers
+│   ├── urls.py           # Landing API Endpoints
+│   └── admin.py          # Admin Interface
+├── manage.py             # Django Management
+├── requirements.txt      # Python Dependencies
+├── env.example           # Environment Variables Template
+└── db.sqlite3           # SQLite Database (Development)
 ```
 
-## Einrichtung
+## 🔧 Installation & Setup
 
-1. Python-Umgebung erstellen und aktivieren:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # Unter Windows: venv\Scripts\activate
-   ```
-
-2. Abhängigkeiten installieren:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Umgebungsvariablen konfigurieren:
-   ```bash
-   cp .env.example .env
-   # Bearbeite die .env-Datei mit deinen Einstellungen
-   ```
-
-4. Datenbank-Migrationen durchführen:
-   ```bash
-   python manage.py migrate
-   ```
-
-5. Superuser erstellen:
-   ```bash
-   python manage.py createsuperuser
-   ```
-
-6. Entwicklungsserver starten:
-   ```bash
-   python manage.py runserver
-   ```
-
-## API-Endpunkte
-
-### Authentifizierung
-- `POST /api/auth/register/` - Benutzer registrieren
-- `POST /api/auth/login/` - Benutzer anmelden
-- `POST /api/auth/token/refresh/` - Token aktualisieren
-- `POST /api/auth/logout/` - Benutzer abmelden
-
-### Faucet
-- `GET /api/faucet/status/` - Status des Faucets abfragen
-- `POST /api/faucet/claim/` - Token beanspruchen
-
-### Referral
-- `GET /api/referral/code/` - Referral-Code abfragen/generieren
-- `GET /api/referral/stats/` - Statistiken zu Referrals abfragen
-
-### Token-Reservierung
-- `POST /api/token-reserve/` - Token reservieren
-- `GET /api/token-reserve/status/` - Status der Reservierung abfragen
-
-### Newsletter
-- `POST /api/newsletter/subscribe/` - Newsletter abonnieren
-- `GET /api/newsletter/confirm/` - E-Mail-Adresse bestätigen
-
-## Entwicklung
-
-- API-Dokumentation: `/api/docs/`
-- Admin-Interface: `/admin/`
-
-## Tests ausführen
-
+### 1. Dependencies installieren
 ```bash
-pytest
+pip install -r requirements.txt
 ```
 
-## Celery-Worker starten
-
+### 2. Environment konfigurieren
 ```bash
-celery -A bsn worker -l info
+cp env.example .env
+# Bearbeite .env mit deinen Einstellungen
 ```
 
-## Celery-Beat für geplante Aufgaben starten
-
+### 3. Datenbank initialisieren
 ```bash
-celery -A bsn beat -l info
+python manage.py makemigrations
+python manage.py migrate
 ```
+
+### 4. Superuser erstellen
+```bash
+python manage.py createsuperuser
+```
+
+### 5. Server starten
+```bash
+python manage.py runserver
+```
+
+## 🌐 API Endpoints
+
+### Authentication
+- `POST /api/v1/users/register/` - Benutzerregistrierung
+- `POST /api/v1/users/login/` - Benutzeranmeldung
+- `POST /api/v1/users/logout/` - Benutzerabmeldung
+- `POST /api/v1/users/email/verify/` - Email-Verifikation
+- `POST /api/v1/users/password/reset/` - Passwort-Reset anfordern
+- `POST /api/v1/users/password/reset/confirm/` - Passwort-Reset bestätigen
+
+### User Management
+- `GET/PUT /api/v1/users/profile/` - Profil anzeigen/bearbeiten
+- `GET/PUT /api/v1/users/profile/detail/` - Erweitertes Profil
+- `POST /api/v1/users/password/change/` - Passwort ändern
+- `GET /api/v1/users/sessions/` - Benutzersessions
+- `DELETE /api/v1/users/sessions/<id>/` - Session löschen
+- `GET /api/v1/users/stats/` - Benutzerstatistiken
+
+### ICO & Token Management
+- `GET/POST /api/v1/landing/reservations/` - Token-Reservierungen
+- `GET/PUT /api/v1/landing/reservations/<id>/` - Einzelne Reservierung
+- `GET/POST /api/v1/landing/faucet/` - Faucet-Anfragen
+- `GET /api/v1/landing/referral/code/` - Referral-Code
+- `GET /api/v1/landing/referral/program/` - Referral-Programm
+
+### Newsletter & Contact
+- `POST /api/v1/landing/newsletter/subscribe/` - Newsletter abonnieren
+- `POST /api/v1/landing/newsletter/unsubscribe/` - Newsletter abbestellen
+- `POST /api/v1/landing/contact/` - Kontaktformular
+
+### Analytics
+- `GET /api/v1/landing/ico/overview/` - ICO-Übersicht
+- `GET /api/v1/landing/ico/stats/` - Detaillierte ICO-Statistiken
+- `GET /api/v1/landing/ico/token-info/` - Token-Preis-Informationen
+
+### Admin Interface
+- `http://localhost:8000/admin/` - Django Admin Interface
+- `http://localhost:8000/api/docs/` - Swagger API Dokumentation
+- `http://localhost:8000/api/redoc/` - ReDoc API Dokumentation
+
+## 🔐 Sicherheit
+
+- **JWT Token Authentication** für alle geschützten Endpoints
+- **CORS Configuration** für sichere Cross-Origin Requests
+- **Password Validation** mit Django-Standards
+- **Email Verification** für neue Benutzer
+- **Session Management** mit IP-Tracking
+- **Admin Interface** für Backend-Management
+
+## 📊 Datenbank-Models
+
+### Users App
+- **User** - Erweitertes Benutzermodel mit Wallet-Integration
+- **UserProfile** - Zusätzliche Profilinformationen
+- **UserSession** - Session-Tracking
+- **EmailVerification** - Email-Verifikationstokens
+- **PasswordReset** - Passwort-Reset-Tokens
+
+### Landing App
+- **TokenReservation** - ICO-Token-Reservierungen
+- **FaucetRequest** - Test-Token-Anfragen
+- **ReferralProgram** - Referral-Tracking
+- **ReferralCode** - Benutzer-Referral-Codes
+- **NewsletterSubscription** - Newsletter-Abonnements
+- **ContactForm** - Kontaktformular-Einreichungen
+- **ICOStats** - ICO-Statistiken und Analytics
+
+## 🚀 Deployment
+
+### Production Setup
+1. **PostgreSQL** Datenbank konfigurieren
+2. **Environment Variables** für Production setzen
+3. **Static Files** sammeln: `python manage.py collectstatic`
+4. **Gunicorn** für WSGI-Server verwenden
+5. **Redis** für Celery (optional)
+6. **SSL/HTTPS** konfigurieren
+
+### Environment Variables
+```bash
+# Django
+SECRET_KEY=your-secret-key
+DEBUG=False
+ALLOWED_HOSTS=your-domain.com
+
+# Database
+DATABASE_URL=postgresql://user:password@localhost/dbname
+
+# Email
+EMAIL_HOST=smtp.gmail.com
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+
+# ICO Settings
+TOKEN_PRICE_USD=0.10
+MIN_PURCHASE_USD=10
+MAX_PURCHASE_USD=10000
+
+# Frontend
+FRONTEND_URL=https://your-frontend-domain.com
+```
+
+## 📈 Monitoring & Analytics
+
+- **Django Admin** für Backend-Management
+- **ICO Statistics** Dashboard
+- **User Analytics** Tracking
+- **Payment Analytics** mit Network-Distribution
+- **Referral Performance** Monitoring
+
+## 🔄 Nächste Schritte
+
+1. **Smart Contract Integration** für automatische Token-Verteilung
+2. **Payment Gateway Integration** für Krypto-Zahlungen
+3. **Real-time Notifications** mit WebSockets
+4. **Advanced Analytics** Dashboard
+5. **Multi-language Support** für internationale Nutzer
+6. **Mobile API** Optimierungen
+7. **Rate Limiting** für API-Endpoints
+8. **Automated Testing** Suite
+
+## 📞 Support
+
+Bei Fragen oder Problemen:
+- **API Documentation**: `http://localhost:8000/api/docs/`
+- **Admin Interface**: `http://localhost:8000/admin/`
+- **GitHub Issues**: Für Bug-Reports und Feature-Requests

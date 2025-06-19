@@ -1,0 +1,370 @@
+﻿{
+  "common": {
+    "learnMore": "Learn more",
+    "connectWallet": "Connect Wallet",
+    "tokenReservation": "Reserve Tokens",
+    "joinCommunity": "Join Community",
+    "readWhitepaper": "Read Whitepaper"
+  },
+  "navigation": {
+    "home": "Home",
+    "about": {
+      "title": "About",
+      "mission": "Mission & Vision",
+      "team": "Team",
+      "partners": "Partners",
+      "milestones": "Milestones"
+    },
+    "features": {
+      "title": "Features",
+      "overview": "Overview",
+      "social": "Social Features",
+      "blockchain": "Blockchain Features",
+      "governance": "Governance"
+    },
+    "tokenomics": {
+      "title": "Tokenomics",
+      "overview": "Token Overview",
+      "distribution": "Distribution",
+      "reservation": "Token Reservation",
+      "faucet": "Faucet",
+      "referral": "Referral"
+    },
+    "roadmap": "Roadmap",
+    "community": {
+      "title": "Community",
+      "hub": "Community Hub",
+      "events": "Events",
+      "ambassadors": "Ambassadors",
+      "guidelines": "Guidelines"
+    },
+    "documentation": {
+      "title": "Documentation",
+      "whitepaper": "Whitepaper",
+      "api": "API",
+      "tutorials": "Tutorials",
+      "faqs": "FAQs"
+    }
+  },
+  "homepage": {
+    "hero": {
+      "title": "BSN - DECENTRALIZED SOCIAL NETWORK",
+      "subtitle": "Experience social media in a new way: Mining-based rewards, integrated wallets, NFT and token options. Join the community now!",
+      "cta": "REGISTER NOW",
+      "launchIn": "LAUNCH IN",
+      "days": "DAYS",
+      "hours": "HOURS",
+      "minutes": "MINUTES",
+      "seconds": "SECONDS"
+    },
+    "features": {
+      "title": "Our Features",
+      "subtitle": "Discover the key functions of our decentralized social network",
+      "viewAll": "Explore All Features",
+      "dezentralesProfilTitle": "Decentralized Profile",
+      "dezentralesProfilDesc": "Your BSN profile belongs to you. All your data is stored decentrally and you maintain full control.",
+      "tokenMiningTitle": "Token Mining",
+      "tokenMiningDesc": "Earn BSN tokens through active participation in the network. The more value you create for the community, the more you earn.",
+      "daoGovernanceTitle": "DAO Governance",
+      "daoGovernanceDesc": "As a BSN token holder, you can vote on platform changes and actively participate in development."
+    },
+    "about": {
+      "title": "About BSN",
+      "subtitle": "Learn more about our mission and vision for the future of social networking",
+      "description": "BSN was founded with the goal of creating a decentralized social network that puts control back in the hands of users. We use blockchain technology to create a transparent, secure, and user-oriented network."
+    },
+    "tokenomics": {
+      "title": "BSN Token",
+      "subtitle": "Discover the benefits and uses of our native token",
+      "governance": "Governance",
+      "governanceDesc": "Vote on platform changes and shape the future of BSN",
+      "staking": "Staking",
+      "stakingDesc": "Earn passive income by staking your BSN tokens",
+      "rewards": "Rewards",
+      "rewardsDesc": "Receive tokens for valuable contributions to the network",
+      "explore": "Explore Tokenomics"
+    },
+    "community": {
+      "title": "Our Community",
+      "subtitle": "Become part of our growing community and shape the future of social networks",
+      "description": "BSN is more than just a platform - it's a community of like-minded individuals who believe in a decentralized, user-oriented future of social networks. Join us and help make this vision a reality."
+    },
+    "roadmap": {
+      "title": "Our Roadmap",
+      "subtitle": "Learn more about our plans and milestones for the future",
+      "description": "We have a clear plan for the development of BSN. Our roadmap shows the most important milestones and planned features for the coming years.",
+      "viewRoadmap": "View Roadmap"
+    },
+    "cta": {
+      "title": "Ready to try BSN?",
+      "description": "Secure your place in the future of social networks now. Reserve your BSN tokens and be part of it from the beginning."
+    }
+  },
+  "aboutPage": {
+    "title": "About BSN",
+    "subtitle": "Our mission, vision and the team behind the Blockchain Social Network",
+    "mission": {
+      "title": "Our Mission",
+      "paragraph1": "BSN was founded with a clear mission: to put the power over social networks back in the hands of users. We believe that your data should belong to you, not to big tech corporations.",
+      "paragraph2": "By integrating blockchain technology, we create a transparent, decentralized, and user-oriented social network that respects privacy while providing new opportunities for interaction and value creation.",
+      "paragraph3": "Our goal is to create a platform that is not only technologically advanced but also operated ethically and sustainably - with a community that actively participates in governance."
+    },
+    "vision": {
+      "title": "Our Vision",
+      "paragraph1": "We envision a future where social networks are no longer controlled by centralized companies, but by the users themselves - transparent, fair, and community-driven.",
+      "paragraph2": "BSN aims to bridge the gap between the traditional Web2 world and the emerging Web3 ecosystem by combining the user-friendliness of classic social media with the benefits of blockchain technology.",
+      "paragraph3": "In the long term, we aspire to become a fully decentralized protocol that is supported and developed by the community - a truly democratic social network for the digital age."
+    },
+    "milestones": {
+      "title": "Our Milestones",
+      "items": [
+        {
+          "year": "2019",
+          "title": "Foundation",
+          "description": "BSN was founded with the vision of creating a decentralized social network that puts control back in the hands of users."
+        },
+        {
+          "year": "2020",
+          "title": "Seed Funding",
+          "description": "Successful seed funding round with 2.5 million euros from leading blockchain VCs."
+        },
+        {
+          "year": "2021",
+          "title": "Alpha Version",
+          "description": "Release of the first alpha version with basic social functions and wallet integration."
+        },
+        {
+          "year": "2022",
+          "title": "Beta Launch",
+          "description": "Public beta version with expanded functionality and improved user interface."
+        },
+        {
+          "year": "2023",
+          "title": "Token Launch",
+          "description": "Successful launch of the BSN token with listing on multiple decentralized exchanges."
+        },
+        {
+          "year": "2024",
+          "title": "Full Launch",
+          "description": "Official launch of the BSN platform with all core features and a growing community."
+        }
+      ]
+    },
+    "team": {
+      "title": "Our Team",
+      "subtitle": "The minds behind BSN"
+    },
+    "partners": {
+      "title": "Our Partners",
+      "subtitle": "Together we are building the future of social networks"
+    }
+  },
+  "documentationPage": {
+    "title": "Documentation",
+    "subtitle": "Everything you need to know about BSN",
+    "categories": [
+      { "id": "overview", "label": "Overview" },
+      { "id": "whitepaper", "label": "Whitepaper" },
+      { "id": "api", "label": "API Documentation" },
+      { "id": "guides", "label": "Guides" },
+      { "id": "faq", "label": "FAQ" }
+    ],
+    "overview": {
+      "title": "What is BSN?",
+      "description": "BSN (Blockchain Social Network) is a decentralized social network based on blockchain technology. It gives users full control over their data and enables new forms of interaction and value creation.",
+      "documentation": {
+        "title": "Our Documentation",
+        "description": "Our documentation is divided into several areas to make it as easy as possible for you to get started with BSN. Choose an area that interests you:"
+      },
+      "resources": {
+        "title": "Technical Resources",
+        "github": {
+          "title": "GitHub Repository",
+          "description": "Access to the source code and technical documentation of the project.",
+          "link": "Go to Repository â†’"
+        },
+        "discord": {
+          "title": "Developer Discord",
+          "description": "Join our developer Discord for technical support and discussions.",
+          "link": "Join Discord â†’"
+        },
+        "sandbox": {
+          "title": "API Sandbox",
+          "description": "Test our API in a secure sandbox environment.",
+          "link": "Go to Sandbox â†’"
+        }
+      }
+    },
+    "guides": {
+      "title": "Guides",
+      "items": [
+        {
+          "title": "Getting Started with BSN",
+          "description": "Learn the basics of BSN and create your first profile.",
+          "icon": "ðŸš€",
+          "link": "/docs/getting-started"
+        },
+        {
+          "title": "Wallet Integration",
+          "description": "Connect your crypto wallet to BSN and use all blockchain features.",
+          "icon": "ðŸ’¼",
+          "link": "/docs/wallet-integration"
+        },
+        {
+          "title": "Content Creation",
+          "description": "Create engaging content and earn BSN tokens through mining.",
+          "icon": "âœï¸",
+          "link": "/docs/content-creation"
+        },
+        {
+          "title": "Community Groups",
+          "description": "Create and manage your own community groups on BSN.",
+          "icon": "ðŸ‘¥",
+          "link": "/docs/community-groups"
+        },
+        {
+          "title": "NFT Creation",
+          "description": "Create and sell your own NFTs on the BSN marketplace.",
+          "icon": "ðŸ–¼ï¸",
+          "link": "/docs/nft-creation"
+        },
+        {
+          "title": "DAO Governance",
+          "description": "Participate in the decentralized governance of BSN and vote on proposals.",
+          "icon": "ðŸ›ï¸",
+          "link": "/docs/dao-governance"
+        }
+      ]
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "items": [
+        {
+          "question": "What is BSN?",
+          "answer": "BSN (Blockchain Social Network) is a decentralized social network based on blockchain technology. It gives users full control over their data and enables new forms of interaction and value creation."
+        },
+        {
+          "question": "How does token mining work?",
+          "answer": "BSN uses a proof-of-contribution mechanism where users are rewarded for valuable contributions to the network. This includes creating high-quality content, participating in moderation, and other activities that contribute to the health of the network."
+        },
+        {
+          "question": "Is BSN open source?",
+          "answer": "Yes, BSN is an open-source project. The source code is available on GitHub, and we encourage developers to contribute to the project. Our goal is to create a transparent and community-developed social network."
+        },
+        {
+          "question": "How is my data protected?",
+          "answer": "BSN stores personal data decentrally and encrypted. You retain full control over your data and decide what information you want to share. Your data is not sold for advertising purposes or used without your consent."
+        },
+        {
+          "question": "Which blockchain does BSN use?",
+          "answer": "BSN is blockchain-agnostic and supports multiple blockchains, including Ethereum and Polygon. This allows users to choose the blockchain that best suits their needs, whether in terms of cost, speed, or functionality."
+        },
+        {
+          "question": "How can I contribute to the project?",
+          "answer": "There are many ways to contribute to the BSN project: as a developer through code contributions, as a community member through feedback and ideas, as a content creator through high-quality content, or as an ambassador by spreading the project."
+        }
+      ]
+    },
+    "api": {
+      "title": "API Documentation",
+      "description": "Our API allows developers to access BSN data and functions and create their own applications.",
+      "endpoints": [
+        {
+          "name": "Users",
+          "endpoints": [
+            { "method": "GET", "path": "/api/v1/users", "description": "Retrieve list of all users" },
+            { "method": "GET", "path": "/api/v1/users/:id", "description": "Retrieve user details" },
+            { "method": "POST", "path": "/api/v1/users", "description": "Create new user" },
+            { "method": "PUT", "path": "/api/v1/users/:id", "description": "Update user data" }
+          ]
+        },
+        {
+          "name": "Posts",
+          "endpoints": [
+            { "method": "GET", "path": "/api/v1/posts", "description": "Retrieve list of all posts" },
+            { "method": "GET", "path": "/api/v1/posts/:id", "description": "Retrieve post details" },
+            { "method": "POST", "path": "/api/v1/posts", "description": "Create new post" },
+            { "method": "DELETE", "path": "/api/v1/posts/:id", "description": "Delete post" }
+          ]
+        },
+        {
+          "name": "Wallet",
+          "endpoints": [
+            { "method": "GET", "path": "/api/v1/wallet/balance", "description": "Retrieve wallet balance" },
+            { "method": "POST", "path": "/api/v1/wallet/transfer", "description": "Transfer tokens" },
+            { "method": "GET", "path": "/api/v1/wallet/transactions", "description": "Retrieve transaction history" }
+          ]
+        }
+      ]
+    },
+    "whitepaper": {
+      "title": "Whitepaper",
+      "description": "Our whitepaper describes the technical details and vision behind BSN.",
+      "sections": [
+        {
+          "title": "Introduction",
+          "content": "BSN was founded with the vision of creating a social network that is owned and controlled by its users. By integrating blockchain technology, we create a platform that enables transparency, privacy, and new forms of value creation."
+        },
+        {
+          "title": "Technical Architecture",
+          "content": "BSN is based on a hybrid architecture that combines central and decentralized components to combine user-friendliness with the benefits of blockchain. Core functionalities such as identity, data, and transactions are stored on the blockchain, while the user interface and certain functions are centrally hosted to ensure optimal performance."
+        },
+        {
+          "title": "Tokenomics",
+          "content": "The BSN token is the heart of the ecosystem and serves several purposes: as a governance token for the DAO, as a reward for contributions to the network, and as a means of payment within the platform. The token design has been carefully developed to promote a sustainable and growing ecosystem."
+        },
+        {
+          "title": "Governance",
+          "content": "BSN is managed as a DAO (Decentralized Autonomous Organization) where token holders can vote on platform changes. The governance model uses quadratic voting to ensure fair decision-making and prevent power concentration."
+        },
+        {
+          "title": "Roadmap",
+          "content": "The development of BSN is divided into several phases, starting with the alpha version and ending with a fully decentralized protocol. Each phase builds on the previous one and adds new features and improvements."
+        }
+      ]
+    }
+  },
+  "footer": {
+    "rights": "All rights reserved",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "contact": "Contact",
+    "description": "Decentralized social networking platform built on blockchain technology, empowering users with full control over their data, identity, and digital interactions.",
+    "platform": "PLATFORM",
+    "blockchain": "BLOCKCHAIN",
+    "community": "COMMUNITY",
+    "platform": {
+      "dashboard": "Dashboard",
+      "socialFeed": "Social Feed",
+      "tokenWallet": "Token Wallet",
+      "privacySettings": "Privacy Settings",
+      "nftGallery": "NFT Gallery",
+      "marketplace": "Marketplace"
+    },
+    "blockchain": {
+      "tokenomics": "Tokenomics",
+      "staking": "Staking",
+      "governance": "Governance",
+      "whitepaper": "Whitepaper",
+      "technicalDocs": "Technical Docs",
+      "smartContracts": "Smart Contracts"
+    },
+    "community": {
+      "blog": "Blog",
+      "forum": "Forum",
+      "events": "Events",
+      "support": "Support",
+      "careers": "Careers"
+    },
+    "newsletter": {
+      "title": "Subscribe to our newsletter",
+      "description": "Subscribe to our newsletter and be the first to know about platform updates, token events, and exclusive community offers.",
+      "placeholder": "Your email address",
+      "button": "Subscribe",
+      "success": "Thank you for subscribing!",
+      "error": "An error occurred. Please try again later.",
+      "privacy": "We respect your privacy. Unsubscribe at any time.",
+      "subscribers": "Join 25,000+ blockchain enthusiasts"
+    }
+  }
+} 

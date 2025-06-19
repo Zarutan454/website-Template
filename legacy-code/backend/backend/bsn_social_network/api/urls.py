@@ -33,4 +33,5 @@ urlpatterns = [
     path('v1/dao/', include('bsn_social_network.api.v1.dao.urls')),
     path('v1/mining/', include('bsn_social_network.api.v1.mining.urls')),
     path('v1/chats/', include('bsn_social_network.api.v1.chat.urls')),
+    path('v1/ico/', include('bsn_social_network.api.v1.ico.urls')),
 ] 

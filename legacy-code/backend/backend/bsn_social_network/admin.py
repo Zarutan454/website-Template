@@ -6,7 +6,8 @@ from .models import (
     Achievement, UserAchievement, Invite,
     Wallet, TokenTransaction, MiningProgress, NFT, UserSettings, NotificationSettings,
     DAO, DAOMembership, Proposal, Vote, AdminLog, Staking, TokenStreaming,
-    AchievementTemplate, SmartContract, TokenFactory, EventLog, Referral, InviteReward
+    AchievementTemplate, SmartContract, TokenFactory, EventLog, Referral, InviteReward,
+    ICOTokenReservation, ICOConfiguration
 )
 
 @admin.register(User)
@@ -213,3 +214,49 @@ class InviteRewardAdmin(admin.ModelAdmin):
     list_display = ('inviter', 'invite', 'reward_amount', 'is_claimed', 'claimed_at')
     search_fields = ('inviter__username', 'invite__code')
     list_filter = ('is_claimed', 'claimed_at')
+
+@admin.register(ICOTokenReservation)
+class ICOTokenReservationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'amount_usd', 'tokens_reserved', 'payment_method', 'status', 'created_at', 'expires_at')
+    list_filter = ('status', 'payment_method', 'created_at', 'expires_at')
+    search_fields = ('user__username', 'user__email', 'transaction_hash', 'payment_address')
+    readonly_fields = ('tokens_reserved', 'created_at', 'updated_at')
+    list_per_page = 50
+    
+    fieldsets = (
+        ('User Information', {
+            'fields': ('user', 'amount_usd', 'tokens_reserved')
+        }),
+        ('Payment Details', {
+            'fields': ('payment_method', 'payment_address', 'transaction_hash')
+        }),
+        ('Status & Timing', {
+            'fields': ('status', 'expires_at', 'confirmed_at', 'completed_at')
+        }),
+        ('Payment Confirmation', {
+            'fields': ('payment_amount', 'payment_currency', 'exchange_rate', 'confirmation_blocks')
+        }),
+        ('Additional Info', {
+            'fields': ('notes', 'metadata', 'created_at', 'updated_at')
+        }),
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user')
+
+@admin.register(ICOConfiguration)
+class ICOConfigurationAdmin(admin.ModelAdmin):
+    list_display = ('key', 'value', 'is_active', 'updated_at')
+    list_filter = ('is_active', 'updated_at')
+    search_fields = ('key', 'value', 'description')
+    readonly_fields = ('created_at', 'updated_at')
+    
+    fieldsets = (
+        ('Configuration', {
+            'fields': ('key', 'value', 'description', 'is_active')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )

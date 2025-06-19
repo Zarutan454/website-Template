@@ -42,4 +42,39 @@ export default [
       ],
     },
   },
+  // Test-Dateien mit Jest-Globals
+  {
+    files: ['**/*.test.{js,jsx}', '**/*.spec.{js,jsx}', '**/tests/**/*.{js,jsx}', '**/__mocks__/**/*.{js,jsx}', '**/setup.js'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        ...globals.jest,
+        // Jest-spezifische Globals
+        jest: 'readonly',
+        describe: 'readonly',
+        test: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        // Node.js Globals für Tests
+        global: 'readonly',
+        process: 'readonly',
+        require: 'readonly',
+        module: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+      },
+    },
+    rules: {
+      'no-undef': 'error',
+      'react/jsx-no-undef': 'error',
+      'react/jsx-no-duplicate-props': 'error',
+      'react/no-direct-mutation-state': 'error',
+      'react-hooks/rules-of-hooks': 'error',
+    },
+  },
 ]

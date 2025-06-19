@@ -702,3 +702,95 @@ class InviteReward(models.Model):
     
     class Meta:
         db_table = 'invite_reward'
+
+class ICOTokenReservation(models.Model):
+    '''
+    ICO Token Reservation System
+    '''
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('confirmed', 'Confirmed'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+        ('failed', 'Failed'),
+    ]
+    
+    PAYMENT_METHODS = [
+        ('ethereum', 'Ethereum'),
+        ('polygon', 'Polygon'),
+        ('bsc', 'Binance Smart Chain'),
+        ('solana', 'Solana'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ico_reservations')
+    amount_usd = models.DecimalField(max_digits=10, decimal_places=2)
+    tokens_reserved = models.DecimalField(max_digits=18, decimal_places=8)
+    payment_method = models.CharField(max_length=10, choices=PAYMENT_METHODS)
+    payment_address = models.CharField(max_length=255)
+    transaction_hash = models.CharField(max_length=66, unique=True, null=True, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    payment_amount = models.DecimalField(max_digits=18, decimal_places=8, null=True, blank=True)
+    payment_currency = models.CharField(max_length=10, null=True, blank=True)
+    exchange_rate = models.DecimalField(max_digits=18, decimal_places=8, null=True, blank=True)
+    confirmation_blocks = models.IntegerField(default=0)
+    required_confirmations = models.IntegerField(default=12)
+    expires_at = models.DateTimeField()
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'ico_token_reservation'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'status']),
+            models.Index(fields=['payment_method']),
+            models.Index(fields=['created_at']),
+        ]
+    
+    def __str__(self):
+        return f"ICO Reservation {self.id} - {self.user.username} - ${self.amount_usd}"
+    
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+    
+    def can_be_confirmed(self):
+        return self.status == 'pending' and not self.is_expired()
+    
+    def confirm(self, transaction_hash, payment_amount, exchange_rate):
+        self.status = 'confirmed'
+        self.transaction_hash = transaction_hash
+        self.payment_amount = payment_amount
+        self.exchange_rate = exchange_rate
+        self.confirmed_at = timezone.now()
+        self.save()
+    
+    def complete(self):
+        self.status = 'completed'
+        self.completed_at = timezone.now()
+        self.save()
+    
+    def cancel(self, reason=''):
+        self.status = 'cancelled'
+        self.notes = reason
+        self.save()
+
+class ICOConfiguration(models.Model):
+    '''
+    ICO Configuration Settings
+    '''
+    key = models.CharField(max_length=100, unique=True)
+    value = models.TextField()
+    description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'ico_configuration'
+    
+    def __str__(self):
+        return f"{self.key}: {self.value}"

@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import GlowingParticles from './animations/GlowingParticles';
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [hoverButton, setHoverButton] = useState(false);
@@ -217,13 +220,12 @@ const Hero = () => {
               textShadow: '0 0 40px rgba(0, 162, 255, 0.3)'
             }}
           >
-            BSN – DEZENTRALISIERTES<br className="hidden sm:block" /> SOCIAL NETWORK
+            {t('homepage.hero.title', 'BSN – DEZENTRALISIERTES SOCIAL NETWORK')}
           </h1>
           <p 
             className={`text-base sm:text-lg md:text-xl text-[#a0e4ff] tracking-wider font-light max-w-3xl mx-auto transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
           >
-            Erlebe Social Media neu: Mining-basierte Belohnungen, integrierte Wallets, 
-            NFT- und Token-Optionen. Trete jetzt der Community bei!
+            {t('homepage.hero.subtitle', 'Erlebe Social Media neu: Mining-basierte Belohnungen, integrierte Wallets, NFT- und Token-Optionen. Trete jetzt der Community bei!')}
           </p>
           <div 
             className={`mt-6 flex flex-wrap justify-center gap-2 transition-all duration-1000 delay-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
@@ -237,51 +239,47 @@ const Hero = () => {
           <div 
             className={`mt-8 md:mt-10 flex justify-center transition-all duration-1000 delay-900 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
           >
-            <a 
-              href="#join-waitlist"
+            <Link 
+              to="/register"
               className={`relative group overflow-hidden bg-gradient-to-r from-[#00a2ff] to-[#0077ff] hover:from-[#33b5ff] hover:to-[#3390ff] text-white px-6 sm:px-10 py-3 rounded-full text-sm sm:text-lg font-medium tracking-wider transition-all duration-500 shadow-lg shadow-[#00a2ff]/20 hover:shadow-[#00a2ff]/40 transform ${hoverButton ? 'translate-y-[-2px]' : ''}`}
               onMouseEnter={() => setHoverButton(true)}
               onMouseLeave={() => setHoverButton(false)}
             >
-              <span className="relative z-10">JETZT REGISTRIEREN</span>
+              <span className="relative z-10">{t('homepage.hero.cta', 'JETZT REGISTRIEREN')}</span>
               
               {/* Button animation effect */}
               <span className={`absolute inset-0 w-full h-full bg-white/10 transition-all duration-300 ${hoverButton ? 'scale-x-100' : 'scale-x-0'} origin-left`}></span>
-              
-              {/* Particle effects */}
-              {hoverButton && (
-                <>
-                  {[...Array(6)].map((_, i) => (
-                    <span 
-                      key={i}
-                      className="absolute w-1 h-1 bg-white/60 rounded-full animate-ping"
-                      style={{
-                        top: `${Math.random() * 100}%`,
-                        left: `${Math.random() * 100}%`,
-                        animationDuration: `${0.5 + Math.random() * 1}s`,
-                        animationDelay: `${Math.random() * 0.5}s`
-                      }}
-                    ></span>
-                  ))}
-                </>
-              )}
-            </a>
+            </Link>
           </div>
           
-          {/* Countdown Timer - Improved styling */}
-          <div 
-            className={`mt-8 md:mt-10 transition-all duration-1000 delay-1100 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
-          >
-            <p className="text-[#00a2ff] text-sm mb-3 tracking-wider font-medium">PLATFORM LAUNCH IN</p>
-            <div className="flex justify-center space-x-2 sm:space-x-4">
-              {Object.entries(countdown).map(([unit, value]) => (
-                <div key={unit} className="flex flex-col items-center">
-                  <div className="w-14 sm:w-16 h-14 sm:h-16 bg-[#00a2ff]/10 border border-[#00a2ff]/30 rounded-lg flex items-center justify-center shadow-lg shadow-[#00a2ff]/5">
-                    <span className="text-xl sm:text-2xl text-white font-light">{value.toString().padStart(2, '0')}</span>
-                  </div>
-                  <span className="text-xs text-[#00a2ff] mt-1 uppercase font-medium">{unit}</span>
+          {/* Countdown Timer */}
+          <div className={`mt-10 transition-all duration-1000 delay-1100 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <p className="text-[#a0e4ff] text-sm mb-2">{t('homepage.hero.launchIn', 'LAUNCH IN')}</p>
+            <div className="flex justify-center space-x-4">
+              <div className="flex flex-col items-center">
+                <div className="bg-black/40 backdrop-blur-md border border-[#00a2ff]/20 rounded-lg w-16 h-16 flex items-center justify-center">
+                  <span className="text-2xl text-white">{countdown.days}</span>
                 </div>
-              ))}
+                <span className="text-xs text-[#a0e4ff] mt-1">{t('homepage.hero.days', 'TAGE')}</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="bg-black/40 backdrop-blur-md border border-[#00a2ff]/20 rounded-lg w-16 h-16 flex items-center justify-center">
+                  <span className="text-2xl text-white">{countdown.hours}</span>
+                </div>
+                <span className="text-xs text-[#a0e4ff] mt-1">{t('homepage.hero.hours', 'STUNDEN')}</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="bg-black/40 backdrop-blur-md border border-[#00a2ff]/20 rounded-lg w-16 h-16 flex items-center justify-center">
+                  <span className="text-2xl text-white">{countdown.minutes}</span>
+                </div>
+                <span className="text-xs text-[#a0e4ff] mt-1">{t('homepage.hero.minutes', 'MINUTEN')}</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="bg-black/40 backdrop-blur-md border border-[#00a2ff]/20 rounded-lg w-16 h-16 flex items-center justify-center">
+                  <span className="text-2xl text-white">{countdown.seconds}</span>
+                </div>
+                <span className="text-xs text-[#a0e4ff] mt-1">{t('homepage.hero.seconds', 'SEKUNDEN')}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -360,7 +358,7 @@ const Hero = () => {
       </div>
 
       {/* Add these keyframes to your global CSS or Tailwind config */}
-      <style jsx>{`
+      <style jsx="true">{`
         @keyframes pulse-line {
           0%, 100% {
             opacity: 0.1;

@@ -1,0 +1,145 @@
+{
+  "common": {
+    "learnMore": "Saber más",
+    "connectWallet": "Conectar billetera",
+    "tokenReservation": "Reservar tokens",
+    "joinCommunity": "Unirse a la comunidad",
+    "readWhitepaper": "Leer whitepaper"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "about": {
+      "title": "Acerca de",
+      "mission": "Misión y visión",
+      "team": "Equipo",
+      "partners": "Socios",
+      "milestones": "Hitos"
+    },
+    "features": {
+      "title": "Características",
+      "overview": "Resumen",
+      "social": "Características sociales",
+      "blockchain": "Características blockchain",
+      "governance": "Gobernanza"
+    },
+    "tokenomics": {
+      "title": "Tokenomics",
+      "overview": "Resumen de tokens",
+      "distribution": "Distribución",
+      "reservation": "Reserva de tokens",
+      "faucet": "Faucet",
+      "referral": "Referidos"
+    },
+    "roadmap": "Hoja de ruta",
+    "community": {
+      "title": "Comunidad",
+      "hub": "Centro comunitario",
+      "events": "Eventos",
+      "ambassadors": "Embajadores",
+      "guidelines": "Directrices"
+    },
+    "documentation": {
+      "title": "Documentación",
+      "whitepaper": "Whitepaper",
+      "api": "API",
+      "tutorials": "Tutoriales",
+      "faqs": "Preguntas frecuentes"
+    }
+  },
+  "homepage": {
+    "hero": {
+      "title": "BSN - RED SOCIAL DESCENTRALIZADA",
+      "subtitle": "Experimenta las redes sociales de una nueva manera: recompensas basadas en minería, billeteras integradas, opciones de NFT y tokens. ¡Únete a la comunidad ahora!",
+      "cta": "REGÍSTRATE AHORA",
+      "launchIn": "LANZAMIENTO EN",
+      "days": "DÍAS",
+      "hours": "HORAS",
+      "minutes": "MINUTOS",
+      "seconds": "SEGUNDOS"
+    },
+    "features": {
+      "title": "Nuestras características",
+      "subtitle": "Descubre las funciones clave de nuestra red social descentralizada",
+      "viewAll": "Explorar todas las características",
+      "dezentralesProfilTitle": "Perfil descentralizado",
+      "dezentralesProfilDesc": "Tu perfil BSN te pertenece. Todos tus datos se almacenan de forma descentralizada y mantienes el control total.",
+      "tokenMiningTitle": "Minería de tokens",
+      "tokenMiningDesc": "Gana tokens BSN a través de la participación activa en la red. Cuanto más valor crees para la comunidad, más ganas.",
+      "daoGovernanceTitle": "Gobernanza DAO",
+      "daoGovernanceDesc": "Como poseedor de tokens BSN, puedes votar sobre cambios en la plataforma y participar activamente en el desarrollo."
+    },
+    "about": {
+      "title": "Acerca de BSN",
+      "subtitle": "Aprende más sobre nuestra misión y visión para el futuro de las redes sociales",
+      "description": "BSN fue fundada con el objetivo de crear una red social descentralizada que devuelve el control a manos de los usuarios. Utilizamos tecnología blockchain para crear una red transparente, segura y orientada al usuario."
+    },
+    "tokenomics": {
+      "title": "Token BSN",
+      "subtitle": "Descubre los beneficios y usos de nuestro token nativo",
+      "governance": "Gobernanza",
+      "governanceDesc": "Vota sobre cambios en la plataforma y da forma al futuro de BSN",
+      "staking": "Staking",
+      "stakingDesc": "Gana ingresos pasivos haciendo staking de tus tokens BSN",
+      "rewards": "Recompensas",
+      "rewardsDesc": "Recibe tokens por contribuciones valiosas a la red",
+      "explore": "Explorar tokenomics"
+    },
+    "community": {
+      "title": "Nuestra comunidad",
+      "subtitle": "Forma parte de nuestra creciente comunidad y da forma al futuro de las redes sociales",
+      "description": "BSN es más que solo una plataforma - es una comunidad de personas con ideas afines que creen en un futuro descentralizado y orientado al usuario para las redes sociales. Únete a nosotros y ayuda a hacer realidad esta visión."
+    },
+    "roadmap": {
+      "title": "Nuestra hoja de ruta",
+      "subtitle": "Aprende más sobre nuestros planes y hitos para el futuro",
+      "description": "Tenemos un plan claro para el desarrollo de BSN. Nuestra hoja de ruta muestra los hitos más importantes y las características planificadas para los próximos años.",
+      "viewRoadmap": "Ver hoja de ruta"
+    },
+    "cta": {
+      "title": "¿Listo para probar BSN?",
+      "description": "Asegura tu lugar en el futuro de las redes sociales ahora. Reserva tus tokens BSN y sé parte desde el principio."
+    }
+  },
+  "footer": {
+    "newsletter": {
+      "title": "Suscríbete a nuestro boletín",
+      "description": "Suscríbete a nuestro boletín y sé el primero en conocer las actualizaciones de la plataforma, eventos de tokens y ofertas exclusivas para la comunidad.",
+      "subscribers": "Únete a más de 25,000 entusiastas de blockchain",
+      "placeholder": "Tu dirección de correo electrónico",
+      "button": "Suscribirse",
+      "success": "¡Gracias por suscribirte!",
+      "privacy": "Respetamos tu privacidad. Puedes darte de baja en cualquier momento."
+    },
+    "description": "Plataforma de red social descentralizada construida sobre tecnología blockchain, que otorga a los usuarios control total sobre sus datos, identidad e interacciones digitales.",
+    "platformTitle": "PLATAFORMA",
+    "platform": {
+      "dashboard": "Panel de control",
+      "socialFeed": "Feed social",
+      "tokenWallet": "Billetera de tokens",
+      "privacySettings": "Configuración de privacidad",
+      "nftGallery": "Galería NFT",
+      "marketplace": "Mercado"
+    },
+    "blockchainTitle": "BLOCKCHAIN",
+    "blockchain": {
+      "tokenomics": "Tokenomics",
+      "staking": "Staking",
+      "governance": "Gobernanza",
+      "whitepaper": "Whitepaper",
+      "technicalDocs": "Documentación técnica",
+      "smartContracts": "Contratos inteligentes"
+    },
+    "communityTitle": "COMUNIDAD",
+    "community": {
+      "blog": "Blog",
+      "forum": "Foro",
+      "events": "Eventos",
+      "support": "Soporte",
+      "careers": "Carreras"
+    },
+    "rights": "Todos los derechos reservados",
+    "privacy": "Política de privacidad",
+    "terms": "Términos de servicio",
+    "contact": "Contacto"
+  }
+}

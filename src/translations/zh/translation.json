@@ -1,0 +1,315 @@
+﻿{
+  "common": {
+    "learnMore": "了解更多",
+    "connectWallet": "连接钱包",
+    "tokenReservation": "预订代币",
+    "joinCommunity": "加入社区",
+    "readWhitepaper": "阅读白皮书"
+  },
+  "navigation": {
+    "home": "首页",
+    "about": {
+      "title": "关于我们",
+      "mission": "使命与愿景",
+      "team": "团队",
+      "partners": "合作伙伴",
+      "milestones": "里程碑"
+    },
+    "features": {
+      "title": "功能特点",
+      "overview": "概览",
+      "social": "社交功能",
+      "blockchain": "区块链功能",
+      "governance": "治理"
+    },
+    "tokenomics": {
+      "title": "代币经济",
+      "overview": "代币概览",
+      "distribution": "分配",
+      "reservation": "代币预订",
+      "faucet": "水龙头",
+      "referral": "推荐"
+    },
+    "roadmap": "路线图",
+    "community": {
+      "title": "社区",
+      "hub": "社区中心",
+      "events": "活动",
+      "ambassadors": "大使",
+      "guidelines": "指南"
+    },
+    "documentation": {
+      "title": "文档",
+      "whitepaper": "白皮书",
+      "api": "API",
+      "tutorials": "教程",
+      "faqs": "常见问题"
+    }
+  },
+  "homepage": {
+    "hero": {
+      "title": "BSN - 去中心化社交网络",
+      "subtitle": "以全新方式体验社交媒体：基于挖矿的奖励、集成钱包、NFT和代币选项。立即加入社区！",
+      "cta": "立即注册",
+      "launchIn": "发布倒计时",
+      "days": "天",
+      "hours": "小时",
+      "minutes": "分钟",
+      "seconds": "秒"
+    },
+    "features": {
+      "title": "我们的功能",
+      "subtitle": "探索我们去中心化社交网络的关键功能",
+      "viewAll": "探索所有功能",
+      "dezentralesProfilTitle": "去中心化个人资料",
+      "dezentralesProfilDesc": "您的BSN个人资料属于您自己。所有数据都以去中心化方式存储，您拥有完全控制权。",
+      "tokenMiningTitle": "代币挖矿",
+      "tokenMiningDesc": "通过积极参与网络获得BSN代币。为社区创造的价值越多，您获得的奖励越多。",
+      "daoGovernanceTitle": "DAO治理",
+      "daoGovernanceDesc": "作为BSN代币持有者，您可以对平台变更进行投票并积极参与开发。"
+    },
+    "about": {
+      "title": "关于BSN",
+      "subtitle": "了解我们对社交网络未来的使命和愿景",
+      "description": "BSN的创立目标是创建一个去中心化的社交网络，将控制权交还给用户。我们利用区块链技术创建一个透明、安全和以用户为中心的网络。"
+    },
+    "tokenomics": {
+      "title": "BSN代币",
+      "subtitle": "探索我们原生代币的优势和用途",
+      "governance": "治理",
+      "governanceDesc": "对平台变更进行投票，塑造BSN的未来",
+      "staking": "质押",
+      "stakingDesc": "通过质押BSN代币获得被动收入",
+      "rewards": "奖励",
+      "rewardsDesc": "为网络的有价值贡献获得代币",
+      "explore": "探索代币经济"
+    },
+    "community": {
+      "title": "我们的社区",
+      "subtitle": "成为我们不断成长的社区的一部分，共同塑造社交网络的未来",
+      "description": "BSN不仅仅是一个平台 - 它是一个由志同道合的人组成的社区，他们相信社交网络的去中心化、以用户为中心的未来。加入我们，帮助实现这一愿景。"
+    },
+    "roadmap": {
+      "title": "我们的路线图",
+      "subtitle": "了解我们对未来的计划和里程碑",
+      "description": "我们对BSN的发展有明确的计划。我们的路线图展示了未来几年的重要里程碑和计划功能。",
+      "viewRoadmap": "查看路线图"
+    },
+    "cta": {
+      "title": "准备好尝试BSN了吗？",
+      "description": "立即确保您在社交网络未来中的位置。预订您的BSN代币，从一开始就参与其中。"
+    }
+  },
+  "aboutPage": {
+    "title": "关于BSN",
+    "subtitle": "我们的使命、愿景和区块链社交网络背后的团队",
+    "mission": {
+      "title": "我们的使命",
+      "paragraph1": "BSN的创立有一个明确的使命：将社交网络的权力交还给用户。我们相信您的数据应该属于您自己，而不是大型科技公司。",
+      "paragraph2": "通过集成区块链技术，我们创建了一个透明、去中心化和以用户为中心的社交网络，它尊重隐私，同时提供新的互动和价值创造机会。",
+      "paragraph3": "我们的目标是创建一个不仅在技术上先进，而且在道德和可持续性方面运营良好的平台 - 拥有积极参与治理的社区。"
+    },
+    "vision": {
+      "title": "我们的愿景",
+      "paragraph1": "我们展望一个社交网络不再由中心化公司控制，而是由用户自己控制的未来 - 透明、公平和社区驱动。",
+      "paragraph2": "BSN旨在通过结合传统Web2世界的用户友好性和区块链技术的优势，架起传统Web2世界与新兴Web3生态系统之间的桥梁。",
+      "paragraph3": "从长远来看，我们希望成为一个完全去中心化的协议，由社区支持和开发 - 一个真正民主的数字时代社交网络。"
+    },
+    "milestones": {
+      "title": "我们的里程碑",
+      "items": [
+        {
+          "year": "2019",
+          "title": "成立",
+          "description": "BSN成立，愿景是创建一个去中心化的社交网络，将控制权交还给用户。"
+        },
+        {
+          "year": "2020",
+          "title": "种子轮融资",
+          "description": "成功完成250万欧元的种子轮融资，投资方为领先的区块链风投。"
+        },
+        {
+          "year": "2021",
+          "title": "Alpha版本",
+          "description": "发布第一个Alpha版本，具有基本社交功能和钱包集成。"
+        },
+        {
+          "year": "2022",
+          "title": "Beta发布",
+          "description": "公开Beta版本，功能扩展，用户界面改进。"
+        },
+        {
+          "year": "2023",
+          "title": "代币发布",
+          "description": "BSN代币成功发布，在多个去中心化交易所上市。"
+        },
+        {
+          "year": "2024",
+          "title": "完整发布",
+          "description": "BSN平台正式发布，具备所有核心功能和不断增长的社区。"
+        }
+      ]
+    },
+    "team": {
+      "title": "我们的团队",
+      "subtitle": "BSN背后的人才"
+    },
+    "partners": {
+      "title": "我们的合作伙伴",
+      "subtitle": "我们共同构建社交网络的未来"
+    }
+  },
+  "documentationPage": {
+    "title": "文档",
+    "subtitle": "关于BSN的所有必要信息",
+    "categories": [
+      { "id": "overview", "label": "概览" },
+      { "id": "whitepaper", "label": "白皮书" },
+      { "id": "api", "label": "API文档" },
+      { "id": "guides", "label": "指南" },
+      { "id": "faq", "label": "常见问题" }
+    ],
+    "overview": {
+      "title": "什么是BSN？",
+      "description": "BSN（区块链社交网络）是一个基于区块链技术的去中心化社交网络。它赋予用户对其数据的完全控制权，并实现新形式的互动和价值创造。",
+      "documentation": {
+        "title": "我们的文档",
+        "description": "我们的文档分为几个部分，以便您尽可能轻松地开始使用BSN。选择一个您感兴趣的领域："
+      },
+      "resources": {
+        "title": "技术资源",
+        "github": {
+          "title": "GitHub仓库",
+          "description": "访问项目的源代码和技术文档。",
+          "link": "前往仓库 →"
+        },
+        "discord": {
+          "title": "开发者Discord",
+          "description": "加入我们的开发者Discord，获取技术支持和参与讨论。",
+          "link": "加入Discord →"
+        },
+        "sandbox": {
+          "title": "API沙盒",
+          "description": "在安全的沙盒环境中测试我们的API。",
+          "link": "前往沙盒 →"
+        }
+      }
+    },
+    "guides": {
+      "title": "指南",
+      "items": [
+        {
+          "title": "BSN入门",
+          "description": "了解BSN的基础知识并创建您的第一个个人资料。",
+          "icon": "🚀",
+          "link": "/docs/getting-started"
+        },
+        {
+          "title": "钱包集成",
+          "description": "将您的加密钱包连接到BSN并使用所有区块链功能。",
+          "icon": "💼",
+          "link": "/docs/wallet-integration"
+        },
+        {
+          "title": "内容创作",
+          "description": "创建引人入胜的内容并通过挖矿获得BSN代币。",
+          "icon": "✍️",
+          "link": "/docs/content-creation"
+        },
+        {
+          "title": "社区群组",
+          "description": "在BSN上创建和管理您自己的社区群组。",
+          "icon": "👥",
+          "link": "/docs/community-groups"
+        },
+        {
+          "title": "NFT创建",
+          "description": "在BSN市场上创建和销售您自己的NFT。",
+          "icon": "🖼️",
+          "link": "/docs/nft-creation"
+        },
+        {
+          "title": "DAO治理",
+          "description": "参与BSN的去中心化治理并对提案进行投票。",
+          "icon": "🏛️",
+          "link": "/docs/dao-governance"
+        }
+      ]
+    },
+    "faq": {
+      "title": "常见问题",
+      "items": [
+        {
+          "question": "什么是BSN？",
+          "answer": "BSN（区块链社交网络）是一个基于区块链技术的去中心化社交网络。它赋予用户对其数据的完全控制权，并实现新形式的互动和价值创造。"
+        },
+        {
+          "question": "代币挖矿如何运作？",
+          "answer": "BSN使用贡献证明机制，用户因对网络的有价值贡献而获得奖励。这包括创建高质量内容、参与管理和其他有助于网络健康的活动。"
+        },
+        {
+          "question": "BSN是开源的吗？",
+          "answer": "是的，BSN是一个开源项目。源代码可在GitHub上获取，我们鼓励开发者为项目做出贡献。我们的目标是创建一个透明和社区开发的社交网络。"
+        },
+        {
+          "question": "我的数据如何受到保护？",
+          "answer": "BSN以去中心化和加密的方式存储个人数据。您保留对数据的完全控制权，并决定要分享哪些信息。您的数据不会被用于广告目的或未经您同意使用。"
+        },
+        {
+          "question": "BSN使用哪种区块链？",
+          "answer": "BSN是区块链无关的，支持多种区块链，包括以太坊和Polygon。这使用户能够选择最适合其需求的区块链，无论是在成本、速度还是功能方面。"
+        },
+        {
+          "question": "我如何为项目做出贡献？",
+          "answer": "有很多方式可以为BSN项目做出贡献：作为开发者通过代码贡献，作为社区成员通过反馈和想法，作为内容创作者通过高质量内容，或作为大使通过传播项目。"
+        }
+      ]
+    }
+  },
+  "footer": {
+    "newsletter": {
+      "title": "订阅我们的通讯",
+      "description": "订阅我们的通讯，第一时间了解平台更新、代币活动和独家社区优惠。",
+      "subscribers": "加入25,000多名区块链爱好者",
+      "placeholder": "您的电子邮件地址",
+      "button": "订阅",
+      "success": "感谢您的订阅！",
+      "privacy": "我们尊重您的隐私。您可以随时取消订阅。"
+    },
+    "description": "基于区块链技术构建的去中心化社交网络平台，赋予用户对其数据、身份和数字互动的完全控制权。",
+    "platformTitle": "平台",
+    "platform": {
+      "dashboard": "仪表板",
+      "socialFeed": "社交动态",
+      "tokenWallet": "代币钱包",
+      "privacySettings": "隐私设置",
+      "nftGallery": "NFT画廊",
+      "marketplace": "市场"
+    },
+    "blockchainTitle": "区块链",
+    "blockchain": {
+      "tokenomics": "代币经济",
+      "staking": "质押",
+      "governance": "治理",
+      "whitepaper": "白皮书",
+      "technicalDocs": "技术文档",
+      "smartContracts": "智能合约"
+    },
+    "communityTitle": "社区",
+    "community": {
+      "blog": "博客",
+      "forum": "论坛",
+      "events": "活动",
+      "support": "支持",
+      "careers": "职业"
+    },
+    "rights": "版权所有",
+    "privacy": "隐私政策",
+    "terms": "服务条款",
+    "contact": "联系我们"
+  }
+} 
+
+
+
+

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework_nested.routers import NestedDefaultRouter
+from drf_nested_routers.routers import NestedDefaultRouter
 
 from .views import ChatViewSet, ChatMessageViewSet
 

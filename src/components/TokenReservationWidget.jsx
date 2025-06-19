@@ -1,10 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
+import { safeT } from '../utils/i18nUtils';
+import { useWallet } from '../context/WalletContext';
 
 const TokenReservationWidget = () => {
+  const { t } = useTranslation();
+  const { 
+    walletAddress, 
+    isConnected, 
+    isConnecting, 
+    currentNetwork,
+    walletBalance,
+    connectWallet, 
+    disconnectWallet 
+  } = useWallet();
+
   // State für die Token-Reservierung
   const [isLoading, setIsLoading] = useState(false);
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState('');
   const [reservationAmount, setReservationAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('eth');
   const [reservationHistory, setReservationHistory] = useState([]);
@@ -16,32 +28,22 @@ const TokenReservationWidget = () => {
   const MIN_AMOUNT = 50; // $50 Mindestbetrag
   const MAX_AMOUNT = 5000; // $5000 Maximalbetrag
 
-  // Simuliere das Verbinden einer Wallet
-  const connectWallet = async () => {
-    try {
-      setIsLoading(true);
-      // Hier würde die tatsächliche Wallet-Verbindungslogik stehen
-      setTimeout(() => {
-        setWalletAddress('0x1234...5678');
-        setIsWalletConnected(true);
-        setIsLoading(false);
-
-        // Simuliere Reservierungshistorie
-        setReservationHistory([
-          {
-            id: 1,
-            amount: 2000,
-            tokens: 40000,
-            date: '2023-06-10T14:20:00Z',
-            status: 'completed'
-          }
-        ]);
-      }, 1500);
-    } catch (err) {
-      setError('Fehler beim Verbinden der Wallet. Bitte versuche es erneut.');
-      setIsLoading(false);
+  // Lade Reservierungshistorie beim Verbinden
+  useEffect(() => {
+    if (isConnected && walletAddress) {
+      // Hier würde die tatsächliche API-Anfrage für die Historie stehen
+      // Für jetzt simulieren wir eine Historie
+      setReservationHistory([
+        {
+          id: 1,
+          amount: 2000,
+          tokens: 40000,
+          date: '2023-06-10T14:20:00Z',
+          status: 'completed'
+        }
+      ]);
     }
-  };
+  }, [isConnected, walletAddress]);
 
   // Berechne die Anzahl der Token basierend auf dem Betrag
   const calculateTokens = (amount) => {
@@ -58,25 +60,32 @@ const TokenReservationWidget = () => {
 
   // Simuliere die Reservierung von Tokens
   const reserveTokens = async () => {
-    if (!isWalletConnected) {
-      setError('Bitte verbinde zuerst deine Wallet.');
+    if (!isConnected) {
+      setError(t('tokenReservationWidget.errorConnectWallet'));
       return;
     }
 
     const amount = parseFloat(reservationAmount);
 
     if (isNaN(amount) || amount === 0) {
-      setError('Bitte gib einen gültigen Betrag ein.');
+      setError(t('tokenReservationWidget.errorValidAmount'));
       return;
     }
 
     if (amount < MIN_AMOUNT) {
-      setError(`Der Mindestbetrag für die Reservierung beträgt $${MIN_AMOUNT}.`);
+      setError(t('tokenReservationWidget.errorMinAmount', { amount: MIN_AMOUNT }));
       return;
     }
 
     if (amount > MAX_AMOUNT) {
-      setError(`Der Maximalbetrag für die Reservierung beträgt $${MAX_AMOUNT}.`);
+      setError(t('tokenReservationWidget.errorMaxAmount', { amount: MAX_AMOUNT }));
+      return;
+    }
+
+    // Prüfe Wallet Balance
+    const walletBalanceNum = parseFloat(walletBalance);
+    if (walletBalanceNum < amount) {
+      setError(t('tokenReservationWidget.insufficientBalance'));
       return;
     }
 
@@ -101,45 +110,59 @@ const TokenReservationWidget = () => {
         ]);
 
         setReservationAmount('');
-        setSuccess(`Du hast erfolgreich ${tokens.toLocaleString()} BSN-Token für $${amount.toLocaleString()} reserviert!`);
+        setSuccess(t('tokenReservationWidget.successReservation', { tokens: tokens.toLocaleString(), amount: amount.toLocaleString() }));
         setIsLoading(false);
       }, 2000);
     } catch (err) {
-      setError('Fehler bei der Reservierung. Bitte versuche es später erneut.');
+      setError(t('tokenReservationWidget.errorReservation'));
       setIsLoading(false);
     }
   };
 
   return (
     <div className="bg-gray-900/50 p-6 rounded-xl backdrop-blur-sm border border-gray-800">
-      <h2 className="text-3xl font-light text-white mb-6">BSN Token Reservation</h2>
+      <h2 className="text-3xl font-light text-white mb-6">{t('tokenReservationPage.title')}</h2>
 
-      {!isWalletConnected ? (
+      {!isConnected ? (
         <div className="mb-8">
           <p className="text-white/70 mb-4">
-            Verbinde deine Wallet, um BSN-Token zu reservieren.
+            {t('tokenReservationWidget.connectWalletText')}
           </p>
           <button
             onClick={connectWallet}
-            disabled={isLoading}
+            disabled={isConnecting}
             className="bg-gradient-to-r from-[#00a2ff] to-[#0077ff] text-white px-6 py-3 rounded-lg hover:shadow-lg hover:shadow-[#00a2ff]/20 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Verbinde...' : 'Wallet verbinden'}
+            {isConnecting ? t('tokenReservationWidget.connecting') : t('wallet.connect')}
           </button>
         </div>
       ) : (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-white/70">Verbundene Wallet:</p>
+            <p className="text-white/70">{t('tokenReservationWidget.connectedWallet')}:</p>
             <p className="text-[#00a2ff] font-mono">{walletAddress}</p>
+          </div>
+
+          {/* Wallet Info */}
+          <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-white/70">{t('wallet.balance')}:</span>
+              <span className="text-white">
+                {parseFloat(walletBalance).toFixed(4)} {currentNetwork?.symbol || 'ETH'}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-white/70">{t('wallet.network')}:</span>
+              <span className="text-white">{currentNetwork?.name || 'Unknown'}</span>
+            </div>
           </div>
 
           {/* Token-Reservierung */}
           <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 mb-6">
-            <h3 className="text-xl text-white mb-3">Token reservieren</h3>
+            <h3 className="text-xl text-white mb-3">{t('tokenReservationWidget.reserveTokens')}</h3>
 
             <div className="mb-4">
-              <label className="block text-white/70 mb-2">Betrag (USD)</label>
+              <label className="block text-white/70 mb-2">{t('tokenReservationWidget.amount')} (USD)</label>
               <div className="flex">
                 <span className="bg-gray-700 text-white/80 p-3 rounded-l-lg border border-gray-600">$</span>
                 <input
@@ -151,14 +174,14 @@ const TokenReservationWidget = () => {
                 />
               </div>
               <p className="text-white/60 text-sm mt-1">
-                1 BSN = ${TOKEN_PRICE.toFixed(2)} | Min: ${MIN_AMOUNT} | Max: ${MAX_AMOUNT}
+                1 BSN = ${TOKEN_PRICE.toFixed(2)} | {t('tokenReservationWidget.min')}: ${MIN_AMOUNT} | {t('tokenReservationWidget.max')}: ${MAX_AMOUNT}
               </p>
             </div>
 
             {reservationAmount && !isNaN(parseFloat(reservationAmount)) && (
               <div className="mb-4 bg-gray-700/30 p-3 rounded-lg">
                 <p className="text-white/70">
-                  Du erhältst: <span className="text-[#00a2ff] font-semibold">
+                  {t('tokenReservationWidget.youReceive')}: <span className="text-[#00a2ff] font-semibold">
                     {calculateTokens(parseFloat(reservationAmount)).toLocaleString()} BSN-Token
                   </span>
                 </p>
@@ -166,7 +189,7 @@ const TokenReservationWidget = () => {
             )}
 
             <div className="mb-4">
-              <label className="block text-white/70 mb-2">Zahlungsmethode</label>
+              <label className="block text-white/70 mb-2">{t('tokenReservationWidget.paymentMethod')}</label>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setPaymentMethod('eth')}
@@ -203,74 +226,59 @@ const TokenReservationWidget = () => {
 
             <button
               onClick={reserveTokens}
-              disabled={isLoading || !reservationAmount}
-              className="bg-gradient-to-r from-[#00a2ff] to-[#0077ff] text-white px-6 py-3 rounded-lg hover:shadow-lg hover:shadow-[#00a2ff]/20 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed w-full"
+              disabled={isLoading || !reservationAmount || isNaN(parseFloat(reservationAmount))}
+              className="w-full bg-gradient-to-r from-[#00a2ff] to-[#0077ff] text-white py-3 rounded-lg hover:shadow-lg hover:shadow-[#00a2ff]/20 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Verarbeite...' : 'Tokens reservieren'}
+              {isLoading ? t('tokenReservationWidget.processing') : t('tokenReservationWidget.reserveTokens')}
             </button>
 
             <p className="text-white/60 text-sm mt-3">
-              Die reservierten Tokens werden nach dem offiziellen Launch an deine Wallet gesendet.
+              {t('tokenReservationWidget.reservationNote')}
             </p>
           </div>
-        </div>
-      )}
 
-      {/* Fehlermeldungen und Erfolgsmeldungen */}
-      {error && (
-        <div className="bg-red-900/20 border border-red-800 text-red-200 px-4 py-3 rounded-lg mb-6">
-          {error}
-        </div>
-      )}
+          {/* Error und Success Messages */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-600/20 border border-red-600/50 rounded-lg">
+              <p className="text-red-400">{error}</p>
+            </div>
+          )}
 
-      {success && (
-        <div className="bg-green-900/20 border border-green-800 text-green-200 px-4 py-3 rounded-lg mb-6">
-          {success}
-        </div>
-      )}
+          {success && (
+            <div className="mb-4 p-3 bg-green-600/20 border border-green-600/50 rounded-lg">
+              <p className="text-green-400">{success}</p>
+            </div>
+          )}
 
-      {/* Reservierungs-Historie */}
-      {isWalletConnected && reservationHistory.length > 0 && (
-        <div className="mt-8">
-          <h3 className="text-xl text-white mb-4">Deine Reservierungshistorie</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="text-left py-2 text-white/70">Datum</th>
-                  <th className="text-left py-2 text-white/70">Betrag</th>
-                  <th className="text-left py-2 text-white/70">Tokens</th>
-                  <th className="text-left py-2 text-white/70">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reservationHistory.map(reservation => (
-                  <tr key={reservation.id} className="border-b border-gray-800">
-                    <td className="py-3 text-white/80">
-                      {new Date(reservation.date).toLocaleDateString()}
-                    </td>
-                    <td className="py-3 text-white/80">
-                      ${reservation.amount.toLocaleString()}
-                    </td>
-                    <td className="py-3 text-white/80">
-                      {reservation.tokens.toLocaleString()} BSN
-                    </td>
-                    <td className="py-3">
-                      {reservation.status === 'completed' ? (
-                        <span className="px-2 py-1 bg-green-900/20 text-green-400 rounded-full text-xs">
-                          Abgeschlossen
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 bg-yellow-900/20 text-yellow-400 rounded-full text-xs">
-                          Ausstehend
-                        </span>
-                      )}
-                    </td>
-                  </tr>
+          {/* Reservierungshistorie */}
+          {reservationHistory.length > 0 && (
+            <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+              <h3 className="text-xl text-white mb-3">{t('tokenReservationWidget.reservationHistory')}</h3>
+              <div className="space-y-2">
+                {reservationHistory.map((reservation) => (
+                  <div key={reservation.id} className="flex justify-between items-center p-3 bg-gray-700/30 rounded-lg">
+                    <div>
+                      <p className="text-white">
+                        ${reservation.amount.toLocaleString()} → {reservation.tokens.toLocaleString()} BSN
+                      </p>
+                      <p className="text-white/60 text-sm">
+                        {new Date(reservation.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      reservation.status === 'completed' 
+                        ? 'bg-green-600/20 text-green-400' 
+                        : reservation.status === 'pending'
+                        ? 'bg-yellow-600/20 text-yellow-400'
+                        : 'bg-red-600/20 text-red-400'
+                    }`}>
+                      {t(`tokenReservationWidget.status${reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}`)}
+                    </span>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
