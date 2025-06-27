@@ -11,6 +11,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 import uuid
 from datetime import timedelta
+import hashlib
 
 from .models import (
     TokenReservation, FaucetRequest, ReferralProgram, ReferralCode,
@@ -474,3 +475,237 @@ def token_price_info(request):
     }
     
     return Response(info)
+
+
+# Dashboard-spezifische Views
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def dashboard_stats(request):
+    """Dashboard statistics for authenticated user"""
+    user = request.user
+    
+    # User-spezifische Statistiken
+    user_reservations = TokenReservation.objects.filter(user=user)
+    user_faucet_requests = FaucetRequest.objects.filter(user=user)
+    user_referrals = ReferralProgram.objects.filter(referrer=user)
+    
+    # Wallet-ähnliche Daten basierend auf Token-Reservierungen
+    total_invested = user_reservations.filter(payment_status='completed').aggregate(
+        total=Sum('amount_usd')
+    )['total'] or 0
+    
+    total_tokens_reserved = user_reservations.aggregate(
+        total=Sum('tokens_amount')
+    )['total'] or 0
+    
+    # Referral-Statistiken
+    referral_stats = user_referrals.aggregate(
+        total_commission=Sum('commission_earned'),
+        total_tokens=Sum('tokens_earned')
+    )
+    
+    return Response({
+        'wallet': {
+            'balance': float(total_tokens_reserved),
+            'address': user_reservations.first().wallet_address if user_reservations.exists() else None,
+            'totalReceived': float(total_tokens_reserved),
+            'totalSent': 0,
+            'transactionCount': user_reservations.count(),
+            'miningRewards': float(referral_stats['total_tokens'] or 0),
+            'recentTransactions': []
+        },
+        'faucet': {
+            'totalRequests': user_faucet_requests.count(),
+            'pendingRequests': user_faucet_requests.filter(status='pending').count(),
+            'approvedRequests': user_faucet_requests.filter(status='approved').count(),
+            'completedRequests': user_faucet_requests.filter(status='completed').count(),
+            'totalAmountRequested': float(user_faucet_requests.aggregate(
+                total=Sum('amount_requested')
+            )['total'] or 0),
+            'recentRequests': FaucetRequestSerializer(
+                user_faucet_requests.order_by('-created_at')[:5], 
+                many=True
+            ).data
+        },
+        'referral': {
+            'referralCode': getattr(user.referral_code, 'code', None) if hasattr(user, 'referral_code') else None,
+            'referralLink': f"{request.build_absolute_uri('/')[:-1]}/register?ref={getattr(user.referral_code, 'code', '')}" if hasattr(user, 'referral_code') else None,
+            'totalReferrals': user_referrals.count(),
+            'totalCommission': float(referral_stats['total_commission'] or 0),
+            'totalTokens': float(referral_stats['total_tokens'] or 0),
+            'activeReferrals': user_referrals.filter(is_active=True).count(),
+            'paidOutReferrals': user_referrals.filter(is_paid_out=True).count(),
+            'recentReferrals': ReferralProgramSerializer(
+                user_referrals.order_by('-created_at')[:5], 
+                many=True
+            ).data
+        },
+        'mining': {
+            'miningPower': 0.0,  # Will be implemented later
+            'accumulatedTokens': float(referral_stats['total_tokens'] or 0),
+            'totalMined': 0.0,  # Will be implemented later
+            'streakDays': 0,  # Will be implemented later
+            'lastClaimTime': None,
+            'currentRate': 0.0,
+            'estimatedTokens': 0.0,
+            'hoursSinceLastClaim': 0,
+            'canClaim': False,
+            'userRank': 0,  # Will be implemented later
+            'userPercentile': 0,
+            'topMiners': [],
+            'totalMinedTokens': 0  # Will be implemented later
+        },
+        'activity': [
+            {
+                'id': reservation.id,
+                'type': 'token_purchase',
+                'amount': float(reservation.tokens_amount),
+                'timestamp': reservation.created_at.isoformat(),
+                'description': f'Token purchase - {reservation.payment_method}'
+            } for reservation in user_reservations.order_by('-created_at')[:3]
+        ] + [
+            {
+                'id': faucet.id,
+                'type': 'faucet_request',
+                'amount': float(faucet.amount_requested),
+                'timestamp': faucet.created_at.isoformat(),
+                'description': f'Faucet request - {faucet.network}'
+            } for faucet in user_faucet_requests.order_by('-created_at')[:2]
+        ]
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def wallet_dashboard_data(request):
+    """Wallet-specific dashboard data"""
+    user = request.user
+    
+    # Return empty data instead of mock data
+    return Response({
+        'balance': 0.0,  # Real balance will be fetched from blockchain
+        'address': '',  # Real address will be provided by frontend
+        'totalReceived': 0.0,
+        'totalSent': 0.0,
+        'transactionCount': 0,
+        'miningRewards': 0.0,
+        'recentTransactions': []  # Real transactions will be fetched from blockchain
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def faucet_dashboard_stats(request):
+    """Faucet-specific dashboard statistics"""
+    user = request.user
+    
+    # Get real faucet data
+    user_faucet_requests = FaucetRequest.objects.filter(user=user)
+    
+    return Response({
+        'totalRequests': user_faucet_requests.count(),
+        'pendingRequests': user_faucet_requests.filter(status='pending').count(),
+        'approvedRequests': user_faucet_requests.filter(status='approved').count(),
+        'completedRequests': user_faucet_requests.filter(status='completed').count(),
+        'totalAmountRequested': float(user_faucet_requests.aggregate(Sum('amount_requested'))['amount_requested__sum'] or 0),
+        'recentRequests': []
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def referral_dashboard_stats(request):
+    """Referral-specific dashboard statistics"""
+    user = request.user
+    
+    # Get real referral data
+    user_referrals = ReferralProgram.objects.filter(referrer=user)
+    referral_stats = user_referrals.aggregate(
+        total_tokens=Sum('tokens_earned'),
+        total_commission=Sum('commission_earned')
+    )
+    
+    return Response({
+        'referralCode': f"BSN{user.id}".upper()[:8],
+        'referralLink': f"http://localhost:5176/register?ref=BSN{user.id}",
+        'totalReferrals': user_referrals.count(),
+        'totalCommission': float(referral_stats['total_commission'] or 0),
+        'totalTokens': float(referral_stats['total_tokens'] or 0),
+        'activeReferrals': user_referrals.filter(is_active=True).count(),
+        'paidOutReferrals': user_referrals.filter(is_paid_out=True).count(),
+        'recentReferrals': []
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def mining_dashboard_data(request):
+    """Mining-specific dashboard data"""
+    user = request.user
+    
+    # Return empty mining data - will be implemented later
+    return Response({
+        'miningPower': 0.0,
+        'accumulatedTokens': 0.0,
+        'totalMined': 0.0,
+        'streakDays': 0,
+        'lastClaimTime': None,
+        'currentRate': 0.0,
+        'estimatedTokens': 0.0,
+        'hoursSinceLastClaim': 0,
+        'canClaim': False,
+        'userRank': 0,
+        'userPercentile': 0,
+        'topMiners': [],
+        'totalMinedTokens': 0
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def recent_activity(request):
+    """Recent user activity"""
+    user = request.user
+    
+    activities = []
+    
+    # Token Reservations
+    reservations = TokenReservation.objects.filter(user=user).order_by('-created_at')[:5]
+    for reservation in reservations:
+        activities.append({
+            'id': str(reservation.id),
+            'type': 'token_purchase',
+            'amount': float(reservation.tokens_amount),
+            'timestamp': reservation.created_at.isoformat(),
+            'description': f'Token purchase via {reservation.payment_method} - ${reservation.amount_usd}',
+            'status': reservation.payment_status
+        })
+    
+    # Faucet Requests
+    faucet_requests = FaucetRequest.objects.filter(user=user).order_by('-created_at')[:3]
+    for faucet in faucet_requests:
+        activities.append({
+            'id': str(faucet.id),
+            'type': 'faucet_request',
+            'amount': float(faucet.amount_requested),
+            'timestamp': faucet.created_at.isoformat(),
+            'description': f'Faucet request on {faucet.network}',
+            'status': faucet.status
+        })
+    
+    # Referral Bonuses
+    referrals = ReferralProgram.objects.filter(referrer=user).order_by('-created_at')[:3]
+    for referral in referrals:
+        activities.append({
+            'id': str(referral.id),
+            'type': 'referral_bonus',
+            'amount': float(referral.tokens_earned),
+            'timestamp': referral.created_at.isoformat(),
+            'description': f'Referral bonus from {referral.referred_user.username}',
+            'status': 'paid_out' if referral.is_paid_out else 'pending'
+        })
+    
+    # Sortiere nach Timestamp (neueste zuerst)
+    activities.sort(key=lambda x: x['timestamp'], reverse=True)
+    
+    return Response(activities[:10])  # Maximal 10 Aktivitäten

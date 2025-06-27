@@ -6,43 +6,6 @@ from .models import UserProfile, UserSession, EmailVerification, PasswordReset
 User = get_user_model()
 
 
-@admin.register(User)
-class UserAdmin(BaseUserAdmin):
-    """
-    Custom User admin interface
-    """
-    list_display = [
-        'username', 'email', 'first_name', 'last_name', 'is_verified',
-        'is_premium', 'is_active', 'date_joined', 'last_login'
-    ]
-    list_filter = [
-        'is_verified', 'is_premium', 'is_active', 'is_staff', 'is_superuser',
-        'date_joined', 'last_login'
-    ]
-    search_fields = ['username', 'email', 'first_name', 'last_name']
-    ordering = ['-date_joined']
-    
-    fieldsets = BaseUserAdmin.fieldsets + (
-        ('BSN Profile', {
-            'fields': (
-                'wallet_address', 'wallet_network', 'bio', 'avatar',
-                'date_of_birth', 'location', 'website', 'twitter_handle',
-                'telegram_username', 'discord_username', 'is_verified',
-                'is_premium', 'email_notifications', 'marketing_emails'
-            )
-        }),
-    )
-    
-    add_fieldsets = BaseUserAdmin.add_fieldsets + (
-        ('BSN Profile', {
-            'fields': (
-                'wallet_address', 'wallet_network', 'is_verified',
-                'is_premium', 'email_notifications', 'marketing_emails'
-            )
-        }),
-    )
-
-
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     """

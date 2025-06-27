@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profile API Test</title>
+</head>
+<body>
+    <h1>BSN Profile API Test</h1>
+    <div id="result"></div>
+    
+    <script>
+        async function testProfileAPI() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // Test without auth first
+                resultDiv.innerHTML += '<h2>Testing Profile API</h2>';
+                
+                const response = await fetch('http://localhost:8000/api/users/profile/');
+                resultDiv.innerHTML += `<p>Status: ${response.status}</p>`;
+                
+                if (response.status === 401) {
+                    resultDiv.innerHTML += '<p>✅ API requires authentication (expected)</p>';
+                    
+                    // Test login API
+                    const loginResponse = await fetch('http://localhost:8000/api/users/login/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            email: 'fabian@bsn.com',
+                            password: 'admin123'
+                        })
+                    });
+                    
+                    if (loginResponse.ok) {
+                        const loginData = await loginResponse.json();
+                        resultDiv.innerHTML += '<p>✅ Login successful</p>';
+                        
+                        // Test profile with token
+                        const profileResponse = await fetch('http://localhost:8000/api/users/profile/', {
+                            headers: {
+                                'Authorization': `Bearer ${loginData.access}`
+                            }
+                        });
+                        
+                        if (profileResponse.ok) {
+                            const profileData = await profileResponse.json();
+                            resultDiv.innerHTML += '<p>✅ Profile API working!</p>';
+                            resultDiv.innerHTML += '<pre>' + JSON.stringify(profileData, null, 2) + '</pre>';
+                        } else {
+                            resultDiv.innerHTML += `<p>❌ Profile API error: ${profileResponse.status}</p>`;
+                            resultDiv.innerHTML += `<p>${await profileResponse.text()}</p>`;
+                        }
+                    } else {
+                        resultDiv.innerHTML += `<p>❌ Login failed: ${loginResponse.status}</p>`;
+                        resultDiv.innerHTML += `<p>${await loginResponse.text()}</p>`;
+                    }
+                } else {
+                    resultDiv.innerHTML += `<p>❌ Unexpected response: ${await response.text()}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML += `<p>❌ Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Run test when page loads
+        window.onload = testProfileAPI;
+    </script>
+</body>
+</html> 

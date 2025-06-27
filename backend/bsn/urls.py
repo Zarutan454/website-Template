@@ -44,8 +44,10 @@ urlpatterns = [
     path('api/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('api/redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     
-    # API Endpoints
-    path('api/v1/users/', include('users.urls')),
+    # API Endpoints - Main BSN API
+    path('api/', include('bsn_social_network.urls')),  # Direct API access
+    
+    # Legacy API paths (for backward compatibility)
     path('api/v1/landing/', include('landing.urls')),
 ]
 

@@ -9,22 +9,22 @@ class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for User model
     """
-    full_name = serializers.ReadOnlyField()
-    avatar_url = serializers.SerializerMethodField()
-    
+    full_name = serializers.SerializerMethodField()
+    # avatar_url und cover_url direkt aus dem Modell serialisieren
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name', 'full_name',
-            'wallet_address', 'wallet_network', 'bio', 'avatar', 'avatar_url',
-            'date_of_birth', 'location', 'website', 'twitter_handle',
-            'telegram_username', 'discord_username', 'is_verified', 'is_premium',
-            'created_at', 'updated_at', 'last_login'
+            'wallet_address', 'created_at', 'updated_at', 'last_login',
+            'is_alpha_user', 'alpha_access_granted_at', 'alpha_access_reason',
+            'referral_count_for_alpha', 'ico_investment_amount', 'influencer_category',
+            'follower_count', 'social_media_links', 'avatar_url', 'cover_url'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'last_login']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'last_login', 'full_name', 'avatar_url', 'cover_url']
     
-    def get_avatar_url(self, obj):
-        return obj.get_avatar_url()
+    def get_full_name(self, obj):
+        """Get the full name of the user."""
+        return f"{obj.first_name} {obj.last_name}".strip() or obj.username
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -70,10 +70,20 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 class UserLoginSerializer(serializers.Serializer):
     """
-    Serializer for user login
+    Serializer for user login - accepts both username and email
     """
-    username = serializers.CharField()
+    username = serializers.CharField(required=False)
+    email = serializers.EmailField(required=False)
     password = serializers.CharField(write_only=True)
+    
+    def validate(self, attrs):
+        username = attrs.get('username')
+        email = attrs.get('email')
+        
+        if not username and not email:
+            raise serializers.ValidationError("Either username or email is required")
+        
+        return attrs
 
 
 class PasswordChangeSerializer(serializers.Serializer):

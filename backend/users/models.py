@@ -1,60 +1,8 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 
-
-class User(AbstractUser):
-    """
-    Custom User model for BSN platform
-    """
-    # Basic profile fields
-    email = models.EmailField(unique=True)
-    wallet_address = models.CharField(max_length=42, blank=True, null=True)
-    wallet_network = models.CharField(max_length=20, blank=True, null=True)
-    
-    # Profile information
-    bio = models.TextField(blank=True, null=True)
-    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
-    date_of_birth = models.DateField(blank=True, null=True)
-    location = models.CharField(max_length=100, blank=True, null=True)
-    website = models.URLField(blank=True, null=True)
-    
-    # Social media links
-    twitter_handle = models.CharField(max_length=50, blank=True, null=True)
-    telegram_username = models.CharField(max_length=50, blank=True, null=True)
-    discord_username = models.CharField(max_length=50, blank=True, null=True)
-    
-    # Account status
-    is_verified = models.BooleanField(default=False)
-    is_premium = models.BooleanField(default=False)
-    is_banned = models.BooleanField(default=False)
-    
-    # Timestamps
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    last_login = models.DateTimeField(blank=True, null=True)
-    
-    # Email preferences
-    email_notifications = models.BooleanField(default=True)
-    marketing_emails = models.BooleanField(default=False)
-    
-    class Meta:
-        db_table = 'users'
-        verbose_name = 'User'
-        verbose_name_plural = 'Users'
-    
-    def __str__(self):
-        return self.username or self.email
-    
-    @property
-    def full_name(self):
-        return f"{self.first_name} {self.last_name}".strip() or self.username
-    
-    def get_avatar_url(self):
-        if self.avatar:
-            return self.avatar.url
-        return None
-
+User = get_user_model()
 
 class UserProfile(models.Model):
     """
