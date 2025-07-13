@@ -15,7 +15,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useUserRelationships } from "@/hooks/useUserRelationships";
 import { Loader2, UserPlus, UserMinus, Search, UserCheck } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface FollowersModalProps {
   isOpen: boolean;

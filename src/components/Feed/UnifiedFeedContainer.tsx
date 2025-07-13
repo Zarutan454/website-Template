@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@/components/ThemeProvider';
 import { FeedStateRenderer } from './common';
@@ -7,15 +7,15 @@ import { useEnhancedFeedActions } from '@/hooks/feed/useEnhancedFeedActions';
 import { useFilterControl } from '@/hooks/feed/useFilterControl';
 import { Tabs } from "@/components/ui/tabs";
 import VirtualizedFeed from './VirtualizedFeed';
-import FeedFilterOptimized from './FeedFilterOptimized';
 import EnhancedFeedHeader from './components/EnhancedFeedHeader';
 import { toast } from 'sonner';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import FeedHeader from './components/FeedHeader';
-import CreatePostBox from './components/CreatePostBox';
+import CreatePostBox from './CreatePostBox';
 import CreatePostModal from './CreatePostModal';
 import { CreateCommentData } from '@/types/posts';
+import { CreatePostData } from '@/types/posts';
 
 interface UnifiedFeedContainerProps {
   feedType: FeedType;
@@ -24,6 +24,7 @@ interface UnifiedFeedContainerProps {
   showCreatePostForm?: boolean;
   showHeader?: boolean;
   headerComponent?: React.ReactNode;
+  userId?: string; // Optional: Filter posts by specific user
 }
 
 const UnifiedFeedContainer: React.FC<UnifiedFeedContainerProps> = ({
@@ -32,7 +33,8 @@ const UnifiedFeedContainer: React.FC<UnifiedFeedContainerProps> = ({
   showMiningRewards = false,
   showCreatePostForm = true,
   showHeader = true,
-  headerComponent
+  headerComponent,
+  userId
 }) => {
   const { theme } = useTheme();
   const navigate = useNavigate();
@@ -63,6 +65,12 @@ const UnifiedFeedContainer: React.FC<UnifiedFeedContainerProps> = ({
     enableAutoRefresh: true,
     refreshInterval: 120000
   });
+
+  // Filter posts by userId if specified
+  const filteredPosts = useMemo(() => {
+    if (!userId) return adaptedPosts;
+    return adaptedPosts.filter(post => post.user?.id?.toString() === userId);
+  }, [adaptedPosts, userId]);
 
   // Create adapter functions to match expected signatures
   
@@ -115,44 +123,27 @@ const UnifiedFeedContainer: React.FC<UnifiedFeedContainerProps> = ({
 
   const handleLoginRedirect = () => navigate('/login');
 
-  const handleCreatePost = async (content: string, mediaUrl?: string | null) => {
-    // COMPREHENSIVE FIX: Sanitize mediaUrl
-    const sanitizeMediaUrl = (mediaUrl: any): string | null => {
-      if (!mediaUrl) return null;
-      if (Array.isArray(mediaUrl)) {
-        console.warn('🚨 ARRAY DETECTED (UnifiedFeedContainer): Converting media_url array to string:', mediaUrl);
-        return mediaUrl[0] || null;
-      }
-      if (typeof mediaUrl === 'string') {
-        return mediaUrl;
-      }
-      console.warn('🚨 UNEXPECTED TYPE (UnifiedFeedContainer): Converting media_url to string:', typeof mediaUrl, mediaUrl);
-      return String(mediaUrl);
-    };
-
-    // Sanitize mediaUrl immediately
-    const sanitizedMediaUrl = sanitizeMediaUrl(mediaUrl);
-    console.log('[UnifiedFeedContainer] sanitizedMediaUrl:', sanitizedMediaUrl, 'type:', typeof sanitizedMediaUrl);
-    
+  const handleCreatePost = async (postData: CreatePostData) => {
     if (!profile) {
       toast.error("Du musst angemeldet sein, um Beiträge zu erstellen");
-      return false;
+      return;
     }
     
     try {
       const result = await createPost({
-        content,
-        media_url: sanitizedMediaUrl
+        content: postData.content,
+        media_url: postData.media_url
       });
       
       if (result.success) {
         await fetchPosts();
-        return true;
+        toast.success('Beitrag erfolgreich erstellt!');
+      } else {
+        toast.error('Fehler beim Erstellen des Beitrags');
       }
-      
-      return false;
     } catch (error) {
-      return false;
+      console.error('Error creating post:', error);
+      toast.error('Fehler beim Erstellen des Beitrags');
     }
   };
 
@@ -233,7 +224,7 @@ const UnifiedFeedContainer: React.FC<UnifiedFeedContainerProps> = ({
         {showCreatePostForm && (
           <CreatePostBox 
             darkMode={isDarkMode}
-            onOpenCreateModal={handleOpenCreatePost}
+            onCreatePost={handleCreatePost}
           />
         )}
         
@@ -266,13 +257,13 @@ const UnifiedFeedContainer: React.FC<UnifiedFeedContainerProps> = ({
                 </button>
               </div>
               
-              <FeedFilterOptimized
+              {/* FeedFilterOptimized
                 showFilters={showFilterMenu}
                 selectedFilter={selectedFilter}
                 handleFilterSelect={handleFilterSelect}
                 feedType={feedType}
                 lastUpdated={lastUpdated}
-              />
+              /> */}
             </div>
           )}
         </Tabs>
@@ -289,9 +280,9 @@ const UnifiedFeedContainer: React.FC<UnifiedFeedContainerProps> = ({
             <FeedStateRenderer
               isLoading={isLoading}
               error={error}
-              posts={adaptedPosts}
+              posts={filteredPosts}
               profile={profile}
-              isEmpty={adaptedPosts.length === 0}
+              isEmpty={filteredPosts.length === 0}
               onLike={handleLikePost}
               onDelete={handleDeletePost}
               onComment={handleCreateComment}

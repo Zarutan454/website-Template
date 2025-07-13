@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Loader2 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { useReels } from '../../hooks/useReels';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import ReelCard from './ReelCard';
 import ReelCreator from './ReelCreator';
 

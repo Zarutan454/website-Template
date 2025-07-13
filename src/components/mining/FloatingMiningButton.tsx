@@ -6,7 +6,7 @@ import { useMining } from '@/hooks/mining/useMining';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useLiveTokenCounter } from '@/hooks/mining/useLiveTokenCounter';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 const FloatingMiningButton: React.FC = () => {
   const { user } = useAuth();

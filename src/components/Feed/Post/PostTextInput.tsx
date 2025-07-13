@@ -4,6 +4,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import HashtagSearch from './HashtagSearch';
 
+interface HashtagResult {
+  id: string;
+  name: string;
+  post_count: number;
+}
+
 interface PostTextInputProps {
   content: string;
   setContent: (content: string) => void;
@@ -16,7 +22,7 @@ interface PostTextInputProps {
   showHashtagPopover: boolean;
   setShowHashtagPopover: (show: boolean) => void;
   isSearchingHashtags: boolean;
-  hashtagSearchResults: any[];
+  hashtagSearchResults: HashtagResult[];
   insertHashtag: (tag: string) => void;
   setCursorPosition: (position: number | null) => void;
 }

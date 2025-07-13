@@ -33,14 +33,9 @@ interface TokenAnalyticsDashboardProps {
   token: Token;
 }
 
-// Ensure the token has all necessary fields for display
-interface DisplayToken extends Token {
-  // No need to add extra fields, just ensure token_metrics is accessed properly
-}
-
 const TokenAnalyticsDashboard: React.FC<TokenAnalyticsDashboardProps> = ({ token }) => {
   // Convert token to display format
-  const displayToken: DisplayToken = {
+  const displayToken: Token = {
     ...token,
     // Use existing properties
   };

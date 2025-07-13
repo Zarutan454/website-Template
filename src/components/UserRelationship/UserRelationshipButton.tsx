@@ -60,6 +60,7 @@ const UserRelationshipButton: React.FC<UserRelationshipButtonProps> = ({
         }
       }
     } catch (error) {
+      console.error("Fehler beim Folgen/Entfolgen:", error);
     } finally {
       setIsLoading(false);
     }

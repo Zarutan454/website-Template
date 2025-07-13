@@ -5,6 +5,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Image, MessageSquare, Video } from 'lucide-react';
 import { useProfile } from '@/hooks/useProfile';
+import { useAuth } from '@/context/AuthContext';
 
 interface CreatePostBoxProps {
   darkMode?: boolean;
@@ -17,7 +18,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
   onOpenCreateModal,
   placeholder = "Was gibt's Neues?"
 }) => {
-  const { user: profile } = useAuth()();
+  const { user: profile } = useAuth();
   
   const avatarUrl = profile?.avatar_url || '/placeholders/user.png';
   const username = profile?.username || 'Anonym';

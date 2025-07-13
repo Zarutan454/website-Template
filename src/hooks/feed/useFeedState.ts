@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { FeedType } from './useFeedData';
 import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 /**
  * Einheitlicher Hook zum Verwalten des Feed-Status mit Echtzeit-Updates,

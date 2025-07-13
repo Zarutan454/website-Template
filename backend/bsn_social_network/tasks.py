@@ -6,6 +6,7 @@ import logging
 from .models import Boost, MiningProgress, User
 from django.core.cache import cache
 from django.db import models
+from .services.story_service import StoryService
 
 logger = logging.getLogger(__name__)
 
@@ -85,4 +86,91 @@ def optimize_mining_performance():
     )['total'] or 0
     
     logger.info(f"Mining performance optimization completed. Active: {total_active}, Total accumulated: {total_accumulated}")
-    return f"Performance optimization completed." 
+    return f"Performance optimization completed."
+
+@shared_task(bind=True, name='cleanup_expired_stories')
+def cleanup_expired_stories(self):
+    """
+    Celery-Task für das Cleanup abgelaufener Stories
+    
+    Läuft alle 30 Minuten automatisch
+    """
+    try:
+        logger.info("Starting expired stories cleanup task")
+        
+        # Führe Cleanup durch
+        stats = StoryService.cleanup_expired_stories(dry_run=False)
+        
+        # Markiere Cleanup als abgeschlossen
+        StoryService.mark_cleanup_completed()
+        
+        # Logge Ergebnisse
+        logger.info(f"Story cleanup task completed: {stats['deleted_stories']} stories deleted, "
+                   f"{stats['deleted_media_files']} media files deleted, {stats['errors']} errors")
+        
+        return {
+            'status': 'success',
+            'stats': stats,
+            'completed_at': timezone.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Story cleanup task failed: {e}")
+        return {
+            'status': 'error',
+            'error': str(e),
+            'completed_at': timezone.now().isoformat()
+        }
+
+@shared_task(bind=True, name='story_cleanup_dry_run')
+def story_cleanup_dry_run(self):
+    """
+    Dry-Run Task für Story-Cleanup (nur zum Testen)
+    """
+    try:
+        logger.info("Starting story cleanup dry run")
+        
+        stats = StoryService.cleanup_expired_stories(dry_run=True)
+        
+        logger.info(f"Story cleanup dry run completed: {stats['total_expired']} expired stories found")
+        
+        return {
+            'status': 'success',
+            'stats': stats,
+            'completed_at': timezone.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Story cleanup dry run failed: {e}")
+        return {
+            'status': 'error',
+            'error': str(e),
+            'completed_at': timezone.now().isoformat()
+        }
+
+@shared_task(bind=True, name='get_story_stats')
+def get_story_stats(self):
+    """
+    Task für Story-Statistiken
+    """
+    try:
+        stats = StoryService.get_story_stats()
+        
+        # Cache die Statistiken für 1 Stunde
+        cache.set('story_stats', stats, timeout=3600)
+        
+        logger.info(f"Story stats updated: {stats.get('total_stories', 0)} total stories")
+        
+        return {
+            'status': 'success',
+            'stats': stats,
+            'completed_at': timezone.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Get story stats task failed: {e}")
+        return {
+            'status': 'error',
+            'error': str(e),
+            'completed_at': timezone.now().isoformat()
+        } 

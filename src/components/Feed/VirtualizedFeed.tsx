@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import PostCard from './Post/PostCard';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, AlertCircle } from 'lucide-react';
+import UnifiedPostCard from './UnifiedPostCard';
 
 interface VirtualizedFeedProps {
   posts: any[];
@@ -40,8 +40,10 @@ const VirtualizedFeed: React.FC<VirtualizedFeedProps> = ({
   currentUser,
   currentUserId
 }) => {
+  // Defensive: posts darf nie undefined/null sein
+  const safePosts = Array.isArray(posts) ? posts : [];
   // Loading state
-  if (isLoading && posts.length === 0) {
+  if (isLoading && safePosts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
         <Spinner size="lg" />
@@ -69,7 +71,7 @@ const VirtualizedFeed: React.FC<VirtualizedFeedProps> = ({
   }
 
   // Empty state
-  if (posts.length === 0) {
+  if (safePosts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
         <div className={`text-6xl ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`}>
@@ -98,25 +100,24 @@ const VirtualizedFeed: React.FC<VirtualizedFeedProps> = ({
           transition={{ duration: 0.3 }}
         >
           <div className="flex flex-col gap-4">
-            {posts.map((post, index) => (
+            {safePosts.map((post, index) => (
               <motion.div
                 key={post.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: Math.min(index * 0.03, 0.3) }}
               >
-                <PostCard
+                <UnifiedPostCard
                   post={post}
-                  onLike={() => onLike(post.id)}
-                  onDelete={onDelete ? () => onDelete(post.id) : undefined}
-                  onComment={(content) => onComment(post.id, content)}
-                  onGetComments={() => onGetComments(post.id)}
-                  onShare={() => onShare(post.id)}
-                  onReport={onReport ? (reason) => onReport(post.id, reason) : undefined}
-                  darkMode={isDarkMode}
-                  currentUserId={currentUserId}
+                  onLike={onLike}
+                  onDelete={onDelete}
+                  onComment={onComment}
+                  onGetComments={onGetComments}
+                  onShare={onShare}
+                  onReport={onReport}
                   currentUser={currentUser}
-                  showMiningRewards={showMiningRewards}
+                  currentUserId={currentUserId}
+                  darkMode={isDarkMode}
                 />
               </motion.div>
             ))}

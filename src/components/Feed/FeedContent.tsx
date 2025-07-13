@@ -2,7 +2,7 @@ import React from 'react';
 import { useTheme } from '@/components/ThemeProvider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/context/AuthContext';
-import { Post } from '@/types/posts';
+import { Post, CreatePostData } from '@/types/posts';
 import UnifiedFeedContainer from './UnifiedFeedContainer';
 // Fix import casing issue by using a relative path
 import CreatePostBoxLight from './CreatePostBoxLight';
@@ -12,7 +12,7 @@ import { AnimatePresence } from 'framer-motion';
 interface FeedContentProps {
   activeTab: FeedType;
   handleTabChange: (tab: FeedType) => void;
-  handleOpenCreateModal: (initialData?: any) => void;
+  handleOpenCreateModal: (initialData?: Partial<CreatePostData>) => void;
   feedType: FeedType;
 }
 

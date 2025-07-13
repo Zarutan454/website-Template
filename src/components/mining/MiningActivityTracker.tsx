@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useMining } from '@/hooks/mining/useMining';
 import { useLiveTokenCounter } from '@/hooks/mining/useLiveTokenCounter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

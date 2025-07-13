@@ -33,7 +33,11 @@ export function useProfileImageUpload(): UseProfileImageUploadResult {
         setAvatarError('Die Datei ist zu groß. Maximale Größe: 5MB');
         return null;
       }
-      const result = await userAPI.uploadAvatar(file, (progress) => setAvatarProgress(progress));
+      
+      const formData = new FormData();
+      formData.append('avatar_image', file);
+      
+      const result = await userAPI.uploadAvatar(formData);
       return result.avatar_url;
     } catch (error: unknown) {
       setAvatarError('Fehler beim Hochladen des Profilbilds. Bitte versuche es erneut.');
@@ -57,7 +61,11 @@ export function useProfileImageUpload(): UseProfileImageUploadResult {
         setCoverError('Die Datei ist zu groß. Maximale Größe: 10MB');
         return null;
       }
-      const result = await userAPI.uploadCover(file, (progress) => setCoverProgress(progress));
+      
+      const formData = new FormData();
+      formData.append('cover_image', file);
+      
+      const result = await userAPI.uploadCover(formData);
       return result.cover_url;
     } catch (error: unknown) {
       setCoverError('Fehler beim Hochladen des Banners. Bitte versuche es erneut.');

@@ -10,9 +10,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
-from pathlib import Path
+# -*- coding: utf-8 -*-
 import os
+import sys
+from pathlib import Path
 from datetime import timedelta
+
+# Ensure proper encoding for Windows
+if sys.platform == 'win32':
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.detach())
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -71,15 +79,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     
-    # Allauth
+    # Allauth - Authentication system
     'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.twitter',
-    
-    # Celery
-    'django_celery_beat',
     
     # My apps
     'landing',
@@ -94,9 +95,11 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'allauth.account.middleware.AccountMiddleware',  # Required for allauth
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Performance Monitoring Middleware
+    'users.middleware.APIPerformanceMiddleware',
+    'users.middleware.UserActivityMiddleware',
 ]
 
 ROOT_URLCONF = 'bsn.urls'
@@ -123,24 +126,26 @@ WSGI_APPLICATION = 'bsn.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Celery Configuration - PERFEKTE MINING-KONFIGURATION
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+# Celery Configuration - Windows-Compatible Mining Setup
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
-# Development Fallback - Verwende Memory nur wenn Redis nicht verfügbar
-try:
-    import redis
-    redis_client = redis.Redis(host='localhost', port=6379, db=0)
-    redis_client.ping()
-    print("🔧 Using Redis broker for production-grade mining")
-except:
-    CELERY_BROKER_URL = 'memory://localhost//'
-    CELERY_RESULT_BACKEND = 'cache+memory://'
-    print("🔧 Using memory broker for development - Mining degraded performance")
+# Smart Broker Selection - Redis with Memory Fallback
+def setup_celery_broker():
+    try:
+        import redis
+        redis_client = redis.Redis(host='localhost', port=6379, db=0, socket_timeout=2)
+        redis_client.ping()
+        print("[INFO] Redis broker connected - Production mining mode active")
+        return 'redis://localhost:6379/0', 'redis://localhost:6379/0'
+    except Exception as e:
+        print(f"[WARNING] Redis unavailable ({str(e)[:50]}...) - Using memory broker")
+        print("[INFO] Memory broker active - Development mode with limited performance")
+        return 'memory://localhost//', 'cache+memory://'
+
+CELERY_BROKER_URL, CELERY_RESULT_BACKEND = setup_celery_broker()
 
 CELERY_BEAT_SCHEDULE = {
     'cleanup-expired-boosts-every-30-minutes': {
@@ -154,6 +159,15 @@ CELERY_BEAT_SCHEDULE = {
     'daily-mining-reset': {
         'task': 'reset_daily_mining_limits',
         'schedule': 86400.0,  # 24 hours in seconds
+    },
+    # Story-Cleanup Tasks
+    'cleanup-expired-stories-every-30-minutes': {
+        'task': 'cleanup_expired_stories',
+        'schedule': 1800.0,  # 30 minutes in seconds
+    },
+    'story-stats-update-every-hour': {
+        'task': 'get_story_stats',
+        'schedule': 3600.0,  # 1 hour in seconds
     },
 }
 
@@ -269,7 +283,77 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8080",
 ]
 
+# CORS Credentials Configuration
 CORS_ALLOW_CREDENTIALS = True
+
+# CORS Additional Settings
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# Cache Configuration for Performance Optimization
+# Use Redis in production, local memory in development
+if DEBUG:
+    # Development: Local memory cache
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+        },
+        'session': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'session-cache',
+        },
+        'api': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'api-cache',
+        }
+    }
+    print("[INFO] Using local memory cache for development")
+else:
+    # Production: Redis cache
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': 'redis://127.0.0.1:6379/1',
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            },
+            'TIMEOUT': 300,  # 5 minutes default
+            'KEY_PREFIX': 'bsn_cache',
+        },
+        'session': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': 'redis://127.0.0.1:6379/2',
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            },
+            'TIMEOUT': 86400,  # 24 hours
+            'KEY_PREFIX': 'bsn_session',
+        },
+        'api': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': 'redis://127.0.0.1:6379/3',
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            },
+            'TIMEOUT': 600,  # 10 minutes
+            'KEY_PREFIX': 'bsn_api',
+        }
+    }
+
+# Session Configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'session'
 
 # Frontend URL Configuration
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5176')
@@ -363,17 +447,7 @@ LOGGING = {
     },
 }
 
-# Cache Configuration - Verwende lokalen Speicher statt Redis
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
-    }
-}
-
-# Development: Disable Redis caching
-if DEBUG:
-    print("🔧 Using local memory cache for development")
+# Cache configuration is handled above based on DEBUG setting
 
 # Mining-spezifische Konfiguration
 MINING_CONFIG = {
@@ -403,7 +477,6 @@ else:
 # Allauth Configuration
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 SITE_ID = 1

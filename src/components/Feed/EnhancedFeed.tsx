@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useTheme } from '@/components/ThemeProvider';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { FilterType, SortType, useFeedFilter } from '@/hooks/feed/useFeedFilter';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';

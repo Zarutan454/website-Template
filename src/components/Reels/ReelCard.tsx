@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger
 } from '../../components/ui/dropdown-menu';
 import { Reel, useReels } from '../../hooks/useReels';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import ReelComments from './ReelComments';
 import {
   AlertDialog,

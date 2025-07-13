@@ -17,7 +17,8 @@ import Logo from '@/components/Logo';
 import Navbar from '@/components/Navbar';
 import { toast } from 'sonner';
 import { FloatingMiningButton } from '@/components/mining';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
+import { postUpdateEmitter } from '@/hooks/useProfileMedia';
 
 interface FeedLayoutProps {
   children: React.ReactNode;
@@ -85,7 +86,7 @@ const FeedLayout: React.FC<FeedLayoutProps> = ({ children, hideRightSidebar = fa
 
   const handleCreatePost = async (data: CreatePostData) => {
     // COMPREHENSIVE FIX: Sanitize all incoming data
-    const sanitizeMediaUrl = (mediaUrl: any): string | null => {
+    const sanitizeMediaUrl = (mediaUrl: unknown): string | null => {
       if (!mediaUrl) return null;
       if (Array.isArray(mediaUrl)) {
         console.warn('🚨 ARRAY DETECTED (FeedLayout): Converting media_url array to string:', mediaUrl);
@@ -100,7 +101,8 @@ const FeedLayout: React.FC<FeedLayoutProps> = ({ children, hideRightSidebar = fa
 
     try {
       // Extract and sanitize data
-      let { content, media_url, media_type, hashtags } = data;
+      const { content, media_type, hashtags } = data;
+      let { media_url } = data;
       
       // CRITICAL FIX: Sanitize media_url immediately
       media_url = sanitizeMediaUrl(media_url);
@@ -144,6 +146,23 @@ const FeedLayout: React.FC<FeedLayoutProps> = ({ children, hideRightSidebar = fa
       if (response.ok) {
         toast.success('Beitrag erfolgreich erstellt');
         setShowCreateModal(false);
+        
+        // Notify profile page about new post
+        if (profile?.id) {
+          localStorage.setItem('newPostCreated', JSON.stringify({
+            authorId: profile.id.toString(),
+            timestamp: Date.now()
+          }));
+          // Trigger storage event manually for same-window communication
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'newPostCreated',
+            newValue: JSON.stringify({
+              authorId: profile.id.toString(),
+              timestamp: Date.now()
+            })
+          }));
+        }
+        
         // Optionally refresh the feed here
       } else {
         const errorData = await response.json();

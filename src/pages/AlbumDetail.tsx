@@ -4,7 +4,7 @@ import { ArrowLeft, ImageIcon, Settings, Share2 } from 'lucide-react';
 import { Media } from '@/types/media';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import MediaGridTab from '@/components/Profile/MediaGridTab';
+
 import { useToast } from '@/components/ui/use-toast';
 import { useProfile } from '@/hooks/useProfile';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -33,7 +33,7 @@ const AlbumDetail = () => {
   const { toast } = useToast();
   const isMobile = useMediaQuery('(max-width: 768px)');
   
-  const isOwner = profile && album && profile.id === album.user_id;
+  const isOwner = profile && album && profile.id === Number(album.user_id);
   
   useEffect(() => {
     const fetchAlbumDetails = async () => {
@@ -93,8 +93,8 @@ const AlbumDetail = () => {
         //     setMedia(mediaItems);
         //   }
         // }
-      } catch (err: any) {
-        setError(err.message || 'Failed to load album');
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Failed to load album');
         toast({
           title: 'Fehler',
           description: 'Das Album konnte nicht geladen werden.',
@@ -211,11 +211,23 @@ const AlbumDetail = () => {
           
           {/* Album photos grid */}
           <div className="mb-8">
-            <MediaGridTab
-              media={media}
-              isLoading={false}
-              onMediaClick={handleMediaClick}
-            />
+            {media.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {media.map((item) => (
+                  <div
+                    key={item.id}
+                    className="aspect-square bg-dark-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => handleMediaClick(item.id)}
+                  >
+                    <img
+                      src={item.url}
+                      alt={item.title || 'Media item'}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           
           {/* Empty state */}

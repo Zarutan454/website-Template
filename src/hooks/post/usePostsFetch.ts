@@ -29,7 +29,7 @@ export const usePostsFetch = () => {
   /**
    * Lädt Posts für verschiedene Feed-Typen
    */
-  const fetchPosts = useCallback(async (feedType: string = 'recent', userId?: string) => {
+  const fetchPosts = useCallback(async (feedType: string = 'recent', userId?: string, username?: string) => {
     if (!userId) return;
     
     try {
@@ -39,30 +39,74 @@ export const usePostsFetch = () => {
       // Verwende die neue socialAPI
       let fetchedPosts: any[] = [];
       
-      switch (feedType) {
-        case 'recent':
-          fetchedPosts = await socialAPI.getPosts(1, 20);
-          break;
-        case 'popular':
-          fetchedPosts = await socialAPI.getTrendingPosts();
-          break;
-        case 'following':
-          fetchedPosts = await socialAPI.getPosts(1, 20);
-          break;
-        case 'tokens':
-          fetchedPosts = await socialAPI.getPosts(1, 20);
-          break;
-        case 'nfts':
-          fetchedPosts = await socialAPI.getPosts(1, 20);
-          break;
-        default:
-          fetchedPosts = await socialAPI.getPosts(1, 20);
+      if (username) {
+        // KORREKTUR: Nur author-Parameter verwenden, da nur dieser im Backend unterstützt wird
+        const paramVariants = [
+          { author: username }
+        ];
+        let found = false;
+        for (const params of paramVariants) {
+          // DEBUG: Logge die exakte URL und Parameter für den Profil-Feed
+          const debugUrl = `/posts/?${new URLSearchParams(params).toString()}`;
+          console.log('[ProfileFeed][DEBUG] Requesting:', debugUrl, 'params:', params);
+          console.log('[ProfileFeed] Teste API-Parameter:', params);
+          try {
+            const response: unknown = await socialAPI.getFeed(params);
+            console.log('[ProfileFeed] API-Response für', params, ':', response);
+            if (
+              response &&
+              typeof response === 'object' &&
+              'results' in response &&
+              Array.isArray((response as { results: unknown[] }).results) &&
+              (response as { results: unknown[] }).results.length > 0
+            ) {
+              fetchedPosts = (response as { results: Post[] }).results;
+              found = true;
+              break;
+            }
+          } catch (err: unknown) {
+            console.error('[ProfileFeed] API-Fehler für', params, ':', err);
+          }
+        }
+        if (!found) {
+          fetchedPosts = [];
+          console.warn('[ProfileFeed] Keine Posts gefunden für author:', username);
+        }
+      } else {
+        switch (feedType) {
+          case 'recent':
+            fetchedPosts = await socialAPI.getPosts(1, 20) as Post[];
+            break;
+          case 'popular':
+            fetchedPosts = await socialAPI.getTrendingPosts() as Post[];
+            break;
+          case 'following':
+            fetchedPosts = await socialAPI.getPosts(1, 20) as Post[];
+            break;
+          case 'tokens':
+            fetchedPosts = await socialAPI.getPosts(1, 20) as Post[];
+            break;
+          case 'nfts':
+            fetchedPosts = await socialAPI.getPosts(1, 20) as Post[];
+            break;
+          default:
+            fetchedPosts = await socialAPI.getPosts(1, 20) as Post[];
+        }
       }
       
       console.log(`[usePostsFetch] Fetched ${fetchedPosts.length} posts for feed type '${feedType}'`);
       
+      // Sicherstellen, dass fetchedPosts ein Array ist (PaginatedResponse oder Array)
+      let postsArray: Post[] = [];
+      if (Array.isArray(fetchedPosts)) {
+        postsArray = fetchedPosts;
+      } else if (fetchedPosts && Array.isArray((fetchedPosts as any).results)) {
+        postsArray = (fetchedPosts as any).results;
+      } else {
+        console.error('[usePostsFetch][DEBUG] fetchedPosts ist kein Array und hat keine results:', fetchedPosts);
+      }
       // Sicherstellen, dass die Posts dem Post-Interface entsprechen
-      const typedPosts: Post[] = fetchedPosts.map((post: any) => ({
+      const typedPosts: Post[] = postsArray.map((post: Post) => ({
         id: post.id,
         author: post.author,
         content: post.content,
@@ -98,9 +142,9 @@ export const usePostsFetch = () => {
       setAdaptedPosts(adapted);
       console.log(`[usePostsFetch] Set ${adapted.length} adapted posts for display`);
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[usePostsFetch] Error fetching posts:', err);
-      setError(err);
+      setError(err instanceof Error ? err : new Error('Unknown error fetching posts'));
     } finally {
       setIsLoading(false);
     }

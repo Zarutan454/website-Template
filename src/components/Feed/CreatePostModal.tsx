@@ -6,7 +6,7 @@ import { Image, Video, X, Music, FileType, Upload } from "lucide-react";
 import { type CreatePostData } from '@/types/posts';
 import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface CreatePostModalProps {
   isOpen: boolean;

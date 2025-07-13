@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { useReels, ReelComment } from '../../hooks/useReels';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 
 interface ReelCommentsProps {

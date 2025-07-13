@@ -4,8 +4,15 @@ import { Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
+interface MiningActionResult {
+  success: boolean;
+  message?: string;
+  points?: number;
+  tokens?: number;
+}
+
 interface QuickPostBoxProps {
-  handleMiningAction: (actionType: string, points: number, tokens: number) => Promise<any>;
+  handleMiningAction: (actionType: string, points: number, tokens: number) => Promise<MiningActionResult>;
   isPerformingAction: string | null;
 }
 
@@ -25,6 +32,7 @@ const QuickPostBox: React.FC<QuickPostBoxProps> = ({
       await handleMiningAction('post', 20, 2.0);
       setPostContent('');
     } catch (error) {
+      console.error('Fehler beim Erstellen des Posts:', error);
     }
   };
 

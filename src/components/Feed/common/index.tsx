@@ -2,7 +2,7 @@
 import React from 'react';
 import FeedLoading from '../FeedLoading';
 import FeedError from '../FeedError';
-import PostCard from '../Post/PostCard';
+import UnifiedPostCard from '../UnifiedPostCard';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
@@ -71,7 +71,7 @@ export const FeedStateRenderer: React.FC<{
   return (
     <div className="space-y-6">
       {posts.map(post => (
-        <PostCard
+        <UnifiedPostCard
           key={post.id}
           post={post}
           onLike={onLike}

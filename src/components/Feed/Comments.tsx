@@ -7,10 +7,31 @@ import { Send, MessageSquare } from 'lucide-react';
 import { Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 
+// TypeScript Interfaces
+interface CommentAuthor {
+  id: string;
+  username: string;
+  display_name?: string;
+  avatar_url?: string;
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  author: CommentAuthor;
+}
+
+interface CommentResponse {
+  success: boolean;
+  message?: string;
+  comment?: Comment;
+}
+
 interface CommentsProps {
-  comments: any[];
+  comments: Comment[];
   postId: string;
-  onComment: (postId: string, content: string) => Promise<any>;
+  onComment: (postId: string, content: string) => Promise<CommentResponse>;
   currentUserId?: string;
   isLoading?: boolean;
 }
@@ -34,6 +55,8 @@ const Comments: React.FC<CommentsProps> = ({
       await onComment(postId, newComment);
       setNewComment('');
     } catch (error) {
+      console.error('Error submitting comment:', error);
+      // Hier könnte ein Toast oder eine andere Fehlerbehandlung hinzugefügt werden
     } finally {
       setIsSubmitting(false);
     }

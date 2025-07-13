@@ -28,7 +28,7 @@ export const PriceChartSection = ({
     // Generate data points with random variations around the current price
     return Array.from({ length: dataPoints }).map((_, index) => {
       // Create date based on timeRange
-      let date = new Date();
+      const date = new Date();
       if (timeRange === "24h") {
         date.setHours(date.getHours() - (dataPoints - index));
       } else if (timeRange === "7d") {

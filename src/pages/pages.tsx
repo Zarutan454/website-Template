@@ -1,7 +1,7 @@
 // Diese Datei wird umbenannt zu pages.tsx um Konflikte zu vermeiden
 import Index from './Index.tsx';
-import Login from './Login';
-import Register from './Register';
+import Login from '../components/landing/Login3D';
+import Register from '../components/landing/Register3D';
 import ResetPassword from './ResetPassword';
 import Dashboard from './Dashboard';
 import Feed from './Feed';
@@ -23,6 +23,8 @@ import FriendsPage from './FriendsPage';
 import GroupsOverviewPage from './GroupsOverviewPage';
 import AlbumDetail from './AlbumDetail';
 import ReelsPage from './Reels';
+import AchievementsOverview from './AchievementsOverview';
+import PostDetail from './PostDetail';
 
 export {
   Index,
@@ -49,4 +51,6 @@ export {
   GroupsOverviewPage,
   AlbumDetail,
   ReelsPage,
+  AchievementsOverview,
+  PostDetail,
 };

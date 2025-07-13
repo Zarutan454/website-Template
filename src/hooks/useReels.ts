@@ -4,7 +4,7 @@ import { apiClient, UploadProgress } from '@/lib/django-api-new';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Reel {
   id: string;

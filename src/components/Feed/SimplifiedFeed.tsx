@@ -6,7 +6,6 @@ import { FeedType } from '@/hooks/feed/useFeedData';
 import { Post } from '@/types/posts';
 import { useTheme } from '@/components/ThemeProvider';
 import { useProfile } from '@/hooks/useProfile';
-import FeedFilterOptimized from './FeedFilterOptimized';
 import { Card, CardContent } from "@/components/ui/card";
 import { AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -14,6 +13,28 @@ import { UiFilterType } from '@/hooks/feed/useFilterControl';
 import { useFilterControl } from '@/hooks/feed/useFilterControl';
 import SimplifiedFeedHeader from './components/SimplifiedFeedHeader';
 import NewPostsNotification from './components/NewPostsNotification';
+import { useAuth } from '@/context/AuthContext';
+
+interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  author_id: string;
+  author?: {
+    id: string;
+    username?: string;
+    display_name?: string;
+    avatar_url?: string;
+  };
+  user?: {
+    id: string;
+    username?: string;
+    display_name?: string;
+    avatar_url?: string;
+  };
+  user_liked?: boolean;
+  like_count?: number;
+}
 
 interface SimplifiedFeedProps {
   feedType: FeedType;
@@ -27,8 +48,8 @@ interface SimplifiedFeedProps {
   description?: string;
   onLike: (postId: string) => Promise<boolean>;
   onDelete: (postId: string) => Promise<boolean>;
-  onComment: (postId: string, content: string) => Promise<any>;
-  onGetComments: (postId: string) => Promise<any[]>;
+  onComment: (postId: string, content: string) => Promise<Comment>;
+  onGetComments: (postId: string) => Promise<Comment[]>;
   onShare: (postId: string) => Promise<boolean>;
   onReport?: (postId: string, reason: string) => Promise<boolean>;
   onRefresh: () => Promise<boolean> | void;

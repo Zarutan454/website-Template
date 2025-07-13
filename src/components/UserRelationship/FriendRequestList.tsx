@@ -7,7 +7,7 @@ import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useProfile } from '@/hooks/useProfile';
 import { RelationshipUser } from '@/hooks/useUserRelationships';
 import { motion } from 'framer-motion';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 const FriendRequestList: React.FC = () => {
   const { user: profile } = useAuth();

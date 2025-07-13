@@ -55,6 +55,7 @@ export const GasEstimationService = {
         const data = await response.json();
         ethPriceUsd = data.ethereum?.usd || ethPriceUsd;
       } catch (error) {
+        console.error('Error fetching ETH price:', error);
       }
       
       const totalCostUsd = (parseFloat(totalCostEth) * ethPriceUsd).toFixed(2);

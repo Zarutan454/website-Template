@@ -16,6 +16,9 @@ class UserProfile(models.Model):
     interests = models.JSONField(default=list, blank=True)
     skills = models.JSONField(default=list, blank=True)
     
+    # Neues Feld für Bio
+    bio = models.TextField(blank=True, null=True)
+    
     # Privacy settings
     profile_visibility = models.CharField(
         max_length=20,

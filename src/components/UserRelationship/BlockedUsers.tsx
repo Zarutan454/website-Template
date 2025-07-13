@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Shield, Loader2 } from 'lucide-react';
 import { RelationshipUser } from '@/hooks/useUserRelationships';
 import { motion } from 'framer-motion';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 const BlockedUsers: React.FC = () => {
   const { user: profile } = useAuth();

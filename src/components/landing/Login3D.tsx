@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../LanguageProvider';
-import { useAuth } from '@/context/AuthContext';
+import { authAPI } from '@/lib/django-api-new';
 import { toast } from 'sonner';
 
 const Login3D: React.FC = () => {
@@ -12,24 +12,40 @@ const Login3D: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { t, language } = useLanguage();
-  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      const response = await authAPI.login(email, password);
       
-      console.log('Login successful, navigating to /feed...');
-      
-      // Kurze Verzögerung für bessere UX
-      setTimeout(() => {
-        navigate('/feed');
-      }, 500);
+      if (response && response.user) {
+        // Tokens speichern - Backend gibt 'token' und 'refresh' zurück
+        const token = response.token;
+        const refresh = response.refresh;
+        
+        if (token && refresh) {
+          localStorage.setItem('access_token', token);
+          localStorage.setItem('refresh_token', refresh);
+          localStorage.setItem('user', JSON.stringify(response.user));
+          
+          toast.success('Erfolgreich angemeldet!');
+          
+          // Kurze Verzögerung für bessere UX
+          setTimeout(() => {
+            navigate('/feed');
+          }, 500);
+        } else {
+          throw new Error('Token-Informationen fehlen in der Server-Antwort');
+        }
+      } else {
+        throw new Error('Ungültige Antwort vom Server');
+      }
     } catch (error: unknown) {
       console.error('Login error:', error);
-      // Fehlerbehandlung ist bereits im AuthContext implementiert
+      const errorMessage = error instanceof Error ? error.message : 'Anmeldung fehlgeschlagen';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -107,7 +123,7 @@ const Login3D: React.FC = () => {
           </p>
         </div>
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit} data-testid="login-form">
           <div className="rounded-md -space-y-px">
             <div className="mb-4">
               <label htmlFor="email-address" className="sr-only">Email address</label>

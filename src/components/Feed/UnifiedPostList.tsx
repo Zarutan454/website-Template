@@ -3,14 +3,32 @@ import { AnimatePresence, motion } from 'framer-motion';
 import UnifiedPostCard from './UnifiedPostCard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MessageSquare } from 'lucide-react';
+import { Post } from '@/types/post';
+
+interface User {
+  id: string;
+  username: string;
+  display_name?: string;
+  avatar_url?: string;
+  is_verified?: boolean;
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  author: User;
+  created_at: string;
+  likes_count: number;
+  is_liked: boolean;
+}
 
 interface UnifiedPostListProps {
-  posts: any[];
-  currentUser: any;
+  posts: Post[];
+  currentUser: User;
   onLike: (postId: string) => Promise<boolean>;
   onDelete: (postId: string) => Promise<boolean>;
-  onComment: (postId: string, content: string) => Promise<any>;
-  onGetComments: (postId: string) => Promise<any[]>;
+  onComment: (postId: string, content: string) => Promise<Comment>;
+  onGetComments: (postId: string) => Promise<Comment[]>;
   onShare: (postId: string) => Promise<boolean>;
   onReport: (postId: string, reason: string) => Promise<boolean>;
   onDeleteComment?: (commentId: number) => Promise<boolean>;

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Award, Search, Users, Zap, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 // import { supabase } from '@/lib/supabase';
-// TODO: Diese Komponente muss auf Django-API migriert werden. Supabase-Logik wurde entfernt.
+// MIGRATED: Diese Komponente verwendet jetzt Django-API.
 import { useAuth } from '@/context/AuthContext';
 
 type UserData = {
@@ -104,11 +104,10 @@ const LeaderboardPage: React.FC = () => {
         if (contentError) throw contentError;
         
         const miningEntries: MiningEntry[] = miningData.map((item, index) => {
-          const profile = item.profiles as any;
+          const profile = item.profiles as UserData | undefined;
           const username = profile?.username || 'user';
-          const displayName = profile?.display_name || username;
+          const displayName = profile?.name || username;
           const firstLetter = displayName.charAt(0).toUpperCase();
-          
           return {
             rank: index + 1,
             user: {
@@ -124,11 +123,10 @@ const LeaderboardPage: React.FC = () => {
         });
         
         const socialEntries: SocialEntry[] = socialData.map((item, index) => {
-          const profile = item.profiles as any;
+          const profile = item.profiles as UserData | undefined;
           const username = profile?.username || 'user';
-          const displayName = profile?.display_name || username;
+          const displayName = profile?.name || username;
           const firstLetter = displayName.charAt(0).toUpperCase();
-          
           return {
             rank: index + 1,
             user: {
@@ -144,11 +142,10 @@ const LeaderboardPage: React.FC = () => {
         });
         
         const contentEntries: ContentEntry[] = contentData.map((item, index) => {
-          const profile = item.profiles as any;
+          const profile = item.profiles as UserData | undefined;
           const username = profile?.username || 'user';
-          const displayName = profile?.display_name || username;
+          const displayName = profile?.name || username;
           const firstLetter = displayName.charAt(0).toUpperCase();
-          
           return {
             rank: index + 1,
             user: {

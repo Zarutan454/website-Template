@@ -47,6 +47,9 @@ urlpatterns = [
     # API Endpoints - Main BSN API
     path('api/', include('bsn_social_network.urls')),  # Direct API access
     
+    # User API Endpoints
+    path('api/auth/', include('users.urls')),  # User authentication endpoints
+    
     # Legacy API paths (for backward compatibility)
     path('api/v1/landing/', include('landing.urls')),
 ]

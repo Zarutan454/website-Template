@@ -10,14 +10,17 @@ import { initializeAchievements } from './hooks/mining/achievements/initAchievem
 import { NotificationProvider } from './components/ui/notification-system';
 import { LanguageProvider } from './components/LanguageProvider';
 import { FriendshipProvider } from './context/FriendshipContext';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { PostProvider } from './context/PostContext';
+import { useAuth } from './hooks/useAuth';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 const queryClient = new QueryClient();
 
 // Global Fetch Interceptor to fix media_url array issues
 const originalFetch = window.fetch;
-window.fetch = function(url: any, options?: RequestInit) {
+window.fetch = function(...args: [RequestInfo | URL, RequestInit | undefined]) {
+  const [url, options] = args;
   // Only intercept POST requests to posts endpoint
   if (typeof url === 'string' && url.includes('/api/posts/') && options?.method === 'POST' && options?.body) {
     try {
@@ -41,14 +44,13 @@ window.fetch = function(url: any, options?: RequestInit) {
   }
   
   // Call the original fetch
-  return originalFetch.apply(this, arguments);
+  return originalFetch.apply(this, args);
 };
 
 console.log('✅ GLOBAL FIX: Fetch interceptor activated - media_url arrays will be automatically fixed!');
 
-function AppContent() {
-  const location = useLocation();
-  const isLandingPage = location.pathname === '/';
+// Separate component that uses useAuth
+function AppInitializer() {
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -60,6 +62,13 @@ function AppContent() {
     }
   }, [isAuthenticated]);
 
+  return null; // This component doesn't render anything
+}
+
+function AppContent() {
+  const location = useLocation();
+  const isLandingPage = location.pathname === '/';
+
   return (
     <ThemeProvider>
       <LanguageProvider>
@@ -67,6 +76,7 @@ function AppContent() {
           <NotificationProvider>
             <FriendshipProvider>
               <PostProvider>
+                <AppInitializer />
                 <div className="min-h-screen flex flex-col">
                   <Navbar />
                   <main className={`flex-1 ${isLandingPage ? '' : 'pt-14'}`}>
@@ -88,12 +98,18 @@ function AppContent() {
   );
 }
 
-function App() {
+const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <PostProvider>
+          <FriendshipProvider>
+            <AppContent />
+          </FriendshipProvider>
+        </PostProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
-}
+};
 
 export default App;

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { apiClient } from "@/lib/django-api-new";
 import { useWallet } from "@/hooks/useWallet";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Transaction {
   id: string;
@@ -104,7 +104,7 @@ export const useTransactionHistory = () => {
               
               if (filter.timeRange && filter.timeRange !== 'all') {
                 const now = new Date();
-                let startDate = new Date();
+                const startDate = new Date();
                 
                 switch (filter.timeRange) {
                   case 'day':
