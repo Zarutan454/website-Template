@@ -49,6 +49,7 @@ const PostActions: React.FC<PostActionsProps> = ({
           );
           // Don't show individual toasts anymore, they're batched now
         } catch (error) {
+          console.error("Fehler bei Mining-Aktivität für Like:", error);
         }
       }
       

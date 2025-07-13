@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { mediaAPI, type UploadProgress } from '@/lib/django-api-new';
 import { toast } from 'sonner';
 

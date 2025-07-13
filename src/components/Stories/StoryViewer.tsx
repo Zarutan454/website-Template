@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, ArrowLeft, Eye } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, ArrowLeft, Eye, Clock, AlertCircle, Heart, MessageCircle, Share2, Bookmark, Send } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Button } from '../../components/ui/button';
-import { Story, StoryGroup, useStories } from '../../hooks/useStories';
+import { Badge } from '../../components/ui/badge';
+import { Input } from '../../components/ui/input';
+import { Story, StoryGroup, useStories, StoryComment } from '../../hooks/useStories';
 import { useTheme } from '../../components/ThemeProvider';
 import { Progress } from '../../components/ui/progress';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 // Derive the backend root URL for media files
 const BACKEND_ROOT_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace('/api', '');
@@ -19,6 +22,37 @@ interface StoryViewerProps {
   initialStoryIndex?: number;
 }
 
+// Hilfsfunktion für Zeitformatierung
+const formatTimeRemaining = (expiresAt: string): string => {
+  const now = new Date();
+  const expiry = new Date(expiresAt);
+  const diffMs = expiry.getTime() - now.getTime();
+  
+  if (diffMs <= 0) return 'Abgelaufen';
+  
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  
+  if (diffHours > 0) {
+    return `${diffHours}h ${diffMinutes}m`;
+  } else if (diffMinutes > 0) {
+    return `${diffMinutes}m`;
+  } else {
+    return '< 1m';
+  }
+};
+
+// Hilfsfunktion für Story-Status
+const getStoryStatus = (story: { expires_at: string }) => {
+  const now = new Date();
+  const expiry = new Date(story.expires_at);
+  const diffMs = expiry.getTime() - now.getTime();
+  
+  if (diffMs <= 0) return 'expired';
+  if (diffMs < 30 * 60 * 1000) return 'expiring-soon'; // < 30 Minuten
+  return 'active';
+};
+
 const StoryViewer: React.FC<StoryViewerProps> = ({
   isOpen,
   onClose,
@@ -28,8 +62,12 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
 }) => {
   const { user: currentUser } = useAuth();
   const { 
-    viewStory,
-    formatTimeSince,
+    markStoryViewed,
+    formatStoryTime,
+    toggleStoryLike,
+    createStoryComment,
+    toggleStoryBookmark,
+    shareStory,
   } = useStories();
   
   const { theme } = useTheme();
@@ -38,6 +76,9 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [showShareOptions, setShowShareOptions] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
 
@@ -48,7 +89,8 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
 
   const activeStoryGroup = storyGroups[activeGroupIndex];
   const activeStory = activeStoryGroup?.stories[activeStoryIndex];
-  const isOwnStory = activeStoryGroup?.user_id === currentUser?.id.toString();
+  const isOwnStory = activeStoryGroup?.user_id === currentUser?.id?.toString();
+  const storyStatus = activeStory ? getStoryStatus(activeStory) : 'active';
 
   const DURATIONS = {
     image: 5000, // 5 seconds for images
@@ -93,7 +135,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
     if (progressInterval.current) clearInterval(progressInterval.current);
     
     if (activeStory && !activeStory.viewed) {
-      viewStory({ storyId: activeStory.id });
+      markStoryViewed.mutate(parseInt(activeStory.id));
     }
     
     setProgress(0);
@@ -136,6 +178,54 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, activeGroupIndex, activeStoryIndex, storyGroups]);
+
+  // ========== Story Interactions ==========
+
+  const handleLikeToggle = () => {
+    if (!activeStory) return;
+    
+    const isLiked = activeStory.is_liked_by_user || false;
+    toggleStoryLike.mutate({ 
+      storyId: parseInt(activeStory.id), 
+      action: isLiked ? 'unlike' : 'like' 
+    });
+  };
+
+  const handleCommentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeStory || !commentText.trim()) return;
+    
+    createStoryComment.mutate({ 
+      storyId: parseInt(activeStory.id), 
+      content: commentText.trim() 
+    });
+    setCommentText('');
+  };
+
+  const handleShare = (shareType: 'copy_link' | 'direct_message' | 'post' | 'external') => {
+    if (!activeStory) return;
+    
+    const shareData = {
+      share_type: shareType,
+      external_platform: shareType === 'external' ? 'twitter' : undefined
+    };
+    
+    shareStory.mutate({ 
+      storyId: parseInt(activeStory.id), 
+      shareData 
+    });
+    setShowShareOptions(false);
+  };
+
+  const handleBookmarkToggle = () => {
+    if (!activeStory) return;
+    
+    const isBookmarked = activeStory.is_bookmarked_by_user || false;
+    toggleStoryBookmark.mutate({ 
+      storyId: parseInt(activeStory.id), 
+      action: isBookmarked ? 'unbookmark' : 'bookmark' 
+    });
+  };
 
   if (!isOpen || !activeStoryGroup || !activeStory) {
     return null;
@@ -183,7 +273,28 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
                 </Avatar>
                 <div>
                   <p className="font-bold text-white">{activeStoryGroup.display_name}</p>
-                  <p className="text-xs text-gray-300">{formatTimeSince(activeStory.created_at)}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-gray-300">{formatStoryTime(activeStory.created_at)}</p>
+                    {/* Expiration Badge */}
+                    {storyStatus !== 'active' && (
+                      <Badge 
+                        variant={storyStatus === 'expired' ? 'secondary' : 'destructive'} 
+                        className="text-xs px-1 py-0.5"
+                      >
+                        {storyStatus === 'expired' ? (
+                          <>
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Abgelaufen
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="w-3 h-3 mr-1" />
+                            {formatTimeRemaining(activeStory.expires_at)}
+                          </>
+                        )}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -240,6 +351,146 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
               <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white bg-black/50 p-2 rounded-lg">
                 <Eye className="w-5 h-5" />
                 <span className="font-bold text-sm">{activeStory.views_count || 0}</span>
+              </div>
+            )}
+
+            {/* Interaction Buttons */}
+            <div className="absolute bottom-4 right-4 flex flex-col items-center gap-3">
+              {/* Like Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-white bg-black/50 hover:bg-black/70 w-12 h-12"
+                onClick={(e) => { e.stopPropagation(); handleLikeToggle(); }}
+              >
+                <Heart 
+                  className={`w-6 h-6 ${activeStory.is_liked_by_user ? 'fill-red-500 text-red-500' : ''}`} 
+                />
+              </Button>
+
+              {/* Comment Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-white bg-black/50 hover:bg-black/70 w-12 h-12"
+                onClick={(e) => { e.stopPropagation(); setShowComments(!showComments); }}
+              >
+                <MessageCircle className="w-6 h-6" />
+              </Button>
+
+              {/* Share Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-white bg-black/50 hover:bg-black/70 w-12 h-12"
+                onClick={(e) => { e.stopPropagation(); setShowShareOptions(!showShareOptions); }}
+              >
+                <Share2 className="w-6 h-6" />
+              </Button>
+
+              {/* Bookmark Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-white bg-black/50 hover:bg-black/70 w-12 h-12"
+                onClick={(e) => { e.stopPropagation(); handleBookmarkToggle(); }}
+              >
+                <Bookmark 
+                  className={`w-6 h-6 ${activeStory.is_bookmarked_by_user ? 'fill-yellow-400 text-yellow-400' : ''}`} 
+                />
+              </Button>
+            </div>
+
+            {/* Share Options Modal */}
+            {showShareOptions && (
+              <div className="absolute bottom-20 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-3 space-y-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white hover:bg-white/20 w-full justify-start"
+                  onClick={() => handleShare('copy_link')}
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Link kopieren
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white hover:bg-white/20 w-full justify-start"
+                  onClick={() => handleShare('direct_message')}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Direktnachricht
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white hover:bg-white/20 w-full justify-start"
+                  onClick={() => handleShare('post')}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Als Post teilen
+                </Button>
+              </div>
+            )}
+
+            {/* Comments Section */}
+            {showComments && (
+              <div className="absolute bottom-0 left-0 right-0 bg-black/90 backdrop-blur-sm p-4 max-h-64 overflow-y-auto">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-white font-semibold">Kommentare</h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-white hover:bg-white/20"
+                    onClick={() => setShowComments(false)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                
+                {/* Comment Input */}
+                <form onSubmit={handleCommentSubmit} className="flex gap-2 mb-3">
+                  <Input
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="Kommentar hinzufügen..."
+                    className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                  />
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={!commentText.trim()}
+                    className="bg-blue-500 hover:bg-blue-600"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </form>
+
+                {/* Comments List */}
+                <div className="space-y-2">
+                  {activeStory.comments?.map((comment: StoryComment) => (
+                    <div key={comment.id} className="flex items-start gap-2">
+                      <Avatar className="w-6 h-6">
+                        <AvatarImage src={comment.user?.avatar_url || ''} />
+                        <AvatarFallback className="text-xs">
+                          {comment.user?.display_name?.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-white font-medium text-sm">
+                            {comment.user?.display_name}
+                          </span>
+                          <span className="text-white/50 text-xs">
+                            {formatStoryTime(comment.created_at)}
+                          </span>
+                        </div>
+                        <p className="text-white text-sm">{comment.content}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw, Bell, Settings2, PlusCircle } from 'lucide-react';
 import { NotificationType } from '@/types/notifications';
 import { EmptyState } from '@/components/ui/empty-state';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { NotificationSettings } from '@/components/notifications/NotificationSettings';
 import { Spinner } from '@/components/ui/spinner';
 

@@ -28,7 +28,7 @@ window.fetch = function(url: string, options?: RequestInit) {
   }
   
   // Call the original fetch
-  return originalFetch.apply(this, arguments);
+  return originalFetch.apply(this, [url, options]);
 };
 
 console.log('✅ GLOBAL FIX: Fetch interceptor activated - media_url arrays will be automatically fixed!'); 

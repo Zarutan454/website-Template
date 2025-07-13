@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePosts } from '@/hooks/usePosts';
-import { useProfile } from '@/hooks/useProfile';
+import { useAuth } from '@/hooks/useAuth';
 
 // Export feed type for reuse
 export type FeedType = 'recent' | 'popular' | 'following' | 'tokens' | 'nfts' | 'foryou';
@@ -13,19 +13,21 @@ export const useFeedData = ({
   selectedFilter,
   enableAutoRefresh = true,
   refreshInterval = 120000,
-  onNewPostsAvailable
+  onNewPostsAvailable,
+  customUser
 }: {
   feedType: FeedType;
   selectedFilter: string | null;
   enableAutoRefresh?: boolean;
   refreshInterval?: number;
   onNewPostsAvailable?: (hasNew: boolean) => void;
+  customUser?: string;
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [hasNewPosts, setHasNewPosts] = useState(false);
-  const { profile, isAuthenticated, isLoading: profileLoading } = useProfile();
+  const { user: profile, isAuthenticated, isLoading: profileLoading } = useAuth();
   
   console.log(`[useFeedData] Hook state - isAuthenticated: ${isAuthenticated}, profile: ${profile ? profile.username : 'null'}, profileLoading: ${profileLoading}`);
   
@@ -47,7 +49,7 @@ export const useFeedData = ({
     try {
       setIsLoading(true);
       setError(null);
-      await baseFetchPosts(feedTypeOverride || feedType);
+      await baseFetchPosts(feedTypeOverride || feedType, customUser);
       setLastUpdated(new Date());
       setHasNewPosts(false);
       return true;
@@ -57,18 +59,18 @@ export const useFeedData = ({
     } finally {
       setIsLoading(false);
     }
-  }, [feedType, baseFetchPosts]);
+  }, [feedType, baseFetchPosts, customUser]);
   
   // Initial load
   useEffect(() => {
-    console.log(`[useFeedData] Effect triggered - isAuthenticated: ${isAuthenticated}, profile: ${profile ? profile.username : 'null'}, feedType: ${feedType}`);
-    if (isAuthenticated && profile) {
-      console.log(`[useFeedData] Fetching posts for feedType: ${feedType}`);
+    console.log(`[useFeedData] Effect triggered - isAuthenticated: ${isAuthenticated}, profile: ${profile ? profile.username : 'null'}, feedType: ${feedType}, customUser: ${customUser}`);
+    if ((isAuthenticated && profile) || customUser) {
+      console.log(`[useFeedData] Fetching posts for feedType: ${feedType} (customUser: ${customUser})`);
       fetchPosts();
     } else {
-      console.log(`[useFeedData] Not fetching posts - isAuthenticated: ${isAuthenticated}, profile: ${!!profile}`);
+      console.log(`[useFeedData] Not fetching posts - isAuthenticated: ${isAuthenticated}, profile: ${!!profile}, customUser: ${customUser}`);
     }
-  }, [feedType, selectedFilter, isAuthenticated, profile, fetchPosts]);
+  }, [feedType, selectedFilter, isAuthenticated, profile, fetchPosts, customUser]);
   
   // Auto-refresh logic
   useEffect(() => {

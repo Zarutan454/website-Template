@@ -9,7 +9,7 @@ import { timeAgo, formatRelativeTime } from '@/utils/dateUtils';
 import djangoApi from '../../lib/django-api-new';
 import type { Post, Comment, UserProfile } from '../../lib/django-api-new';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { socialAPI } from '@/lib/django-api-new';
 import { deleteComment } from '@/utils/commentUtils';
 
@@ -104,6 +104,7 @@ const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
   currentUser,
   darkMode = true,
 }) => {
+  const navigate = useNavigate();
   // State für Interaktionen
   const [isLiked, setIsLiked] = useState(post.is_liked_by_user || false);
   const [likeCount, setLikeCount] = useState(post.likes_count || 0);
@@ -132,6 +133,13 @@ const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
   useEffect(() => {
     console.log('[UnifiedPostCard] post.media_url:', post.media_url);
   }, [post.media_url]);
+
+  // Debug-Log für currentUser
+  useEffect(() => {
+    console.log('[UnifiedPostCard] currentUser:', currentUser);
+    console.log('[UnifiedPostCard] currentUser?.avatar_url:', currentUser?.avatar_url);
+    console.log('[UnifiedPostCard] currentUser?.username:', currentUser?.username);
+  }, [currentUser]);
 
   const formattedTimeAgo = formatRelativeTime(post.created_at);
   const isCurrentUserAuthor = currentUserId && post.author?.id === currentUserId;
@@ -191,7 +199,7 @@ const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
     console.log('[UnifiedPostCard] Loading comments for post:', post.id);
     setIsLoadingComments(true);
     try {
-      const response = await djangoApi.getComments(String(post.id), { page: 1 });
+      const response = await djangoApi.getComments(String(post.id), { page: '1' });
       console.log('[UnifiedPostCard] Comments response:', response);
       
       // Django API gibt direkt ein Array zurück oder { results: [...] }
@@ -387,8 +395,16 @@ const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
             <Separator className="my-3" />
             <div className="flex space-x-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={getAbsoluteAvatarUrl(currentUser?.avatar_url)} />
-                <AvatarFallback>{currentUser?.username?.charAt(0)}</AvatarFallback>
+                <AvatarImage 
+                  src={getAbsoluteAvatarUrl(currentUser?.avatar_url)} 
+                  alt={currentUser?.username || 'User'}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <AvatarFallback>
+                  {currentUser?.username?.charAt(0) || currentUser?.display_name?.charAt(0) || 'U'}
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1 flex">
                 <input type="text" value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Schreibe einen Kommentar..." className="flex-1 bg-transparent border-b border-gray-700 focus:outline-none focus:border-primary" />
@@ -416,7 +432,7 @@ const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
                         </Link>
                         <span className="ml-2 text-xs text-gray-400">{formatRelativeTime(comment.created_at)}</span>
                       </div>
-                      {currentUserId === comment.author?.id && (
+                      {(currentUserId === comment.author?.id || currentUserId === comment.author_id) && (
                         <Button
                           variant="ghost"
                           size="icon"

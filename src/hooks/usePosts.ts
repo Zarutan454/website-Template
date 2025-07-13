@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { usePostsFetch } from './post/usePostsFetch';
 import { usePostActions } from './post/usePostActions';
 import { useCommentActions } from './post/useCommentActions';
@@ -27,13 +27,15 @@ export const usePosts = () => {
   } = usePostsFetch();
   
   // Wrapper für fetchPosts, der den Benutzer automatisch mitgibt
-  const fetchPosts = useCallback(async (feedType: string = 'recent') => {
-    console.log(`[usePosts] fetchPosts called - feedType: ${feedType}, profile: ${profile ? profile.username : 'null'}`);
+  const fetchPosts = useCallback(async (feedType: string = 'recent', userFilter?: string) => {
+    // userFilter = user_id (Profilseite) oder undefined (Feed)
+    if (userFilter) {
+      return fetchPostsInternal(feedType, userFilter, undefined);
+    }
     if (!profile) {
       console.log('[usePosts] No profile found, cannot fetch posts');
       return;
     }
-    console.log(`[usePosts] Calling fetchPostsInternal with feedType: ${feedType}, userId: ${profile.id}`);
     return fetchPostsInternal(feedType, profile.id.toString());
   }, [profile, fetchPostsInternal]);
   

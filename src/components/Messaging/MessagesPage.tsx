@@ -14,7 +14,7 @@ import UserProfile from './UserProfile';
 import GroupChatList from './GroupChat/GroupChatList';
 import GroupChatView from './GroupChat/GroupChatView';
 import { UploadResult } from '../../utils/storageUtils';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 // Temporary placeholder types and hooks until messaging is fully migrated to Django
 interface Conversation {
@@ -316,6 +316,7 @@ export const MessagesPage: React.FC = () => {
             <AnimatePresence initial={false}>
               {showConversationList && (
                 <ConversationsList 
+                  key="conversations-list"
                   isLoadingConversations={isLoadingConversations}
                   searchQuery={searchQuery}
                   setSearchQuery={setSearchQuery}
@@ -333,6 +334,7 @@ export const MessagesPage: React.FC = () => {
             <AnimatePresence initial={false}>
               {showMessages && selectedConversation && (
                 <ConversationView 
+                  key="conversation-view"
                   isMobile={isMobile}
                   selectedConversation={selectedConversation}
                   showUserProfile={showUserProfile}
@@ -354,6 +356,7 @@ export const MessagesPage: React.FC = () => {
             <AnimatePresence initial={false}>
               {showNewConversation && isNewConversation && (
                 <CreateConversationView 
+                  key="create-conversation"
                   handleBackToList={handleBackToList}
                   isMobile={isMobile}
                   theme={theme}
@@ -364,6 +367,7 @@ export const MessagesPage: React.FC = () => {
             <AnimatePresence>
               {showUserProfile && partnerProfile && (
                 <UserProfile 
+                  key="user-profile"
                   user={partnerProfile}
                   isFollowing={isFollowingUser}
                   onToggleFollow={handleToggleFollow}
@@ -379,6 +383,7 @@ export const MessagesPage: React.FC = () => {
             <AnimatePresence initial={false}>
               {(!isMobile || !selectedGroupId) && (
                 <GroupChatList
+                  key="group-chat-list"
                   onSelectGroup={handleSelectGroup}
                   selectedGroupId={selectedGroupId || undefined}
                   isMobile={isMobile}
@@ -389,6 +394,7 @@ export const MessagesPage: React.FC = () => {
             <AnimatePresence initial={false}>
               {(!isMobile || selectedGroupId) && selectedGroupId && (
                 <GroupChatView
+                  key="group-chat-view"
                   groupId={selectedGroupId}
                 />
               )}

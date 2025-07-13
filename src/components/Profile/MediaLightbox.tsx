@@ -114,6 +114,7 @@ const MediaLightbox: React.FC<MediaLightboxProps> = ({
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
+      console.error('Download failed:', error);
       throw error;
     }
   };

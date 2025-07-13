@@ -32,11 +32,41 @@ class UserProfileSerializer(serializers.ModelSerializer):
     Serializer for UserProfile model
     """
     user = UserSerializer(read_only=True)
-    
+    # Neue Felder für About-Sektion
+    occupation = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    company = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    interests = serializers.ListField(
+        child=serializers.CharField(max_length=50),
+        max_length=10,
+        required=False,
+        allow_empty=True
+    )
+    skills = serializers.ListField(
+        child=serializers.CharField(max_length=50),
+        max_length=15,
+        required=False,
+        allow_empty=True
+    )
+    bio = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    social_media_links = serializers.JSONField(required=False, allow_null=True)
+
+    ALLOWED_PLATFORMS = {'website', 'twitter', 'github', 'linkedin', 'facebook', 'instagram'}
+
+    def validate_social_media_links(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError('Social Media Links müssen ein Objekt sein.')
+        for platform, url in value.items():
+            if platform not in self.ALLOWED_PLATFORMS:
+                raise serializers.ValidationError(f'Plattform "{platform}" ist nicht erlaubt.')
+            if not (isinstance(url, str) and (url.startswith('http://') or url.startswith('https://'))):
+                raise serializers.ValidationError(f'URL für {platform} muss mit http:// oder https:// beginnen.')
+        return value
+
     class Meta:
         model = UserProfile
         fields = [
             'id', 'user', 'occupation', 'company', 'interests', 'skills',
+            'bio', 'social_media_links',
             'profile_visibility', 'push_notifications', 'sms_notifications',
             'created_at', 'updated_at'
         ]

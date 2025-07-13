@@ -160,6 +160,10 @@ export function useMiningStatus(
           }
         }
       } catch (error) {
+        console.error('Error processing activity queue:', error);
+        // Revert optimistic update if there was an error
+        const totalTokens = activityQueue.reduce((sum, act) => sum + act.tokens, 0);
+        setTotalEarnings(prev => prev - totalTokens);
       } finally {
         setIsProcessingQueue(false);
       }

@@ -10,9 +10,10 @@ import { toast } from 'sonner';
 import { postRepository } from '@/repositories/PostRepository';
 import { isValid } from 'date-fns';
 import { useAuth } from '@/context/AuthContext';
+import { Post } from '@/types/post';
 
 const TrendingPage: React.FC = () => {
-  const [trendingPosts, setTrendingPosts] = useState<any[]>([]);
+  const [trendingPosts, setTrendingPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { user: profile } = useAuth();
@@ -26,7 +27,7 @@ const TrendingPage: React.FC = () => {
   /**
    * Überprüft und korrigiert ungültige Datumswerte in Posts
    */
-  const validateAndFixPostDates = (posts: any[]): any[] => {
+  const validateAndFixPostDates = (posts: Post[]): Post[] => {
     return posts.map(post => {
       // Prüfe, ob created_at existiert und ein gültiges Datum ist
       if (post.created_at) {
@@ -50,21 +51,13 @@ const TrendingPage: React.FC = () => {
     try {
       console.log("[TrendingPage] Fetching trending posts...");
       
-      const { data, error } = await supabase
-        .from('posts')
-        .select(`
-          *,
-          user:author_id(id, username, display_name, avatar_url)
-        `)
-        .order('likes_count', { ascending: false })
-        .limit(20);
+      // Use postRepository instead of direct supabase call
+      const posts = await postRepository.getTrendingPosts();
       
-      if (error) throw error;
-      
-      console.log(`[TrendingPage] Fetched ${data?.length || 0} trending posts`);
+      console.log(`[TrendingPage] Fetched ${posts?.length || 0} trending posts`);
       
       // Prüfe und korrigiere Datumswerte, bevor weitere Verarbeitung stattfindet
-      const validatedPosts = validateAndFixPostDates(data || []);
+      const validatedPosts = validateAndFixPostDates(posts || []);
       
       if (profile) {
         const postsWithLikeStatus = await Promise.all(

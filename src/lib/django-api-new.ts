@@ -24,6 +24,12 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
     headers,
     ...options,
   });
+  
+  // Handle CORS errors specifically
+  if (response.status === 0) {
+    throw new Error('CORS error: Unable to connect to server. Please check if the backend is running.');
+  }
+  
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     // Versuche, eine spezifischere Fehlermeldung aus der Django-Antwort zu extrahieren
@@ -50,6 +56,7 @@ export interface UserProfile {
   last_name: string;
   display_name?: string;
   avatar_url?: string;
+  cover_url?: string;
   profile?: {
     display_name: string;
     bio: string;
@@ -198,8 +205,10 @@ export const authAPI = {
 // User API
 export const userAPI = {
   getProfile: () => apiRequest('/auth/user/'),
+  getProfileByUsername: (username: string) => apiRequest(`/auth/profile/${username}/`),
   updateProfile: (data: Record<string, unknown>) => apiRequest('/auth/user/', { method: 'PATCH', body: JSON.stringify(data) }),
   uploadAvatar: (formData: FormData) => fetch(`${BASE_URL}/upload/media/`, { method: 'POST', body: formData, credentials: 'include' }).then(r => r.json()),
+  uploadCover: (formData: FormData) => fetch(`${BASE_URL}/upload/media/`, { method: 'POST', body: formData, credentials: 'include' }).then(r => r.json()),
   deleteAccount: (data: Record<string, unknown>) => apiRequest('/auth/user/', { method: 'DELETE', body: JSON.stringify(data) }),
 };
 
@@ -260,24 +269,74 @@ export const notificationAPI = {
   deleteNotification: (id: number) => apiRequest(`/notifications/${id}/`, { method: 'DELETE' }),
 };
 
+// Global cache for follow stats - more aggressive caching
+const globalFollowStatsCache = new Map<number, { data: { followers_count: number; following_count: number }; timestamp: number }>();
+const GLOBAL_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes - very long cache
+
 // User Relationship API
 export const userRelationshipAPI = {
+  // Follow/Unfollow operations
+  followUser: (userId: number) => apiRequest('/follow/', { method: 'POST', body: JSON.stringify({ user_id: userId }) }),
+  unfollowUser: (userId: number) => apiRequest(`/follow/${userId}/`, { method: 'DELETE' }),
+  isFollowing: (userId: number) => apiRequest(`/follow/status/${userId}/`),
+  
+  // Get followers and following lists
   getFollowers: async (userId: number, params: Record<string, string> = {}) => {
     const query = new URLSearchParams(params).toString();
-    const response = await apiRequest(`/friendships/${query ? '?' + query : ''}`);
-    if (Array.isArray(response)) return response;
-    if (response && Array.isArray(response.results)) return response.results;
+    const response = await apiRequest(`/followers/${userId}/${query ? '?' + query : ''}`);
+    if (response && response.followers) return response.followers;
     return [];
   },
   getFollowing: async (userId: number, params: Record<string, string> = {}) => {
     const query = new URLSearchParams(params).toString();
-    const response = await apiRequest(`/friendships/${query ? '?' + query : ''}`);
-    if (Array.isArray(response)) return response;
-    if (response && Array.isArray(response.results)) return response.results;
+    const response = await apiRequest(`/following/${userId}/${query ? '?' + query : ''}`);
+    if (response && response.following) return response.following;
     return [];
   },
-  followUser: (userId: number) => apiRequest(`/friendships/`, { method: 'POST', body: JSON.stringify({ user_id: userId }) }),
-  unfollowUser: (userId: number) => apiRequest(`/friendships/${userId}/`, { method: 'DELETE' }),
+  
+  // Get follow statistics (with super aggressive caching)
+  getFollowStats: async (userId: number) => {
+    try {
+      // Check global cache first
+      const cached = globalFollowStatsCache.get(userId);
+      if (cached && Date.now() - cached.timestamp < GLOBAL_CACHE_DURATION) {
+        console.log(`[CACHE HIT] Follow stats for user ${userId}`);
+        return cached.data;
+      }
+      
+      console.log(`[CACHE MISS] Fetching follow stats for user ${userId}`);
+      const [followersResponse, followingResponse] = await Promise.all([
+        apiRequest(`/followers/${userId}/`),
+        apiRequest(`/following/${userId}/`)
+      ]);
+      
+      const result = {
+        followers_count: followersResponse.followers_count || 0,
+        following_count: followingResponse.following_count || 0
+      };
+      
+      // Cache the result globally
+      globalFollowStatsCache.set(userId, {
+        data: result,
+        timestamp: Date.now()
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('Error getting follow stats:', error);
+      return { followers_count: 0, following_count: 0 };
+    }
+  },
+  
+  // Clear cache when follow/unfollow happens
+  clearFollowStatsCache: (userId: number) => {
+    globalFollowStatsCache.delete(userId);
+    console.log(`[CACHE CLEARED] Follow stats for user ${userId}`);
+  },
+  
+  // Block/Unblock operations (using existing endpoints)
+  blockUser: (userId: number) => apiRequest(`/friendships/`, { method: 'POST', body: JSON.stringify({ user_id: userId, action: 'block' }) }),
+  unblockUser: (userId: number) => apiRequest(`/friendships/${userId}/`, { method: 'DELETE' }),
 };
 
 // Post API
@@ -367,6 +426,38 @@ export const referralAPI = {
     return apiRequest(`/friendships/${query ? '?' + query : ''}`);
   },
   getStats: () => apiRequest('/auth/user/'),
+};
+
+// Story API
+export const storyAPI = {
+  // Story CRUD
+  getStories: (params: Record<string, string> = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiRequest(`/stories/${query ? '?' + query : ''}`);
+  },
+  createStory: (data: Record<string, unknown>) => apiRequest('/stories/', { method: 'POST', body: JSON.stringify(data) }),
+  updateStory: (id: number, data: Record<string, unknown>) => apiRequest(`/stories/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteStory: (id: number) => apiRequest(`/stories/${id}/`, { method: 'DELETE' }),
+  
+  // Story Management
+  getMyStories: () => apiRequest('/stories/my/'),
+  getFollowingStories: () => apiRequest('/stories/following/'),
+  markStoryViewed: (storyId: number) => apiRequest(`/stories/${storyId}/view/`, { method: 'POST' }),
+  
+  // Story Interactions
+  likeStory: (storyId: number) => apiRequest(`/stories/${storyId}/like/`, { method: 'POST' }),
+  unlikeStory: (storyId: number) => apiRequest(`/stories/${storyId}/like/`, { method: 'DELETE' }),
+  getStoryComments: (storyId: number) => apiRequest(`/stories/${storyId}/comments/`),
+  createStoryComment: (storyId: number, data: Record<string, unknown>) => apiRequest(`/stories/${storyId}/comments/`, { method: 'POST', body: JSON.stringify(data) }),
+  deleteStoryComment: (storyId: number, commentId: number) => apiRequest(`/stories/${storyId}/comments/${commentId}/`, { method: 'DELETE' }),
+  shareStory: (storyId: number, data: Record<string, unknown>) => apiRequest(`/stories/${storyId}/share/`, { method: 'POST', body: JSON.stringify(data) }),
+  bookmarkStory: (storyId: number) => apiRequest(`/stories/${storyId}/bookmark/`, { method: 'POST' }),
+  unbookmarkStory: (storyId: number) => apiRequest(`/stories/${storyId}/bookmark/`, { method: 'DELETE' }),
+  getStoryBookmarks: () => apiRequest('/stories/bookmarks/'),
+  
+  // Story Management (Admin)
+  cleanupStories: (dryRun: boolean = false) => apiRequest('/stories/cleanup/', { method: 'POST', body: JSON.stringify({ dry_run: dryRun }) }),
+  getStoryStats: () => apiRequest('/stories/statistics/'),
 };
 
 // Allgemeiner API-Client (z.B. für dynamische Endpunkte)
@@ -464,6 +555,7 @@ const djangoApi = {
   ...miningAPI,
   ...faucetAPI,
   ...referralAPI,
+  ...storyAPI,
   ...apiClient,
   
   // Helper to get base URL
@@ -494,4 +586,7 @@ const djangoApi = {
 };
 
 // Default-Export für Kompatibilität
-export default djangoApi; 
+export default djangoApi;
+
+// Benannter Export für Kompatibilität
+export const api = djangoApi; 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useDjangoFeed, type FeedType } from '@/hooks/feed/useDjangoFeed';
 import { useTheme } from '@/components/ThemeProvider';
 import { adaptApiPostToFrontendPost } from '@/utils/postAdapter';

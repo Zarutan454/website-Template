@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { NFT, NFTTransaction, NFTCollection } from '@/types/nft';
 // import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 // import { nftAPI } from '@/lib/django-api-new'; // TODO: Implement Django API calls
 

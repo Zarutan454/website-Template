@@ -5,16 +5,17 @@ import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, AlertCircle, Loader2 } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
+import { Post } from '@/types/posts';
 
 interface InfiniteScrollFeedProps {
-  posts: any[];
+  posts: Post[];
   isLoading: boolean;
   error: string | null;
   hasMore: boolean;
   onLike: (postId: string) => Promise<boolean>;
   onDelete?: (postId: string) => Promise<boolean>;
-  onComment: (postId: string, content: string) => Promise<any>;
-  onGetComments: (postId: string) => Promise<any[]>;
+  onComment: (postId: string, content: string) => Promise<void>;
+  onGetComments: (postId: string) => Promise<Post['comments']>;
   onShare: (postId: string) => Promise<boolean>;
   onReport?: (postId: string, reason: string) => Promise<boolean>;
   onLoadMore: () => Promise<void>;
@@ -22,7 +23,7 @@ interface InfiniteScrollFeedProps {
   onLoginRedirect: () => void;
   isDarkMode: boolean;
   showMiningRewards?: boolean;
-  currentUser?: any;
+  currentUser?: Post['author'];
   currentUserId?: string;
 }
 

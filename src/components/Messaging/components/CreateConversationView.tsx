@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { useUserSearch, SearchUser } from '@/hooks/useUserSearch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 // TODO: Diese Komponente muss auf Django-API migriert werden. useMessages wurde entfernt.
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface CreateConversationViewProps {
   handleBackToList: () => void;

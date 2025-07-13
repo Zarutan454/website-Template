@@ -1,160 +1,165 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import djangoApi, { PaginatedResponse, Post } from '@/lib/django-api-new';
+import { useProfile } from '@/hooks/useProfile';
 
 /**
- * Hook zum Verwalten von Lesezeichen für Posts
+ * Hook zum Verwalten von Lesezeichen für Posts mit Django API
  */
 export const useBookmarks = (postId?: string, userId?: string) => {
   const [bookmarked, setBookmarked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { profile } = useProfile();
 
-  /**
-   * Post als Lesezeichen speichern oder Lesezeichen entfernen
-   */
-  const handleBookmark = async () => {
-    if (!userId || !postId) {
-      toast.error('Du musst angemeldet sein, um einen Beitrag zu speichern');
-      return false;
-    }
-
-    try {
-      if (bookmarked) {
-        // Unbookmark the post
-        const { error } = await supabase
-          .from('bookmarks')
-          .delete()
-          .eq('user_id', userId)
-          .eq('post_id', postId);
-          
-        if (error) throw error;
-        
-        setBookmarked(false);
-        toast.info('Lesezeichen entfernt');
-      } else {
-        // Bookmark the post
-        const { error } = await supabase
-          .from('bookmarks')
-          .insert({
-            user_id: userId,
-            post_id: postId
-          });
-          
-        if (error) throw error;
-        
-        setBookmarked(true);
-        toast.success('Zu Lesezeichen hinzugefügt');
-      }
-      return true;
-    } catch (error) {
-      console.error('Error bookmarking post:', error);
-      toast.error('Fehler beim Setzen des Lesezeichens');
-      return false;
-    }
-  };
+  // Use current user if no userId provided
+  const currentUserId = userId || profile?.id?.toString();
 
   /**
    * Überprüfen, ob Post als Lesezeichen gespeichert ist
    */
-  const checkBookmarkStatus = async () => {
-    if (!userId || !postId) return false;
+  const checkBookmarkStatus = useCallback(async () => {
+    if (!currentUserId || !postId) return false;
     
     try {
-      const { data, error } = await supabase
-        .from('bookmarks')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('post_id', postId)
-        .maybeSingle();
-        
-      if (error) {
-        console.error('Error checking bookmark status:', error);
-        return false;
+      setIsLoading(true);
+      
+      // Get user's bookmarked posts to check if this post is bookmarked
+      const response = await djangoApi.get<PaginatedResponse<Post>>(`/posts/?bookmarked_by=${currentUserId}`);
+      
+      if (response?.results) {
+        const isBookmarked = response.results.some((post: Post) => post.id.toString() === postId);
+        setBookmarked(isBookmarked);
+        return isBookmarked;
       }
       
-      const isBookmarked = !!data;
-      setBookmarked(isBookmarked);
-      return isBookmarked;
+      return false;
     } catch (error) {
-      console.error('Error checking bookmark status:', error);
+      console.error('[useBookmarks] Error checking bookmark status:', error);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentUserId, postId]);
+
+  /**
+   * Post als Lesezeichen speichern oder Lesezeichen entfernen
+   */
+  const handleBookmark = useCallback(async () => {
+    if (!currentUserId || !postId) {
+      toast.error('Du musst angemeldet sein, um einen Beitrag zu speichern');
       return false;
     }
-  };
+
+    if (isProcessing) return false;
+
+    try {
+      setIsProcessing(true);
+      
+      // Optimistic update
+      const newBookmarkedState = !bookmarked;
+      setBookmarked(newBookmarkedState);
+
+      if (bookmarked) {
+        // Unbookmark the post
+        await djangoApi.unbookmarkPost(parseInt(postId));
+        toast.info('Lesezeichen entfernt');
+      } else {
+        // Bookmark the post
+        await djangoApi.bookmarkPost(parseInt(postId));
+        toast.success('Zu Lesezeichen hinzugefügt');
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('[useBookmarks] Error toggling bookmark:', error);
+      
+      // Revert optimistic update on error
+      setBookmarked(bookmarked);
+      toast.error('Fehler beim Setzen des Lesezeichens');
+      return false;
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [currentUserId, postId, bookmarked, isProcessing]);
 
   /**
    * Lesezeichen für einen bestimmten Post abrufen
    */
-  const getBookmarkedStatus = async (specificPostId: string) => {
-    if (!userId) return false;
+  const getBookmarkedStatus = useCallback(async (specificPostId: string) => {
+    if (!currentUserId) return false;
     
     try {
-      const { data, error } = await supabase
-        .from('bookmarks')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('post_id', specificPostId)
-        .maybeSingle();
-        
-      if (error) {
-        console.error('Error checking bookmark status:', error);
-        return false;
+      const response = await djangoApi.get<PaginatedResponse<Post>>(`/posts/?bookmarked_by=${currentUserId}`);
+      
+      if (response?.results) {
+        return response.results.some((post: Post) => post.id.toString() === specificPostId);
       }
       
-      return !!data;
+      return false;
     } catch (error) {
-      console.error('Error checking bookmark status:', error);
+      console.error('[useBookmarks] Error checking bookmark status:', error);
       return false;
     }
-  };
+  }, [currentUserId]);
 
   /**
    * Lesezeichen für einen bestimmten Post umschalten
    */
-  const toggleBookmark = async (specificPostId: string) => {
-    if (!userId) {
+  const toggleBookmark = useCallback(async (specificPostId?: string) => {
+    const targetPostId = specificPostId || postId;
+    
+    if (!currentUserId || !targetPostId) {
       toast.error('Du musst angemeldet sein, um ein Lesezeichen zu setzen');
       return { success: false, isBookmarked: false };
     }
     
     try {
-      const isCurrentlyBookmarked = await getBookmarkedStatus(specificPostId);
+      const isCurrentlyBookmarked = await getBookmarkedStatus(targetPostId);
       
       if (isCurrentlyBookmarked) {
         // Unbookmark the post
-        const { error } = await supabase
-          .from('bookmarks')
-          .delete()
-          .eq('user_id', userId)
-          .eq('post_id', specificPostId);
-          
-        if (error) throw error;
-        
+        await djangoApi.unbookmarkPost(parseInt(targetPostId));
         toast.info('Lesezeichen entfernt');
+        
+        // Update local state if this is the current post
+        if (targetPostId === postId) {
+          setBookmarked(false);
+        }
+        
         return { success: true, isBookmarked: false };
       } else {
         // Bookmark the post
-        const { error } = await supabase
-          .from('bookmarks')
-          .insert({
-            user_id: userId,
-            post_id: specificPostId
-          });
-          
-        if (error) throw error;
-        
+        await djangoApi.bookmarkPost(parseInt(targetPostId));
         toast.success('Zu Lesezeichen hinzugefügt');
+        
+        // Update local state if this is the current post
+        if (targetPostId === postId) {
+          setBookmarked(true);
+        }
+        
         return { success: true, isBookmarked: true };
       }
     } catch (error) {
-      console.error('Error toggling bookmark:', error);
+      console.error('[useBookmarks] Error toggling bookmark:', error);
       toast.error('Fehler beim Setzen des Lesezeichens');
       return { success: false, isBookmarked: false };
     }
-  };
+  }, [currentUserId, postId, getBookmarkedStatus]);
+
+  // Initialize bookmark status when component mounts
+  useEffect(() => {
+    if (currentUserId && postId) {
+      checkBookmarkStatus();
+    }
+  }, [currentUserId, postId, checkBookmarkStatus]);
 
   return {
     bookmarked,
     setBookmarked,
+    isLoading,
+    isProcessing,
     handleBookmark,
     checkBookmarkStatus,
     getBookmarkedStatus,
@@ -162,26 +167,21 @@ export const useBookmarks = (postId?: string, userId?: string) => {
   };
 };
 
-// Fix: Create a useGeneralBookmarks hook that properly manages authentication state
+/**
+ * Hook für allgemeine Lesezeichen-Funktionen ohne spezifischen Post
+ */
 export const useGeneralBookmarks = () => {
-  const [userId, setUserId] = useState<string | undefined>(undefined);
+  const { profile } = useProfile();
+  const userId = profile?.id?.toString();
 
-  useEffect(() => {
-    const fetchUserId = async () => {
-      const { data } = await supabase.auth.getSession();
-      setUserId(data?.session?.user?.id);
-    };
-    
-    fetchUserId();
-  }, []);
-
-  // Use the base useBookmarks hook with the userId
+  // Use the base useBookmarks hook without a specific postId
   const bookmarkHook = useBookmarks(undefined, userId);
   
   return {
-    ...bookmarkHook,
-    // Ensure we're only exposing the functions that don't rely on a specific postId
+    // Expose only the general functions
     getBookmarkedStatus: bookmarkHook.getBookmarkedStatus,
-    toggleBookmark: bookmarkHook.toggleBookmark
+    toggleBookmark: bookmarkHook.toggleBookmark,
+    isLoading: bookmarkHook.isLoading,
+    isProcessing: bookmarkHook.isProcessing
   };
 };

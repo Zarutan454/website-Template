@@ -63,7 +63,7 @@ export const useTokenAnalytics = (tokenId: string) => {
         
         let filteredHistory = historyData || [];
         const now = new Date();
-        let cutoffDate = new Date();
+        const cutoffDate = new Date();
         
         if (timeRange === "24h") {
           cutoffDate.setHours(now.getHours() - 24);

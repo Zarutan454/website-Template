@@ -35,6 +35,26 @@ interface PostAuthor {
   is_verified?: boolean;
 }
 
+interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  author_id: string;
+  author?: PostAuthor;
+  user?: PostAuthor;
+  user_liked?: boolean;
+  like_count?: number;
+}
+
+interface UserData {
+  id: string;
+  username?: string;
+  display_name?: string;
+  avatar_url?: string;
+  is_verified?: boolean;
+  role?: string;
+}
+
 interface PostData {
   id: string;
   content: string;
@@ -66,11 +86,11 @@ interface PostData {
 
 interface OptimizedPostCardProps {
   post: PostData;
-  currentUser?: any;
+  currentUser?: UserData | null;
   isDarkMode?: boolean;
   showMiningRewards?: boolean;
   onLike: (postId: string) => Promise<boolean>;
-  onComment?: (postId: string, content: string) => Promise<any>;
+  onComment?: (postId: string, content: string) => Promise<Comment>;
   onShare?: (postId: string) => Promise<boolean>;
   onDelete?: (postId: string) => Promise<boolean>;
   onReport?: (postId: string, reason: string) => Promise<boolean>;
@@ -88,7 +108,7 @@ const OptimizedPostCard: React.FC<OptimizedPostCardProps> = ({
   onReport
 }) => {
   const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [isLiked, setIsLiked] = useState(post.is_liked || false);
   const [likesCount, setLikesCount] = useState(post.likes_count || 0);

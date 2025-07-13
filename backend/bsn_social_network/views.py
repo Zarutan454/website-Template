@@ -21,11 +21,16 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.exceptions import ValidationError
 import os
 from django.conf import settings
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .models import NFT
 
 from .models import *
 from .serializers import *
 from .models import FollowRelationship
 from .services.mining_service import MiningService
+from .services.story_service import StoryService
 from .permissions import IsOwnerOrAdmin, CanViewGroup
 
 logger = logging.getLogger(__name__)
@@ -98,6 +103,105 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         # Logging für Debugging
         print(f"[UserProfileView] API-Response: {data}")
         return Response(data)
+
+class UserProfileAboutView(generics.RetrieveUpdateAPIView):
+    """
+    Dedicated view for user profile about section with enhanced validation
+    """
+    serializer_class = UserProfileAboutSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_object(self):
+        return self.request.user
+    
+    def retrieve(self, request, *args, **kwargs):
+        """Get user profile about data"""
+        user = self.get_object()
+        
+        # Get UserProfile data if it exists
+        try:
+            profile = user.userprofile
+        except UserProfile.DoesNotExist:
+            profile = UserProfile.objects.create(user=user)
+        
+        # Prepare response data
+        data = {
+            'bio': profile.bio or '',
+            'occupation': profile.occupation or '',
+            'company': profile.company or '',
+            'interests': profile.interests or [],
+            'skills': profile.skills or [],
+            'social_media_links': user.social_media_links or {}
+        }
+        
+        logger.info(f"[UserProfileAboutView] Retrieved about data for user {user.id}: {data}")
+        return Response(data)
+    
+    def update(self, request, *args, **kwargs):
+        """Update user profile about data with validation"""
+        user = self.get_object()
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            logger.info(f"[UserProfileAboutView] Updated about data for user {user.id}")
+            return Response(serializer.data)
+        else:
+            logger.warning(f"[UserProfileAboutView] Validation errors for user {user.id}: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserSocialLinksView(generics.RetrieveUpdateAPIView):
+    """
+    Dedicated view for user social media links with enhanced validation and features
+    """
+    serializer_class = UserSocialLinksSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_object(self):
+        return self.request.user
+    
+    def retrieve(self, request, *args, **kwargs):
+        """Get user social media links with metadata"""
+        user = self.get_object()
+        serializer = self.get_serializer(user)
+        data = serializer.data
+        
+        logger.info(f"[UserSocialLinksView] Retrieved social links for user {user.id}")
+        return Response(data)
+    
+    def update(self, request, *args, **kwargs):
+        """Update user social media links with validation"""
+        user = self.get_object()
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            logger.info(f"[UserSocialLinksView] Updated social links for user {user.id}")
+            return Response(serializer.data)
+        else:
+            logger.warning(f"[UserSocialLinksView] Validation errors for user {user.id}: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def patch(self, request, *args, **kwargs):
+        """Partial update for individual social links"""
+        user = self.get_object()
+        current_links = user.social_media_links or {}
+        
+        # Merge with existing links
+        updated_links = current_links.copy()
+        if 'social_media_links' in request.data:
+            updated_links.update(request.data['social_media_links'])
+        
+        # Validate the merged links
+        serializer = self.get_serializer(user, data={'social_media_links': updated_links}, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            logger.info(f"[UserSocialLinksView] Patched social links for user {user.id}")
+            return Response(serializer.data)
+        else:
+            logger.warning(f"[UserSocialLinksView] Patch validation errors for user {user.id}: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -618,9 +722,121 @@ def claim_tokens(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_achievements(request):
-    """Get all mining achievements for the logged-in user."""
-    # Placeholder implementation
-    return Response([])
+    """Get all available achievements with user progress and pagination."""
+    try:
+        # Get pagination parameters
+        page = int(request.GET.get('page', 1))
+        page_size = min(int(request.GET.get('page_size', 12)), 50)  # Max 50 per page
+        search = request.GET.get('search', '').strip()
+        category = request.GET.get('category', 'all')
+        status = request.GET.get('status', 'all')
+        
+        # Get all achievements with filtering
+        achievements = Achievement.objects.all().order_by('name')
+        
+        # Apply search filter
+        if search:
+            achievements = achievements.filter(
+                Q(name__icontains=search) | Q(description__icontains=search)
+            )
+        
+        # Apply category filter
+        if category != 'all':
+            achievements = achievements.filter(criteria__category=category)
+        
+        # Get user's unlocked achievements
+        user_achievements = UserAchievement.objects.filter(
+            user=request.user
+        ).select_related('achievement')
+        
+        # Create mapping of achievement_id -> user_achievement
+        unlocked_map = {ua.achievement.id: ua for ua in user_achievements}
+        
+        # Build results with progress
+        all_results = []
+        for achievement in achievements:
+            user_achievement = unlocked_map.get(achievement.id)
+            
+            # Calculate progress based on achievement criteria
+            progress = 0
+            is_completed = False
+            
+            if user_achievement:
+                progress = 100
+                is_completed = True
+            else:
+                # TODO: Implement dynamic progress calculation based on criteria
+                progress = 0
+            
+            result_item = {
+                'id': achievement.id,
+                'name': achievement.name,
+                'description': achievement.description,
+                'criteria': achievement.criteria,
+                'reward': achievement.reward,
+                'progress': progress,
+                'max_progress': 100,
+                'is_completed': is_completed,
+                'unlocked_at': user_achievement.unlocked_at.isoformat() if user_achievement else None,
+                'category': achievement.criteria.get('category', 'general') if achievement.criteria else 'general',
+                'points': achievement.criteria.get('points', 0) if achievement.criteria else 0,
+                'token_reward': achievement.criteria.get('token_reward', 0) if achievement.criteria else 0,
+            }
+            all_results.append(result_item)
+        
+        # Apply status filter after building results (since it depends on calculated fields)
+        if status != 'all':
+            if status == 'completed':
+                all_results = [r for r in all_results if r['is_completed']]
+            elif status == 'in_progress':
+                all_results = [r for r in all_results if r['progress'] > 0 and not r['is_completed']]
+            elif status == 'locked':
+                all_results = [r for r in all_results if r['progress'] == 0 and not r['is_completed']]
+        
+        # Calculate pagination
+        total_count = len(all_results)
+        total_pages = (total_count + page_size - 1) // page_size
+        start_index = (page - 1) * page_size
+        end_index = start_index + page_size
+        paginated_results = all_results[start_index:end_index]
+        
+        # Calculate stats for all achievements (not just current page)
+        completed_count = sum(1 for r in all_results if r['is_completed'])
+        in_progress_count = sum(1 for r in all_results if r['progress'] > 0 and not r['is_completed'])
+        total_points = sum(r['points'] for r in all_results)
+        earned_points = sum(r['points'] for r in all_results if r['is_completed'])
+        total_tokens = sum(r['token_reward'] for r in all_results)
+        earned_tokens = sum(r['token_reward'] for r in all_results if r['is_completed'])
+        
+        return Response({
+            'results': paginated_results,
+            'pagination': {
+                'page': page,
+                'page_size': page_size,
+                'total_pages': total_pages,
+                'total_count': total_count,
+                'has_next': page < total_pages,
+                'has_previous': page > 1,
+            },
+            'stats': {
+                'total': total_count,
+                'completed': completed_count,
+                'in_progress': in_progress_count,
+                'total_points': total_points,
+                'earned_points': earned_points,
+                'total_tokens': total_tokens,
+                'earned_tokens': earned_tokens,
+            },
+            'filters': {
+                'search': search,
+                'category': category,
+                'status': status,
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching achievements: {e}")
+        return Response({'error': 'Failed to fetch achievements'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
@@ -892,6 +1108,26 @@ class NFTViewSet(ReadOnlyModelViewSet):
             return NFT.objects.all().select_related('owner', 'creator')
         else:
             return NFT.objects.none()
+
+class NFTLikeView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, nft_id):
+        nft = NFT.objects.filter(id=nft_id).first()
+        if not nft:
+            return Response({'error': 'NFT not found.'}, status=404)
+        nft.likes = (nft.likes or 0) + 1
+        nft.save(update_fields=['likes'])
+        return Response({'likes': nft.likes})
+
+class NFTViewView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, nft_id):
+        nft = NFT.objects.filter(id=nft_id).first()
+        if not nft:
+            return Response({'error': 'NFT not found.'}, status=404)
+        nft.views = (nft.views or 0) + 1
+        nft.save(update_fields=['views'])
+        return Response({'views': nft.views})
 
 # ========== Notification Views ==========
 
@@ -1322,6 +1558,7 @@ def get_my_stories(request):
 def get_following_stories(request):
     """
     Get stories from users that the current user is following
+    Returns StoryGroup[] instead of Story[] for frontend compatibility
     """
     try:
         now = timezone.now()
@@ -1337,7 +1574,30 @@ def get_following_stories(request):
             expires_at__gt=now
         ).select_related('author').order_by('-created_at')
         
-        serializer = StorySerializer(stories, many=True, context={'request': request})
+        # Group stories by user
+        story_groups = []
+        for user_id in following_users:
+            user_stories = [s for s in stories if s.author_id == user_id]
+            if user_stories:
+                # Check if any story is unviewed by current user
+                has_unviewed = any(
+                    not StoryView.objects.filter(
+                        story=story,
+                        user=request.user
+                    ).exists()
+                    for story in user_stories
+                )
+                
+                story_groups.append({
+                    'user_id': user_id,
+                    'username': user_stories[0].author.username,
+                    'display_name': user_stories[0].author.display_name or user_stories[0].author.username,
+                    'avatar_url': user_stories[0].author.avatar_url or '',
+                    'stories': user_stories,
+                    'hasUnviewed': has_unviewed
+                })
+        
+        serializer = StoryGroupSerializer(story_groups, many=True, context={'request': request})
         return Response(serializer.data)
     except Exception as e:
         logger.error(f"Error fetching following stories: {e}")
@@ -1400,3 +1660,457 @@ def upload_media(request):
         return Response({'url': media_url}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# ========== Story Management Views ==========
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def cleanup_expired_stories_manual(request):
+    """
+    Manueller Story-Cleanup (nur für Admins)
+    """
+    try:
+        # Prüfe ob User Admin ist
+        if not request.user.is_staff:
+            return Response(
+                {'error': 'Admin privileges required'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        dry_run = request.data.get('dry_run', False)
+        
+        # Führe Cleanup durch
+        stats = StoryService.cleanup_expired_stories(dry_run=dry_run)
+        
+        # Markiere Cleanup als abgeschlossen
+        if not dry_run:
+            StoryService.mark_cleanup_completed()
+        
+        return Response({
+            'message': 'Story cleanup completed',
+            'stats': stats,
+            'dry_run': dry_run
+        })
+        
+    except Exception as e:
+        logger.error(f"Manual story cleanup failed: {e}")
+        return Response(
+            {'error': 'Cleanup failed', 'details': str(e)}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_story_statistics(request):
+    """
+    Story-Statistiken abrufen
+    """
+    try:
+        stats = StoryService.get_story_stats()
+        return Response(stats)
+        
+    except Exception as e:
+        logger.error(f"Error fetching story statistics: {e}")
+        return Response(
+            {'error': 'Failed to fetch statistics'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+# ========== Story Interactions Views ==========
+
+@api_view(['POST', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def story_like_toggle(request, story_id):
+    """
+    Toggle like on a story
+    """
+    try:
+        story = get_object_or_404(Story, id=story_id)
+        user = request.user
+        
+        if request.method == 'POST':
+            # Check if user already liked the story
+            existing_like = StoryLike.objects.filter(story=story, user=user).first()
+            
+            if existing_like:
+                # Unlike the story
+                existing_like.delete()
+                liked = False
+            else:
+                # Like the story
+                StoryLike.objects.create(story=story, user=user)
+                liked = True
+            
+            # Return updated story data
+            serializer = StorySerializer(story, context={'request': request})
+            return Response({
+                'story': serializer.data,
+                'liked': liked,
+                'likes_count': story.likes.count()
+            })
+            
+        elif request.method == 'DELETE':
+            # Unlike the story
+            existing_like = StoryLike.objects.filter(story=story, user=user).first()
+            if existing_like:
+                existing_like.delete()
+            
+            serializer = StorySerializer(story, context={'request': request})
+            return Response({
+                'story': serializer.data,
+                'liked': False,
+                'likes_count': story.likes.count()
+            })
+            
+    except Story.DoesNotExist:
+        return Response({'error': 'Story not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Error in story_like_toggle: {e}")
+        return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def story_comments(request, story_id):
+    """
+    Get comments for a story or create a new comment
+    """
+    try:
+        story = get_object_or_404(Story, id=story_id)
+        
+        if request.method == 'GET':
+            # Get all comments for the story
+            comments = StoryComment.objects.filter(story=story).select_related('user').order_by('created_at')
+            serializer = StoryCommentSerializer(comments, many=True)
+            return Response(serializer.data)
+            
+        elif request.method == 'POST':
+            # Create a new comment
+            serializer = StoryCommentSerializer(data=request.data)
+            if serializer.is_valid():
+                comment = serializer.save(story=story, user=request.user)
+                
+                # Return the created comment
+                response_serializer = StoryCommentSerializer(comment)
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+    except Story.DoesNotExist:
+        return Response({'error': 'Story not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Error in story_comments: {e}")
+        return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def story_comment_delete(request, story_id, comment_id):
+    """
+    Delete a comment on a story (only by comment author or story author)
+    """
+    try:
+        comment = get_object_or_404(StoryComment, id=comment_id, story_id=story_id)
+        
+        # Check if user can delete the comment
+        if comment.user != request.user and comment.story.author != request.user:
+            return Response(
+                {'error': 'Not authorized to delete this comment'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        comment.delete()
+        return Response({'message': 'Comment deleted successfully'})
+        
+    except StoryComment.DoesNotExist:
+        return Response({'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Error in story_comment_delete: {e}")
+        return Response(
+            {'error': 'Failed to delete comment'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def story_share(request, story_id):
+    """
+    Share a story
+    """
+    try:
+        story = get_object_or_404(Story, id=story_id)
+        
+        serializer = StoryShareSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            share_data = serializer.validated_data
+            share_data['story'] = story
+            share_data['user'] = request.user
+            
+            # Handle different share types
+            share_type = share_data.get('share_type', 'copy_link')
+            
+            if share_type == 'direct_message':
+                shared_with_id = request.data.get('shared_with')
+                if shared_with_id:
+                    try:
+                        shared_with = User.objects.get(id=shared_with_id)
+                        share_data['shared_with'] = shared_with
+                        
+                        # Create notification for shared user
+                        Notification.objects.create(
+                            user=shared_with,
+                            type='message',
+                            reference_id=story.id
+                        )
+                    except User.DoesNotExist:
+                        return Response(
+                            {'error': 'User not found'}, 
+                            status=status.HTTP_404_NOT_FOUND
+                        )
+            
+            serializer.save(**share_data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+    except Exception as e:
+        logger.error(f"Error in story_share: {e}")
+        return Response(
+            {'error': 'Failed to share story'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def story_bookmark_toggle(request, story_id):
+    """
+    Bookmark/Unbookmark a story
+    """
+    try:
+        story = get_object_or_404(Story, id=story_id)
+        
+        if request.method == 'POST':
+            # Bookmark the story
+            bookmark, created = StoryBookmark.objects.get_or_create(
+                story=story,
+                user=request.user
+            )
+            
+            if created:
+                return Response({
+                    'message': 'Story bookmarked successfully',
+                    'bookmarked': True
+                })
+            else:
+                return Response({
+                    'message': 'Story already bookmarked',
+                    'bookmarked': True
+                })
+        
+        elif request.method == 'DELETE':
+            # Remove bookmark
+            try:
+                bookmark = StoryBookmark.objects.get(story=story, user=request.user)
+                bookmark.delete()
+                return Response({
+                    'message': 'Story bookmark removed successfully',
+                    'bookmarked': False
+                })
+            except StoryBookmark.DoesNotExist:
+                return Response({
+                    'message': 'Story not bookmarked',
+                    'bookmarked': False
+                })
+                
+    except Exception as e:
+        logger.error(f"Error in story_bookmark_toggle: {e}")
+        return Response(
+            {'error': 'Failed to toggle bookmark'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def story_bookmarks(request):
+    """
+    Get user's bookmarked stories
+    """
+    try:
+        bookmarks = StoryBookmark.objects.filter(
+            user=request.user,
+            story__expires_at__gt=timezone.now()
+        ).select_related('story', 'story__author').order_by('-created_at')
+        
+        stories = [bookmark.story for bookmark in bookmarks]
+        serializer = StoryInteractionSerializer(stories, many=True, context={'request': request})
+        
+        return Response(serializer.data)
+        
+    except Exception as e:
+        logger.error(f"Error in story_bookmarks: {e}")
+        return Response(
+            {'error': 'Failed to fetch bookmarks'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+# Follow/Unfollow API Views
+class FollowUserView(APIView):
+    """
+    Follow a user
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        serializer = FollowRequestSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            user_id = serializer.validated_data['user_id']
+            target_user = User.objects.get(id=user_id)
+            
+            # Check if already following
+            if FollowRelationship.objects.filter(user=request.user, friend=target_user).exists():
+                return Response({
+                    'message': f'You are already following {target_user.username}',
+                    'is_following': True
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Create follow relationship
+            follow_relationship = FollowRelationship.objects.create(
+                user=request.user,
+                friend=target_user
+            )
+            
+            # Create notification (optional)
+            # Notification.objects.create(
+            #     user=target_user,
+            #     type='follow',
+            #     reference_id=request.user.id
+            # )
+            
+            return Response({
+                'message': f'You are now following {target_user.username}',
+                'is_following': True,
+                'follow_relationship': FollowRelationshipSerializer(follow_relationship).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UnfollowUserView(APIView):
+    """
+    Unfollow a user
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def delete(self, request, user_id):
+        try:
+            target_user = User.objects.get(id=user_id)
+            
+            # Check if following
+            follow_relationship = FollowRelationship.objects.filter(
+                user=request.user,
+                friend=target_user
+            ).first()
+            
+            if not follow_relationship:
+                return Response({
+                    'message': f'You are not following {target_user.username}',
+                    'is_following': False
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Delete follow relationship
+            follow_relationship.delete()
+            
+            return Response({
+                'message': f'You have unfollowed {target_user.username}',
+                'is_following': False
+            }, status=status.HTTP_200_OK)
+            
+        except User.DoesNotExist:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+class FollowersListView(APIView):
+    """
+    Get list of followers for a user
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, user_id):
+        try:
+            target_user = User.objects.get(id=user_id)
+            
+            # Get followers (users who follow this user)
+            followers = FollowRelationship.objects.filter(friend=target_user).select_related('user')
+            
+            # Check if current user is following this user
+            is_following = FollowRelationship.objects.filter(
+                user=request.user,
+                friend=target_user
+            ).exists()
+            
+            return Response({
+                'followers': FollowRelationshipSerializer(followers, many=True).data,
+                'followers_count': followers.count(),
+                'is_following': is_following
+            }, status=status.HTTP_200_OK)
+            
+        except User.DoesNotExist:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+class FollowingListView(APIView):
+    """
+    Get list of users that a user is following
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, user_id):
+        try:
+            target_user = User.objects.get(id=user_id)
+            
+            # Get following (users this user follows)
+            following = FollowRelationship.objects.filter(user=target_user).select_related('friend')
+            
+            # Check if current user is following this user
+            is_following = FollowRelationship.objects.filter(
+                user=request.user,
+                friend=target_user
+            ).exists()
+            
+            return Response({
+                'following': FollowRelationshipSerializer(following, many=True).data,
+                'following_count': following.count(),
+                'is_following': is_following
+            }, status=status.HTTP_200_OK)
+            
+        except User.DoesNotExist:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+class FollowStatusView(APIView):
+    """
+    Check if current user is following a specific user
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, user_id):
+        try:
+            target_user = User.objects.get(id=user_id)
+            
+            is_following = FollowRelationship.objects.filter(
+                user=request.user,
+                friend=target_user
+            ).exists()
+            
+            return Response({
+                'is_following': is_following,
+                'target_user': {
+                    'id': target_user.id,
+                    'username': target_user.username
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except User.DoesNotExist:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)

@@ -306,9 +306,78 @@ class StoryView(models.Model):
         # Ensures a user can only view a story once
         unique_together = ('story', 'user')
         ordering = ['-viewed_at']
+        db_table = 'story_view'
 
     def __str__(self):
-        return f"{self.user.username} viewed Story {self.story.id}"
+        return f"{self.user.username} viewed {self.story.author.username}'s story"
+
+class StoryLike(models.Model):
+    """ Tracks likes on stories. """
+    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='story_likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Ensures a user can only like a story once
+        unique_together = ('story', 'user')
+        ordering = ['-created_at']
+        db_table = 'story_like'
+
+    def __str__(self):
+        return f"{self.user.username} liked {self.story.author.username}'s story"
+
+class StoryComment(models.Model):
+    """ Comments on stories. """
+    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='story_comments')
+    content = models.TextField(max_length=500)  # Limit comment length
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['created_at']
+        db_table = 'story_comment'
+
+    def __str__(self):
+        return f"{self.author.username} commented on {self.story.author.username}'s story"
+
+class StoryShare(models.Model):
+    """ Tracks story shares. """
+    SHARE_TYPES = [
+        ('copy_link', 'Copy Link'),
+        ('direct_message', 'Direct Message'),
+        ('post', 'Share as Post'),
+        ('external', 'External Platform'),
+    ]
+    
+    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='shares')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='story_shares')
+    share_type = models.CharField(max_length=20, choices=SHARE_TYPES, default='copy_link')
+    shared_with = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='story_shared_with')
+    external_platform = models.CharField(max_length=50, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        db_table = 'story_share'
+
+    def __str__(self):
+        return f"{self.user.username} shared {self.story.author.username}'s story"
+
+class StoryBookmark(models.Model):
+    """ Bookmarks for stories. """
+    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='bookmarks')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='story_bookmarks')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Ensures a user can only bookmark a story once
+        unique_together = ('story', 'user')
+        ordering = ['-created_at']
+        db_table = 'story_bookmark'
+
+    def __str__(self):
+        return f"{self.user.username} bookmarked {self.story.author.username}'s story"
 
 class Notification(models.Model):
     '''
@@ -498,6 +567,9 @@ class NFT(models.Model):
     is_locked = models.BooleanField(default=False)
     transaction_hash = models.CharField(max_length=64, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    # Statistiken
+    views = models.IntegerField(default=0)
+    likes = models.IntegerField(default=0)
     
     class Meta:
         db_table = 'nft'

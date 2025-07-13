@@ -10,15 +10,44 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
+interface CommentAuthor {
+  id: string;
+  username?: string;
+  display_name?: string;
+  avatar_url?: string;
+  is_verified?: boolean;
+  role?: string;
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  author_id: string;
+  author?: CommentAuthor;
+  user?: CommentAuthor;
+  user_liked?: boolean;
+  like_count?: number;
+}
+
+interface UserData {
+  id: string;
+  username?: string;
+  display_name?: string;
+  avatar_url?: string;
+  is_verified?: boolean;
+  role?: string;
+}
+
 interface PostCommentSectionProps {
-  comments: any[];
+  comments: Comment[];
   isLoading: boolean;
   commentContent: string;
   setCommentContent: (content: string) => void;
   onCommentSubmit: () => void;
-  currentUser: any;
+  currentUser: UserData | null;
   darkMode?: boolean;
-  onLoadComments?: () => Promise<any[]>;
+  onLoadComments?: () => Promise<Comment[]>;
   onDeleteComment?: (commentId: string) => Promise<boolean>;
   onLikeComment?: (commentId: string) => Promise<boolean>;
 }

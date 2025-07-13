@@ -56,6 +56,7 @@ const SearchPage: React.FC = () => {
         const related = await findRelatedUsers(profile.id, 10);
         setSuggestedUsers(related);
       } catch (error) {
+        console.error('Error loading suggestions:', error);
       } finally {
         setIsLoadingSuggestions(false);
       }

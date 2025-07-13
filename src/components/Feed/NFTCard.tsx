@@ -80,6 +80,7 @@ const NFTCard: React.FC<NFTCardProps> = ({
           await recordActivity('nft_share', 5, 0.5);
           toast.success("+0.5 BSN durch NFT-Share!");
         } catch (error) {
+          console.error('Fehler bei Mining-Aktivität für NFT-Share:', error);
         }
       }
     } catch (error) {

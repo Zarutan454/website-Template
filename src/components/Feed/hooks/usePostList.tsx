@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useProfile } from '@/hooks/useProfile';
-import { usePosts } from '@/hooks/usePosts';
 import { useNavigate } from 'react-router-dom';
-import { toast } from "sonner";
+import { useAuth } from '@/context/AuthContext';
+import { usePosts } from '@/hooks/post/usePostsFetch';
 import { useTheme } from '@/components/ThemeProvider';
 import { postRepository } from '@/repositories/PostRepository';
+import { toast } from 'sonner';
+import { Post } from '@/types/post';
 
 export const usePostList = (feedType: 'foryou' | 'following' | 'recent' | 'popular' | 'nfts' = 'foryou') => {
+  const { user: profile, isAuthenticated, isLoading: profileLoading } = useAuth();
   const { theme } = useTheme();
-  const { profile, isAuthenticated, isLoading: profileLoading } = useProfile();
   const [showFilters, setShowFilters] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string | null>("Neueste");
-  const [filteredPosts, setFilteredPosts] = useState<any[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
   const navigate = useNavigate();
   
   const { 
@@ -31,6 +32,8 @@ export const usePostList = (feedType: 'foryou' | 'following' | 'recent' | 'popul
 
   useEffect(() => {
     if (posts.length > 0 && adaptedPosts.length === 0) {
+      // Handle case where posts exist but adaptedPosts is empty
+      console.log('Posts available but adaptedPosts empty');
     }
   }, [posts, adaptedPosts, isLoading, error, isAuthenticated, profileLoading]);
 

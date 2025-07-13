@@ -55,12 +55,13 @@ const VirtualizedFeedList: React.FC<VirtualizedFeedListProps> = ({
     overscan: 5, // Number of items to render outside of the viewport
   });
 
-  // Ensure parent element has height
+  // All hooks are called at the top level, complying with React rules-of-hooks.
+  // useEffect depends on posts.length and virtualizer.getTotalSize() value, not the function reference.
   useEffect(() => {
     if (parentRef.current) {
       parentRef.current.style.height = `${virtualizer.getTotalSize()}px`;
     }
-  }, [posts.length, virtualizer.getTotalSize]);
+  }, [posts.length, virtualizer.getTotalSize()]);
 
   if (isLoading) {
     return <FeedLoading />;

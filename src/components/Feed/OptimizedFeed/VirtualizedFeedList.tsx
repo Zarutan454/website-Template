@@ -4,6 +4,7 @@ import { useTheme } from '@/components/ThemeProvider';
 import { useInView } from 'react-intersection-observer';
 import { toast } from 'sonner';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { Post } from '@/types/post';
 
 // Import unserer optimierten Komponenten
 import PostRenderer from './PostRenderer';
@@ -14,19 +15,37 @@ import ScrollToTopButton from './ScrollToTopButton';
 import LoadMoreTrigger from './LoadMoreTrigger';
 import ScrollOptimizer from './ScrollOptimizer';
 
+interface User {
+  id: string;
+  username: string;
+  display_name?: string;
+  avatar_url?: string;
+  is_verified?: boolean;
+}
+
+interface FeedComment {
+  id: string;
+  content: string;
+  author: User;
+  created_at: string;
+  likes_count: number;
+  is_liked: boolean;
+  author_id?: string; // Optional für Kompatibilität
+}
+
 interface VirtualizedFeedListProps {
-  posts: any[];
+  posts: Post[];
   isLoading: boolean;
   hasMore: boolean;
   onLoadMore: () => void;
   onLike: (postId: string) => Promise<boolean>;
   onDelete: (postId: string) => Promise<boolean>;
-  onComment: (postId: string, content: string) => Promise<any>;
-  onGetComments: (postId: string) => Promise<any[]>;
+  onComment: (postId: string, content: string) => Promise<FeedComment>;
+  onGetComments: (postId: string) => Promise<FeedComment[]>;
   onShare: (postId: string) => Promise<boolean>;
   onReport?: (postId: string, reason: string) => Promise<boolean>;
   showMiningRewards?: boolean;
-  currentUser: any;
+  currentUser: User;
   error?: Error | null;
   onRetry?: () => void;
 }
@@ -112,12 +131,12 @@ const VirtualizedFeedList: React.FC<VirtualizedFeedListProps> = ({
       }
       
       // Zusätzliche Höhe für Medien
-      if (post.media_url || post.image_url) {
+      if (post.image_url) {
         estimatedHeight += 300;
       }
       
       // Zusätzliche Höhe für Video/YouTube
-      if (post.media_type === 'video' || post.video_url || post.content?.includes('youtube.com')) {
+      if (post.content?.includes('youtube.com')) {
         estimatedHeight += 350;
       }
       
@@ -152,7 +171,7 @@ const VirtualizedFeedList: React.FC<VirtualizedFeedListProps> = ({
         currentlyVisible.add(post.id);
         
         // Intelligenteres Preload-Fenster basierend auf Scroll-Richtung und Geschwindigkeit
-        const preloadWindow = scrollY > (rowVirtualizer as any).scrollOffset ? 5 : 2;
+        const preloadWindow = scrollY > (rowVirtualizer as { scrollOffset: number }).scrollOffset ? 5 : 2;
         for (let i = 1; i <= preloadWindow; i++) {
           const preloadIndex = virtualRow.index + i;
           if (preloadIndex < posts.length) {
@@ -179,7 +198,7 @@ const VirtualizedFeedList: React.FC<VirtualizedFeedListProps> = ({
   }, [posts, rowVirtualizer, visiblePostIds, preloadedPostIds]);
   
   // Debounced trackVisiblePosts für bessere Performance
-  const debouncedTrackRef = useRef<any>(null);
+  const debouncedTrackRef = useRef<NodeJS.Timeout | null>(null);
   const trackVisiblePosts = useCallback((scrollY: number) => {
     if (debouncedTrackRef.current) {
       clearTimeout(debouncedTrackRef.current);
@@ -244,6 +263,22 @@ const VirtualizedFeedList: React.FC<VirtualizedFeedListProps> = ({
     });
   }, [rowVirtualizer, posts]);
 
+  // Scroll to top function - moved before conditional returns
+  const scrollToTop = useCallback(() => {
+    const scrollElement = document.querySelector('[data-testid="scroll-optimizer"]');
+    if (scrollElement) {
+      scrollElement.scrollTo({
+        top: 0,
+        behavior: deviceCapabilities.isReducedMotionPreferred ? 'auto' : 'smooth'
+      });
+      console.log("[VirtualizedFeedList] User scrolled to top");
+      toast.success("Zum Anfang gescrollt", {
+        duration: 1500,
+        position: "bottom-right"
+      });
+    }
+  }, [deviceCapabilities.isReducedMotionPreferred]);
+
   // Error state
   if (error) {
     return <ErrorMessage error={error} onRetry={onRetry} />;
@@ -259,21 +294,6 @@ const VirtualizedFeedList: React.FC<VirtualizedFeedListProps> = ({
     return <FeedLoadingSkeleton count={3} darkMode={isDarkMode} />;
   }
   
-  const scrollToTop = useCallback(() => {
-    const scrollElement = document.querySelector('[data-testid="scroll-optimizer"]');
-    if (scrollElement) {
-      scrollElement.scrollTo({
-        top: 0,
-        behavior: deviceCapabilities.isReducedMotionPreferred ? 'auto' : 'smooth'
-      });
-      console.log("[VirtualizedFeedList] User scrolled to top");
-      toast.success("Zum Anfang gescrollt", {
-        duration: 1500,
-        position: "bottom-right"
-      });
-    }
-  }, [deviceCapabilities.isReducedMotionPreferred]);
-  
   return (
     <ScrollOptimizer 
       onScroll={handleScroll}
@@ -282,9 +302,6 @@ const VirtualizedFeedList: React.FC<VirtualizedFeedListProps> = ({
       className="w-full"
     >
       <div
-        aria-live="polite"
-        aria-busy={isLoading}
-        role="feed"
         data-testid="virtualized-feed-container"
       >
         {/* Virtualized items container */}
@@ -307,8 +324,8 @@ const VirtualizedFeedList: React.FC<VirtualizedFeedListProps> = ({
               currentUser={currentUser}
               onLike={onLike}
               onDelete={onDelete}
-              onComment={onComment}
-              onGetComments={onGetComments}
+              onComment={onComment as any}
+              onGetComments={onGetComments as any}
               onShare={onShare}
               onReport={onReport}
               onMeasureHeight={(height) => measurePostHeight(post.id, height)}

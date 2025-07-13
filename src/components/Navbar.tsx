@@ -1,8 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useProfile } from '@/hooks/useProfile';
-import { Bell, MessageSquare, Search, Menu, X, LogOut, Settings, User, Globe } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { useNotifications } from '@/hooks/useNotifications';
+import { useMining } from '@/hooks/useMining';
+import { useUserRelationships } from '@/hooks/useUserRelationships';
+import { useSidebarData } from '@/hooks/useSidebarData';
+import { userAPI } from '@/lib/django-api-new';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from './ThemeToggle';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -16,16 +21,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from '@/components/ThemeProvider';
 import Logo from '@/components/Logo';
-import { authAPI } from '@/lib/django-api-new';
-import { toast } from 'sonner';
 import { MessagesBadge } from './Messaging/MessagesBadge';
 import { NotificationsBadge } from './notifications/NotificationsBadge';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useLanguage } from '@/components/LanguageProvider';
 import { getFullUrl } from '@/utils/url';
+import { Search, Bell, MessageSquare, Globe, Menu, X, Settings, User, LogOut } from 'lucide-react';
 
 const Navbar = () => {
-  const { profile, isLoading } = useProfile();
+  const { user, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
@@ -35,7 +39,6 @@ const Navbar = () => {
   const { language, setLanguage } = useLanguage();
   
   const isLandingPage = location.pathname === '/';
-  const isAuthenticated = !!profile;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -48,9 +51,8 @@ const Navbar = () => {
 
   const handleSignOut = async () => {
     try {
-      await authAPI.logout();
+      await logout();
       navigate('/login');
-      toast.success('Erfolgreich abgemeldet');
     } catch (error: unknown) {
       toast.error('Fehler beim Abmelden');
     }
@@ -58,8 +60,8 @@ const Navbar = () => {
 
   // Navigate to user profile with the correct username
   const navigateToProfile = () => {
-    if (profile?.username) {
-      navigate(`/profile/${profile.username}`);
+    if (user?.username) {
+      navigate(`/profile/${user.username}`);
       if (mobileMenuOpen) {
         setMobileMenuOpen(false);
       }
@@ -151,6 +153,12 @@ const Navbar = () => {
                     </Button>
                   </Link>
                   
+                  <Link to="/achievements">
+                    <Button variant="ghost" size="sm" className="nav-item">
+                      Achievements
+                    </Button>
+                  </Link>
+                  
                   <Link to="/wallet">
                     <Button variant="ghost" size="sm" className="nav-item">
                       Wallet
@@ -225,9 +233,9 @@ const Navbar = () => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={getFullUrl(profile?.avatar_url)} />
+                        <AvatarImage src={getFullUrl(user?.avatar_url)} />
                         <AvatarFallback className="bg-primary/10 text-primary">
-                          {profile?.username?.[0]?.toUpperCase() || "U"}
+                          {user?.username?.[0]?.toUpperCase() || "U"}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
@@ -496,6 +504,9 @@ const Navbar = () => {
                     </Link>
                     <Link to="/mining" onClick={() => setMobileMenuOpen(false)} className="block p-3 rounded-lg bg-dark-300/30 backdrop-blur-md border border-white/10 hover:bg-dark-200/50 hover:border-primary-500/20 transition-all">
                       {language === 'de' ? 'Mining' : 'Mining'}
+                    </Link>
+                    <Link to="/achievements" onClick={() => setMobileMenuOpen(false)} className="block p-3 rounded-lg bg-dark-300/30 backdrop-blur-md border border-white/10 hover:bg-dark-200/50 hover:border-primary-500/20 transition-all">
+                      🏆 {language === 'de' ? 'Achievements' : 'Achievements'}
                     </Link>
                     <Link to="/wallet" onClick={() => setMobileMenuOpen(false)} className="block p-3 rounded-lg bg-dark-300/30 backdrop-blur-md border border-white/10 hover:bg-dark-200/50 hover:border-primary-500/20 transition-all">
                       {language === 'de' ? 'Wallet' : 'Wallet'}

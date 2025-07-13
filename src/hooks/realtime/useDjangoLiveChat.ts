@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDjangoWebSocket } from './useDjangoWebSocket';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 export interface ChatMessage {

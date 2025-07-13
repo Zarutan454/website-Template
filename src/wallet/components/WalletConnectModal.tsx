@@ -162,7 +162,7 @@ export const WalletConnectModal: React.FC<WalletConnectModalProps> = ({
           </TabsList>
           
           <AnimatePresence mode="wait">
-            <TabsContent value="connect" className="mt-0">
+            <TabsContent key="connect-tab" value="connect" className="mt-0">
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -264,7 +264,7 @@ export const WalletConnectModal: React.FC<WalletConnectModalProps> = ({
               </motion.div>
             </TabsContent>
             
-            <TabsContent value="network" className="mt-0">
+            <TabsContent key="network-tab" value="network" className="mt-0">
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}

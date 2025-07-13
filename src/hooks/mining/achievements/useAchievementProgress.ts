@@ -173,6 +173,7 @@ export const useAchievementProgress = () => {
         await updateAchievementProgress(userId, achievementId, 1);
       }
     } catch (error) {
+      console.error('Error tracking social activity:', error);
     }
   }, [updateAchievementProgress]);
   

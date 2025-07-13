@@ -3,7 +3,7 @@ import { Notification } from '@/types/notifications';
 import { markNotificationAsRead, markAllNotificationsAsRead } from '@/api/notifications/markNotifications';
 import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 export const useNotificationActions = (
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>,

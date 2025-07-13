@@ -1,94 +1,87 @@
-import { useState, useEffect, useCallback } from 'react';
-import { userAPI, UserProfile } from '../lib/django-api-new';
-import { useAuth } from '@/context/AuthContext';
+import { useState, useEffect } from 'react';
+import { userAPI } from '@/lib/django-api-new';
+import type { UserProfile } from '@/lib/django-api-new';
 
-export interface Profile {
-  id: string;
-  username: string;
-  email: string;
-  avatar_url: string | null;
-  cover_url: string | null;
-  bio: string | null;
-  display_name?: string; // Optionales Feld für Kompatibilität
-  // Fügen Sie weitere Profilfelder hinzu, die von Ihrer API zurückgegeben werden
-}
+// Simple in-memory cache for profile data
+const profileCache = new Map<string, { data: UserProfile; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-export function useProfile() {
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
+export const useProfile = (username?: string) => {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  console.log(`[useProfile] Hook called - user: ${user ? user.username : 'null'}, isLoading: ${isLoading}`);
-
-  const fetchProfile = useCallback(async () => {
-    if (!user) {
-      console.log('[useProfile] No user found, setting profile to null');
+  const fetchProfile = async (forceRefresh = false) => {
+    if (!username) {
       setIsLoading(false);
-      setProfile(null);
       return;
     }
 
-    console.log(`[useProfile] Fetching profile for user: ${user.username}`);
+    // Check cache first (unless force refresh)
+    if (!forceRefresh) {
+      const cached = profileCache.get(username);
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        setProfile(cached.data);
+        setIsLoading(false);
+        return;
+      }
+    }
+
     setIsLoading(true);
     setError(null);
+
     try {
-      const response = await userAPI.getProfile();
-      console.log(`[useProfile] Profile fetched successfully:`, response);
-      setProfile(response as Profile);
+      const profileData = await userAPI.getProfileByUsername(username);
+      
+      // Cache the result
+      profileCache.set(username, {
+        data: profileData,
+        timestamp: Date.now()
+      });
+      
+      setProfile(profileData);
     } catch (err) {
-      console.error('[useProfile] Failed to fetch profile:', err);
-      setError('Failed to fetch profile');
-      console.error(err);
+      const errorMessage = err instanceof Error ? err.message : 'Fehler beim Laden des Profils';
+      setError(errorMessage);
+      console.error('Error fetching profile:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  };
+
+  // Separate function to fetch profile by username (for use in components)
+  const fetchProfileByUsername = async (targetUsername: string): Promise<UserProfile> => {
+    // Check cache first
+    const cached = profileCache.get(targetUsername);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return cached.data;
+    }
+
+    try {
+      const profileData = await userAPI.getProfileByUsername(targetUsername);
+      
+      // Cache the result
+      profileCache.set(targetUsername, {
+        data: profileData,
+        timestamp: Date.now()
+      });
+      
+      return profileData;
+    } catch (err) {
+      console.error('Error fetching profile by username:', err);
+      throw err;
+    }
+  };
 
   useEffect(() => {
-    console.log(`[useProfile] useEffect triggered - user changed: ${user ? user.username : 'null'}`);
     fetchProfile();
-  }, [fetchProfile]);
-  
-  const fetchProfileByUsername = useCallback(async (username: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      // Use the generic apiClient for custom endpoints
-      const response = await userAPI.getProfile();
-      return response as Profile;
-    } catch (err) {
-      setError(`Failed to fetch profile for ${username}`);
-      console.error(err);
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  }, [username]);
 
-  const updateProfile = useCallback(async (profileData: Partial<Profile>) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-        const response = await userAPI.getProfile();
-        setProfile(response as Profile);
-        return response as Profile;
-    } catch (err) {
-        setError('Failed to update profile');
-        console.error(err);
-        return null;
-    } finally {
-        setIsLoading(false);
-    }
-  }, []);
-
-  return { 
-    profile, 
-    isLoading, 
-    error, 
-    fetchProfile, 
-    fetchProfileByUsername, 
-    updateProfile,
-    isAuthenticated: !!user
+  return {
+    profile,
+    isLoading,
+    error,
+    refreshProfile: () => fetchProfile(true),
+    fetchProfileByUsername
   };
-} 
+}; 

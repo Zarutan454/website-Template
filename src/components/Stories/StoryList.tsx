@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Camera, Loader2 } from 'lucide-react';
+import { Plus, Camera, Loader2, Clock, AlertCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
 import { useStories, StoryGroup } from '../../hooks/useStories';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import StoryViewer from './StoryViewer';
 import StoryCreator from './StoryCreator';
 
@@ -13,6 +14,37 @@ const BACKEND_ROOT_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost
 interface StoryListProps {
   className?: string;
 }
+
+// Hilfsfunktion für Zeitformatierung
+const formatTimeRemaining = (expiresAt: string): string => {
+  const now = new Date();
+  const expiry = new Date(expiresAt);
+  const diffMs = expiry.getTime() - now.getTime();
+  
+  if (diffMs <= 0) return 'Abgelaufen';
+  
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  
+  if (diffHours > 0) {
+    return `${diffHours}h ${diffMinutes}m`;
+  } else if (diffMinutes > 0) {
+    return `${diffMinutes}m`;
+  } else {
+    return '< 1m';
+  }
+};
+
+// Hilfsfunktion für Story-Status
+const getStoryStatus = (story: { expires_at: string }) => {
+  const now = new Date();
+  const expiry = new Date(story.expires_at);
+  const diffMs = expiry.getTime() - now.getTime();
+  
+  if (diffMs <= 0) return 'expired';
+  if (diffMs < 30 * 60 * 1000) return 'expiring-soon'; // < 30 Minuten
+  return 'active';
+};
 
 const StoryList: React.FC<StoryListProps> = ({ className = '' }) => {
   const { myStories, followingStories, isLoadingMyStories, isLoadingFollowingStories } = useStories();
@@ -112,23 +144,70 @@ const StoryList: React.FC<StoryListProps> = ({ className = '' }) => {
         </div>
         
         {/* Story avatars */}
-        {combinedStories.map((group, index) => (
+        {combinedStories.map((group, index) => {
+          // Finde die neueste Story für Expiration-Anzeige
+          const latestStory = group.stories?.[0];
+          const storyStatus = latestStory ? getStoryStatus(latestStory) : 'active';
+          
+          return (
             <div
               key={group.user_id}
               className="flex flex-col items-center space-y-1 cursor-pointer group flex-shrink-0"
               onClick={() => handleStoryClick(index)}
             >
-              <div className={`relative p-0.5 rounded-full ${group.hasUnviewed ? 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500' : 'bg-gray-300'}`}>
+              <div className={`relative p-0.5 rounded-full ${
+                storyStatus === 'expired' 
+                  ? 'bg-gray-400 opacity-50' 
+                  : group.hasUnviewed 
+                    ? 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500' 
+                    : storyStatus === 'expiring-soon'
+                      ? 'bg-gradient-to-tr from-orange-400 to-red-500'
+                      : 'bg-gray-300'
+              }`}>
                 <Avatar className="w-16 h-16 border-2 border-white dark:border-gray-900">
                   <AvatarImage src={group.avatar_url || ''} alt={group.display_name} />
                   <AvatarFallback>{group.display_name?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
+                
+                {/* Expiration Badge */}
+                {latestStory && storyStatus !== 'active' && (
+                  <div className="absolute -top-1 -right-1">
+                    <Badge 
+                      variant={storyStatus === 'expired' ? 'secondary' : 'destructive'} 
+                      className="text-xs px-1 py-0.5"
+                    >
+                      {storyStatus === 'expired' ? (
+                        <AlertCircle className="w-3 h-3" />
+                      ) : (
+                        <Clock className="w-3 h-3" />
+                      )}
+                    </Badge>
+                  </div>
+                )}
               </div>
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate w-16 text-center">
-                {group.display_name}
-              </span>
+              
+              <div className="flex flex-col items-center space-y-0.5">
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate w-16 text-center">
+                  {group.display_name}
+                </span>
+                
+                {/* Time remaining indicator */}
+                {latestStory && storyStatus !== 'active' && (
+                  <span className={`text-xs ${
+                    storyStatus === 'expired' 
+                      ? 'text-gray-500' 
+                      : 'text-orange-600 dark:text-orange-400'
+                  }`}>
+                    {storyStatus === 'expired' 
+                      ? 'Abgelaufen' 
+                      : formatTimeRemaining(latestStory.expires_at)
+                    }
+                  </span>
+                )}
+              </div>
             </div>
-          ))}
+          );
+        })}
       </div>
 
       <AnimatePresence>

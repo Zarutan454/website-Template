@@ -6,7 +6,7 @@ import { PerspectiveCamera, Environment, useTexture, MeshDistortMaterial } from 
 import { motion } from 'framer-motion';
 import * as THREE from 'three';
 
-interface ParticleFieldProps {}
+type ParticleFieldProps = Record<never, never>;
 
 const ParticleField: React.FC<ParticleFieldProps> = () => {
   const particles = useRef<THREE.Points>(null);
@@ -114,7 +114,7 @@ const ParticleField: React.FC<ParticleFieldProps> = () => {
   );
 };
 
-interface GridFloorProps {}
+type GridFloorProps = Record<never, never>;
 
 const GridFloor: React.FC<GridFloorProps> = () => {
   const grid = useRef<THREE.Mesh>(null);

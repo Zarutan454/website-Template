@@ -9,7 +9,7 @@ import UserRelationshipButton from './UserRelationshipButton';
 import { RelationshipUser } from '@/hooks/useUserRelationships';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 const FriendsList: React.FC = () => {
   const { user: profile } = useAuth();

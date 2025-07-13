@@ -1,9 +1,12 @@
-import { Index, Feed, Dashboard, Profile, NotFound, NotificationSettings, Notifications, ResetPassword, CreateToken, Wallet, Mining, MessagesPage, GroupsOverviewPage, CreateNFT, NFTDetails, NFTMarketplace, SearchPage, FriendsPage, AlbumDetail, CreateNFTCollection, NFTCollection, ReelsPage } from './pages/pages';
+import { Index, Feed, Dashboard, Profile, NotFound, NotificationSettings, Notifications, ResetPassword, CreateToken, Wallet, Mining, MessagesPage, GroupsOverviewPage, CreateNFT, NFTDetails, NFTMarketplace, SearchPage, FriendsPage, AlbumDetail, CreateNFTCollection, NFTCollection, ReelsPage, PostDetail } from './pages/pages';
 import Login3D from './components/landing/Login3D';
 import Register3D from './components/landing/Register3D';
 import ProtectedRoute from './components/ProtectedRoute';
 import TokenCreationPage from './components/TokenCreation/TokenCreationPage';
 import { TestNotificationsPage } from './pages/TestNotificationsPage';
+import AchievementsOverview from './pages/AchievementsOverview';
+import DAOPage from './pages/DAOPage';
+import ICOPage from './pages/ICOPage';
 
 const routes = [
   {
@@ -227,6 +230,38 @@ const routes = [
     element: (
       <ProtectedRoute>
         <NFTCollection />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/achievements',
+    element: (
+      <ProtectedRoute>
+        <AchievementsOverview />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/post/:id',
+    element: (
+      <ProtectedRoute>
+        <PostDetail />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/dao',
+    element: (
+      <ProtectedRoute>
+        <DAOPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/ico',
+    element: (
+      <ProtectedRoute>
+        <ICOPage />
       </ProtectedRoute>
     ),
   },
