@@ -92,7 +92,8 @@ export const FeedStateRenderer: React.FC<FeedStateRendererProps> = ({
   return (
     <VirtualizedFeed
       posts={posts}
-      profile={profile}
+      currentUser={profile}
+      currentUserId={profile?.id?.toString()}
       isLoading={isLoading}
       error={error}
       showMiningRewards={showMiningRewards}

@@ -1,7 +1,7 @@
 // TODO: Diese Datei muss auf Django-API migriert werden. Supabase-Logik wurde entfernt.
 // Platzhalter-Implementierung, damit der Build funktioniert.
 
-export async function loginWithWallet(address: string, walletClient: any): Promise<boolean> {
+export async function loginWithWallet(address: string, walletClient: unknown): Promise<boolean> {
   throw new Error('loginWithWallet: Not implemented. Use Django API.');
 }
 

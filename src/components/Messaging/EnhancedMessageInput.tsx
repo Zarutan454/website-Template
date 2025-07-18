@@ -9,8 +9,11 @@ import {
   Image as ImageIcon, 
   FileText, 
   Film, 
-  Music 
+  Music,
+  Mic,
+  Send
 } from 'lucide-react';
+import { VoiceMessageRecorder } from './components/VoiceMessageRecorder';
 import { useTheme } from '../ThemeProvider';
 import { handleError } from '../common/ErrorHandler';
 import { uploadFile, UploadResult } from '../../utils/storageUtils';
@@ -22,13 +25,15 @@ interface EnhancedMessageInputProps {
   isDisabled: boolean;
   placeholder?: string;
   autoFocus?: boolean;
+  onTyping?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
 const EnhancedMessageInput: React.FC<EnhancedMessageInputProps> = ({ 
   onSendMessage, 
   isDisabled,
   placeholder = "Schreibe eine Nachricht...",
-  autoFocus = true
+  autoFocus = true,
+  onTyping
 }) => {
   const { theme } = useTheme();
   const [message, setMessage] = useState('');
@@ -37,6 +42,7 @@ const EnhancedMessageInput: React.FC<EnhancedMessageInputProps> = ({
   const [attachment, setAttachment] = useState<UploadResult | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +77,7 @@ const EnhancedMessageInput: React.FC<EnhancedMessageInputProps> = ({
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`;
     }
+    onTyping?.(e);
   };
 
   const handleAttachmentClick = () => {
@@ -127,6 +134,11 @@ const EnhancedMessageInput: React.FC<EnhancedMessageInputProps> = ({
 
   const removeAttachment = () => {
     setAttachment(null);
+  };
+
+  const handleVoiceMessageSent = () => {
+    setShowVoiceRecorder(false);
+    // The parent component will handle message refresh
   };
 
   useEffect(() => {
@@ -203,6 +215,8 @@ const EnhancedMessageInput: React.FC<EnhancedMessageInputProps> = ({
             className="hidden"
             onChange={handleFileChange}
             accept="image/*,video/*,audio/*,application/pdf"
+            aria-label="Datei auswählen"
+            title="Datei auswählen"
           />
         </div>
         
@@ -231,6 +245,18 @@ const EnhancedMessageInput: React.FC<EnhancedMessageInputProps> = ({
           </Button>
           
           <Button
+            type="button"
+            disabled={isDisabled || isUploading}
+            size="icon"
+            variant="ghost"
+            className="rounded-full h-9 w-9 text-gray-500 hover:text-primary"
+            title="Sprachnachricht aufnehmen"
+            onClick={() => setShowVoiceRecorder(true)}
+          >
+            <Mic size={18} />
+          </Button>
+
+          <Button
             type="submit"
             disabled={(!message.trim() && !attachment) || isDisabled || isUploading}
             size="icon"
@@ -241,6 +267,15 @@ const EnhancedMessageInput: React.FC<EnhancedMessageInputProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* Voice Message Recorder */}
+      {showVoiceRecorder && (
+        <VoiceMessageRecorder
+          conversationId={1} // This should be passed from parent
+          onMessageSent={handleVoiceMessageSent}
+          onCancel={() => setShowVoiceRecorder(false)}
+        />
+      )}
     </form>
   );
 };

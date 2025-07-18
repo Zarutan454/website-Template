@@ -10,7 +10,7 @@ import {
   X 
 } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogClose } from '../ui/dialog';
+import { Dialog, DialogContent, DialogClose, DialogTitle } from '../ui/dialog';
 
 interface MessageAttachmentProps {
   url: string;
@@ -125,6 +125,7 @@ const MessageAttachment: React.FC<MessageAttachmentProps> = ({
       
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="max-w-4xl p-1 bg-transparent border-0">
+          <DialogTitle className="sr-only">Media Preview</DialogTitle>
           <div className="relative">
             <DialogClose className="absolute top-2 right-2 z-10">
               <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full bg-black/50 text-white hover:bg-black/70">

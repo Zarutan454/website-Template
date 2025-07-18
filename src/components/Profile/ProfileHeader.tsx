@@ -126,7 +126,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     if (!url) return '';
     let fullUrl = url;
     if (url.startsWith('/media/')) {
-      fullUrl = `http://localhost:8000${url}`;
+      fullUrl = `http://localhost:8080${url}`;
     }
     // Cache-Buster nur nach Upload erzwingen
     let cacheBuster = '';

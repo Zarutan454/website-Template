@@ -79,7 +79,9 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
       setUserRole(post.user.role);
       setAuthorId(post.user.id);
     } else if (post.author && typeof post.author === 'object') {
-      setAuthorDisplayName(post.author.display_name || post.author.username || 'Unbekannter Nutzer');
+      // Verbesserte Fallback-Logik: Verwende username als display_name wenn display_name fehlt
+      const displayName = post.author.display_name || post.author.username;
+      setAuthorDisplayName(displayName || 'Unbekannter Nutzer');
       setAuthorUsername(post.author.username || '');
       setAuthorAvatarUrl(post.author.avatar_url || '');
       setIsVerified(post.author.is_verified || false);
@@ -87,7 +89,8 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
       setAuthorId(post.author.id);
     } else {
       // Fallback auf direkte Felder
-      setAuthorDisplayName(post.display_name || post.username || 'Unbekannter Nutzer');
+      const displayName = post.display_name || post.username;
+      setAuthorDisplayName(displayName || 'Unbekannter Nutzer');
       setAuthorUsername(post.username || '');
       setAuthorAvatarUrl(post.avatar_url || '');
       setIsVerified(post.is_verified || false);
@@ -142,7 +145,7 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
     
     // Wenn es eine relative URL ist (beginnt mit /media/), mache sie absolut
     if (url.startsWith('/media/')) {
-      const absoluteUrl = `http://localhost:8000${url}`;
+      const absoluteUrl = `http://localhost:8080${url}`;
       console.log(`[PostHeader] Converting relative to absolute: ${url} -> ${absoluteUrl}`);
       return absoluteUrl;
     }

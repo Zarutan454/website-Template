@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   analyticsAPI } from '@/lib/django-api-new';
 import { toast } from 'sonner';

@@ -75,8 +75,12 @@ export const useUserSearch = () => {
       const relatedUsers: SearchUser[] = [];
       
       return relatedUsers;
-    } catch (err: any) {
-      console.error('Fehler beim Finden verwandter Benutzer:', err);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error('Fehler beim Finden verwandter Benutzer:', err.message);
+      } else {
+        console.error('Fehler beim Finden verwandter Benutzer:', err);
+      }
       return [];
     } finally {
       setIsLoading(false);

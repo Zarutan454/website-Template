@@ -1,52 +1,33 @@
-
-import React from 'react';
-import { useTheme } from '@/components/ThemeProvider';
+import * as React from "react";
 
 interface GroupTabsNavProps {
-  activeTab: 'all' | 'my-groups' | 'suggested';
-  setActiveTab: (tab: 'all' | 'my-groups' | 'suggested') => void;
+  activeTab: "all" | "my-groups" | "suggested";
+  setActiveTab: (tab: "all" | "my-groups" | "suggested") => void;
 }
 
-const GroupTabsNav: React.FC<GroupTabsNavProps> = ({ 
-  activeTab, 
-  setActiveTab 
-}) => {
-  const { theme } = useTheme();
+const tabs = [
+  { id: "all", label: "Alle Gruppen" },
+  { id: "my-groups", label: "Meine Gruppen" },
+  { id: "suggested", label: "Vorgeschlagen" },
+];
 
-  return (
-    <div className="flex border-b overflow-x-auto scrollbar-hide">
+const GroupTabsNav: React.FC<GroupTabsNavProps> = ({ activeTab, setActiveTab }) => (
+  <div className="flex border-b overflow-x-auto scrollbar-hide">
+    {tabs.map((tab) => (
       <button
-        onClick={() => setActiveTab('all')}
+        key={tab.id}
+        onClick={() => setActiveTab(tab.id as "all" | "my-groups" | "suggested")}
         className={`px-4 py-2 font-medium text-sm transition-colors duration-200 ${
-          activeTab === 'all'
-            ? `border-b-2 border-primary ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`
-            : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'}`
+          activeTab === tab.id
+            ? "border-b-2 border-primary text-white"
+            : "text-gray-400 hover:text-white"
         }`}
+        type="button"
       >
-        Alle Gruppen
+        {tab.label}
       </button>
-      <button
-        onClick={() => setActiveTab('my-groups')}
-        className={`px-4 py-2 font-medium text-sm transition-colors duration-200 ${
-          activeTab === 'my-groups'
-            ? `border-b-2 border-primary ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`
-            : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'}`
-        }`}
-      >
-        Meine Gruppen
-      </button>
-      <button
-        onClick={() => setActiveTab('suggested')}
-        className={`px-4 py-2 font-medium text-sm transition-colors duration-200 ${
-          activeTab === 'suggested'
-            ? `border-b-2 border-primary ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`
-            : `${theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'}`
-        }`}
-      >
-        Vorgeschlagen
-      </button>
-    </div>
-  );
-};
+    ))}
+  </div>
+);
 
-export default GroupTabsNav;
+export default GroupTabsNav; 

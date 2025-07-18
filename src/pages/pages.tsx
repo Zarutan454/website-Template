@@ -1,7 +1,6 @@
 // Diese Datei wird umbenannt zu pages.tsx um Konflikte zu vermeiden
 import Index from './Index.tsx';
 import Login from './Login';
-import Register from './Register';
 import ResetPassword from './ResetPassword';
 import Dashboard from './Dashboard';
 import Feed from './Feed';
@@ -20,14 +19,14 @@ import Notifications from './Notifications';
 import NotificationSettings from './NotificationSettings';
 import SearchPage from './SearchPage';
 import FriendsPage from './FriendsPage';
-import GroupsOverviewPage from './GroupsOverviewPage';
-import AlbumDetail from './AlbumDetail';
 import ReelsPage from './Reels';
+import AchievementsOverview from './AchievementsOverview';
+import PostDetail from './PostDetail';
+import GroupDetailPage from '../components/Community/GroupDetailPage';
 
 export {
   Index,
   Login,
-  Register,
   ResetPassword,
   Dashboard,
   Feed,
@@ -46,7 +45,8 @@ export {
   NotificationSettings,
   SearchPage,
   FriendsPage,
-  GroupsOverviewPage,
-  AlbumDetail,
   ReelsPage,
+  AchievementsOverview,
+  PostDetail,
+  GroupDetailPage,
 };

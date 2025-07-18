@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { createTokenReservation, getTokenReservations, getToken, getIcoOverview } from '../utils/api';
+import { tokenAPI, icoAPI } from '../utils/api';
 
 const TokenReservationPage: React.FC = () => {
   const { user } = useAuth();
@@ -20,7 +20,7 @@ const TokenReservationPage: React.FC = () => {
 
   // Check authentication and load data
   useEffect(() => {
-    const token = getToken();
+    const token = tokenAPI.getToken();
     setIsAuthenticated(!!token);
     
     if (token) {
@@ -33,7 +33,7 @@ const TokenReservationPage: React.FC = () => {
   const loadUserReservations = async () => {
     try {
       console.log('📋 Loading user reservations...');
-      const reservations = await getTokenReservations();
+      const reservations = await tokenAPI.getTokenReservations();
       console.log('✅ User reservations loaded:', reservations);
       setUserReservations(reservations);
     } catch (err) {
@@ -44,7 +44,7 @@ const TokenReservationPage: React.FC = () => {
   const loadIcoStats = async () => {
     try {
       console.log('📊 Loading ICO stats...');
-      const stats = await getIcoOverview();
+      const stats = await icoAPI.getIcoOverview();
       console.log('✅ ICO stats loaded:', stats);
       setIcoStats(stats);
     } catch (err) {
@@ -99,7 +99,7 @@ const TokenReservationPage: React.FC = () => {
         payment_method: formData.payment_method
       };
       
-      const result = await createTokenReservation(reservationData);
+      const result = await tokenAPI.createTokenReservation(reservationData);
       console.log('✅ Token reservation successful:', result);
       
       setIsSubmitting(false);

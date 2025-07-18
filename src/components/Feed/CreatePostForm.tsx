@@ -63,6 +63,7 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({
               icon: "🚀",
             });
           } catch (error) {
+            console.error("Mining activity error:", error);
           }
         }
         
@@ -80,8 +81,9 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({
     }
   };
   
-  const handleEmojiSelect = (emoji: any) => {
-    setContent(prev => prev + emoji.emoji);
+  const handleEmojiSelect = (emoji: unknown) => {
+    const emojiData = emoji as { emoji: string };
+    setContent(prev => prev + emojiData.emoji);
     setShowEmojiPicker(false);
   };
 
@@ -154,9 +156,10 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({
       clearSimulation();
       setUploadProgress(100);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
       console.error("Fehler beim Hochladen:", error);
-      toast.error(`Fehler beim Hochladen: ${error.message || 'Unbekannter Fehler'}`);
+      toast.error(`Fehler beim Hochladen: ${errorMessage}`);
     } finally {
       setIsUploading(false);
       // Reset the file input
@@ -271,6 +274,7 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({
                       className="hidden"
                       accept="image/*,video/*"
                       onChange={handleFileUpload}
+                      title="Datei auswählen"
                     />
                     <Button 
                       variant="outline" 
@@ -336,7 +340,10 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm font-medium block mb-1">Was möchtest du verteilen?</label>
-                    <select className={`w-full px-3 py-2 rounded-md ${darkMode ? 'bg-dark-200 border-gray-700' : 'bg-white border-gray-200'} border`}>
+                    <select 
+                      className={`w-full px-3 py-2 rounded-md ${darkMode ? 'bg-dark-200 border-gray-700' : 'bg-white border-gray-200'} border`}
+                      aria-label="Airdrop-Typ auswählen"
+                    >
                       <option value="token">Token</option>
                       <option value="nft">NFT</option>
                     </select>
@@ -383,7 +390,10 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm font-medium block mb-1">Was möchtest du teilen?</label>
-                    <select className={`w-full px-3 py-2 rounded-md ${darkMode ? 'bg-dark-200 border-gray-700' : 'bg-white border-gray-200'} border`}>
+                    <select 
+                      className={`w-full px-3 py-2 rounded-md ${darkMode ? 'bg-dark-200 border-gray-700' : 'bg-white border-gray-200'} border`}
+                      aria-label="Teilen-Typ auswählen"
+                    >
                       <option value="post">Beitrag</option>
                       <option value="token">Token</option>
                       <option value="nft">NFT</option>

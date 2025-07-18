@@ -141,17 +141,6 @@ const Feed: React.FC = () => {
           />
         </div>
         
-        <div className="mb-6">
-          <StoryList />
-        </div>
-
-        <div className="mb-4">
-            <CreatePostBox 
-                onCreatePost={handleCreatePost}
-                darkMode={isDarkMode}
-            />
-        </div>
-
         <EnhancedFeed 
           posts={posts}
           isLoading={isLoading}

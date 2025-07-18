@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useProfile } from '@/hooks/useProfile';
 import { useUserRelationships, RelationshipUser } from '@/hooks/useUserRelationships';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface FriendshipContextType {
   friends: RelationshipUser[];

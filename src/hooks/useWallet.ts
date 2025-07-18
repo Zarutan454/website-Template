@@ -139,7 +139,7 @@ export const useWallet = () => {
         const knownTokens = KNOWN_TOKENS[chainId as keyof typeof KNOWN_TOKENS] || [];
         
         // TODO: Fetch user tokens from Django backend
-        const userTokens: any[] = [];
+        const userTokens: TokenBalance[] = [];
         const userTokensError = null;
           
         if (userTokensError) {
@@ -172,17 +172,21 @@ export const useWallet = () => {
                   token_logo: '', // Etherscan doesn't provide logos
                   balance: balance,
                   value_usd: 0, // We would need to fetch price from an API
-                  contract_address: tokenBalance.contractAddress
+                  contract_address: String(tokenBalance.contractAddress)
                 });
               }
             }
           } catch (etherscanError) {
             // Check if it's a "No transactions found" error - this is normal for new addresses
             if (etherscanError instanceof Error && etherscanError.message.includes('No transactions found')) {
-              console.log('No token transactions found for address - this is normal for new addresses');
+              if (import.meta.env.DEV) {
+                console.log('No token transactions found for address - this is normal for new addresses');
+              }
               // Don't show this as an error, just continue with empty token balances
             } else {
-              console.warn('Etherscan token balances failed, falling back to contract calls:', etherscanError);
+              if (import.meta.env.DEV) {
+                console.warn('Etherscan token balances failed, falling back to contract calls:', etherscanError);
+              }
               
               // Fallback to contract calls if Etherscan fails
               for (const token of knownTokens) {
@@ -212,7 +216,7 @@ export const useWallet = () => {
                           token_logo: token.logo,
                           balance: balance,
                           value_usd: 0, // We would need to fetch price from an API
-                          contract_address: token.address
+                          contract_address: String(token.address)
                         });
                       }
                     }
@@ -260,7 +264,7 @@ export const useWallet = () => {
         setTransactionsLoading(true);
         
         // TODO: Fetch transactions from Django backend
-        const dbTransactions: any[] = [];
+        const dbTransactions: Transaction[] = [];
         const error = null;
           
         if (error) throw error;
@@ -284,7 +288,7 @@ export const useWallet = () => {
               id: tx.hash,
               date: new Date(Number(tx.timeStamp) * 1000),
               type: tx.from.toLowerCase() === address.toLowerCase() ? 'send' : 'receive',
-              amount: parseFloat(formatUnits(tx.value, 18)),
+              amount: parseFloat(formatUnits(BigInt(tx.value), 18)),
               token_symbol: 'ETH',
               address: tx.from.toLowerCase() === address.toLowerCase() ? tx.to : tx.from,
               status: tx.txreceipt_status === '1' ? 'completed' : 'failed',
@@ -354,15 +358,16 @@ export const useWallet = () => {
       toast.error('Echte Blockchain-Transaktionen sind noch nicht implementiert');
       return false;
       
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { code?: number; message?: string };
       console.error('Fehler beim Senden der Tokens:', error);
       
-      if (error.code === 4001) {
+      if (err.code === 4001) {
         toast.error('Transaktion wurde vom Benutzer abgelehnt');
-      } else if (error.message && error.message.includes('insufficient funds')) {
+      } else if (err.message && err.message.includes('insufficient funds')) {
         toast.error('Nicht genügend Guthaben für Transaktionsgebühren');
       } else {
-        toast.error(`Fehler beim Senden der Tokens: ${error.message || 'Unbekannter Fehler'}`);
+        toast.error(`Fehler beim Senden der Tokens: ${err.message || 'Unbekannter Fehler'}`);
       }
       
       return false;

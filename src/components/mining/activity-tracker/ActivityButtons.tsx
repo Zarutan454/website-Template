@@ -15,7 +15,7 @@ import {
 interface ActivityButtonsProps {
   handleInteraction: (type: ActivityType) => Promise<boolean>;
   isActivityLimitReached: (type: ActivityType) => boolean;
-  MINING_LIMITS: Record<string, any>;
+  MINING_LIMITS: Record<ActivityType, import('@/hooks/mining/types').ActivityLimit>;
 }
 
 const ActivityButtons: React.FC<ActivityButtonsProps> = ({

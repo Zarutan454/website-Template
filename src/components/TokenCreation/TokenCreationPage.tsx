@@ -169,9 +169,10 @@ const TokenCreationPage: React.FC = () => {
   }
   
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {showIntro && (
         <motion.div 
+          key="intro-overlay"
           className="fixed inset-0 flex items-center justify-center bg-black/80 z-50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -223,6 +224,7 @@ const TokenCreationPage: React.FC = () => {
       )}
       
       <motion.div 
+        key="main-content"
         className="container mx-auto p-6 max-w-4xl"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -278,7 +280,7 @@ const TokenCreationPage: React.FC = () => {
             <AnimatePresence mode="wait">
               <motion.div 
                 className="mt-2"
-                key={currentStep}
+                key={`step-${currentStep}`}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}

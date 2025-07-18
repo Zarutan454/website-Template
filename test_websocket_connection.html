@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        #log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        .log-success { color: #28a745; }
+        .log-error { color: #dc3545; }
+        .log-info { color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <h1>🔌 WebSocket Connection Test</h1>
+    
+    <div class="test-section info">
+        <h3>📋 Test Overview</h3>
+        <p>This page tests WebSocket connections to the BSN backend server.</p>
+        <p><strong>Backend URL:</strong> <span id="backend-url">ws://localhost:8000</span></p>
+        <p><strong>Test Endpoints:</strong></p>
+        <ul>
+            <li><code>/ws/test/</code> - Simple connection test</li>
+            <li><code>/ws/chat/</code> - General chat endpoint</li>
+            <li><code>/ws/feed/</code> - Real-time feed updates</li>
+            <li><code>/ws/notifications/</code> - Real-time notifications</li>
+            <li><code>/ws/mining/</code> - Real-time mining updates</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h3>🧪 Connection Tests</h3>
+        <button onclick="testSimpleConnection()">Test Simple Connection</button>
+        <button onclick="testChatConnection()">Test Chat Connection</button>
+        <button onclick="testFeedConnection()">Test Feed Connection</button>
+        <button onclick="testNotificationsConnection()">Test Notifications</button>
+        <button onclick="testMiningConnection()">Test Mining Connection</button>
+        <button onclick="testAllConnections()">Test All Connections</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 Test Results</h3>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        let connections = {};
+        let testResults = {
+            simple: false,
+            chat: false,
+            feed: false,
+            notifications: false,
+            mining: false
+        };
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function testWebSocketConnection(endpoint, name) {
+            return new Promise((resolve, reject) => {
+                const wsUrl = `ws://localhost:8000${endpoint}`;
+                log(`Testing ${name} connection to: ${wsUrl}`, 'info');
+                
+                const ws = new WebSocket(wsUrl);
+                let timeout;
+
+                ws.onopen = function() {
+                    log(`✅ ${name}: Connection established successfully`, 'success');
+                    clearTimeout(timeout);
+                    
+                    // Send a test message
+                    ws.send(JSON.stringify({
+                        type: 'ping',
+                        timestamp: new Date().toISOString()
+                    }));
+                    
+                    // Close connection after 2 seconds
+                    setTimeout(() => {
+                        ws.close();
+                        resolve(true);
+                    }, 2000);
+                };
+
+                ws.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        log(`📨 ${name}: Received message: ${JSON.stringify(data)}`, 'info');
+                    } catch (e) {
+                        log(`📨 ${name}: Received raw message: ${event.data}`, 'info');
+                    }
+                };
+
+                ws.onerror = function(error) {
+                    log(`❌ ${name}: Connection error: ${error}`, 'error');
+                    clearTimeout(timeout);
+                    reject(error);
+                };
+
+                ws.onclose = function(event) {
+                    log(`🔌 ${name}: Connection closed (code: ${event.code})`, 'info');
+                    clearTimeout(timeout);
+                    if (event.code === 1000) {
+                        resolve(true);
+                    } else {
+                        reject(new Error(`Connection closed with code: ${event.code}`));
+                    }
+                };
+
+                // Set timeout for connection
+                timeout = setTimeout(() => {
+                    log(`⏰ ${name}: Connection timeout`, 'error');
+                    ws.close();
+                    reject(new Error('Connection timeout'));
+                }, 5000);
+
+                connections[name] = ws;
+            });
+        }
+
+        async function testSimpleConnection() {
+            try {
+                await testWebSocketConnection('/ws/test/', 'Simple Test');
+                testResults.simple = true;
+                log('✅ Simple connection test completed successfully', 'success');
+            } catch (error) {
+                testResults.simple = false;
+                log(`❌ Simple connection test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testChatConnection() {
+            try {
+                await testWebSocketConnection('/ws/chat/', 'Chat');
+                testResults.chat = true;
+                log('✅ Chat connection test completed successfully', 'success');
+            } catch (error) {
+                testResults.chat = false;
+                log(`❌ Chat connection test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testFeedConnection() {
+            try {
+                await testWebSocketConnection('/ws/feed/', 'Feed');
+                testResults.feed = true;
+                log('✅ Feed connection test completed successfully', 'success');
+            } catch (error) {
+                testResults.feed = false;
+                log(`❌ Feed connection test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testNotificationsConnection() {
+            try {
+                await testWebSocketConnection('/ws/notifications/', 'Notifications');
+                testResults.notifications = true;
+                log('✅ Notifications connection test completed successfully', 'success');
+            } catch (error) {
+                testResults.notifications = false;
+                log(`❌ Notifications connection test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testMiningConnection() {
+            try {
+                await testWebSocketConnection('/ws/mining/', 'Mining');
+                testResults.mining = true;
+                log('✅ Mining connection test completed successfully', 'success');
+            } catch (error) {
+                testResults.mining = false;
+                log(`❌ Mining connection test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAllConnections() {
+            log('🚀 Starting comprehensive WebSocket test...', 'info');
+            
+            const tests = [
+                { name: 'Simple Test', func: testSimpleConnection },
+                { name: 'Chat', func: testChatConnection },
+                { name: 'Feed', func: testFeedConnection },
+                { name: 'Notifications', func: testNotificationsConnection },
+                { name: 'Mining', func: testMiningConnection }
+            ];
+
+            for (const test of tests) {
+                try {
+                    await test.func();
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait between tests
+                } catch (error) {
+                    log(`❌ ${test.name} failed: ${error.message}`, 'error');
+                }
+            }
+
+            // Summary
+            const passed = Object.values(testResults).filter(Boolean).length;
+            const total = Object.keys(testResults).length;
+            
+            log(`📊 Test Summary: ${passed}/${total} connections successful`, passed === total ? 'success' : 'error');
+            
+            if (passed === total) {
+                log('🎉 All WebSocket connections are working correctly!', 'success');
+            } else {
+                log('⚠️ Some WebSocket connections failed. Check backend logs for details.', 'error');
+            }
+        }
+
+        // Auto-test on page load
+        window.onload = function() {
+            log('🔌 WebSocket Test Page Loaded', 'info');
+            log('Click "Test All Connections" to run comprehensive test', 'info');
+        };
+    </script>
+</body>
+</html> 

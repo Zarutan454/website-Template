@@ -1,25 +1,44 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import PostCard from './Post/PostCard';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, AlertCircle } from 'lucide-react';
+import UnifiedPostCard from './UnifiedPostCard';
 
+interface Post {
+  id: string;
+  author?: {
+    id: string;
+    username?: string;
+    display_name?: string;
+    avatar_url?: string;
+    [key: string]: unknown;
+  };
+  content?: string;
+  [key: string]: unknown;
+}
+interface UserProfile {
+  id: string;
+  username?: string;
+  display_name?: string;
+  avatar_url?: string;
+  [key: string]: unknown;
+}
 interface VirtualizedFeedProps {
-  posts: any[];
+  posts: Post[];
   isLoading: boolean;
   error: string | null;
   onLike: (postId: string) => Promise<boolean>;
   onDelete?: (postId: string) => Promise<boolean>;
-  onComment: (postId: string, content: string) => Promise<any>;
-  onGetComments: (postId: string) => Promise<any[]>;
+  onComment: (postId: string, content: string) => Promise<unknown>;
+  onGetComments: (postId: string) => Promise<unknown[]>;
   onShare: (postId: string) => Promise<boolean>;
   onReport?: (postId: string, reason: string) => Promise<boolean>;
   onRetry: () => void;
   onLoginRedirect: () => void;
   isDarkMode: boolean;
   showMiningRewards?: boolean;
-  currentUser?: any;
+  currentUser?: UserProfile;
   currentUserId?: string;
 }
 
@@ -40,8 +59,10 @@ const VirtualizedFeed: React.FC<VirtualizedFeedProps> = ({
   currentUser,
   currentUserId
 }) => {
+  // Defensive: posts darf nie undefined/null sein
+  const safePosts = Array.isArray(posts) ? posts : [];
   // Loading state
-  if (isLoading && posts.length === 0) {
+  if (isLoading && safePosts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
         <Spinner size="lg" />
@@ -69,7 +90,7 @@ const VirtualizedFeed: React.FC<VirtualizedFeedProps> = ({
   }
 
   // Empty state
-  if (posts.length === 0) {
+  if (safePosts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
         <div className={`text-6xl ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`}>
@@ -90,44 +111,52 @@ const VirtualizedFeed: React.FC<VirtualizedFeedProps> = ({
 
   return (
     <div className="w-full">
-      <AnimatePresence>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="flex flex-col gap-4">
-            {posts.map((post, index) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: Math.min(index * 0.03, 0.3) }}
-              >
-                <PostCard
-                  post={post}
-                  onLike={() => onLike(post.id)}
-                  onDelete={onDelete ? () => onDelete(post.id) : undefined}
-                  onComment={(content) => onComment(post.id, content)}
-                  onGetComments={() => onGetComments(post.id)}
-                  onShare={() => onShare(post.id)}
-                  onReport={onReport ? (reason) => onReport(post.id, reason) : undefined}
-                  darkMode={isDarkMode}
-                  currentUserId={currentUserId}
-                  currentUser={currentUser}
-                  showMiningRewards={showMiningRewards}
-                />
-              </motion.div>
-            ))}
-          </div>
-          {isLoading && posts.length > 0 && (
-            <div className="flex justify-center py-4">
-              <Spinner size="md" />
+      <div role="feed" aria-label="Beitragsliste">
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex flex-col gap-4">
+              {safePosts.length > 0 ? (
+                safePosts.map((post, index) => (
+                  <motion.div
+                    key={post.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: Math.min(index * 0.03, 0.3) }}
+                    role="article"
+                    aria-label={`Beitrag von ${post.author?.display_name || post.author?.username || 'Unbekannter Nutzer'}: ${post.content?.slice(0, 40) || ''}`}
+                    tabIndex={0}
+                  >
+                    <UnifiedPostCard
+                      post={post}
+                      onLike={onLike}
+                      onDelete={onDelete}
+                      onComment={onComment}
+                      onGetComments={onGetComments}
+                      onShare={onShare}
+                      onReport={onReport}
+                      currentUser={currentUser}
+                      currentUserId={currentUserId}
+                      darkMode={isDarkMode}
+                    />
+                  </motion.div>
+                ))
+              ) : (
+                <div role="article" aria-label="Noch keine Beiträge" tabIndex={0} style={{ display: 'none' }} />
+              )}
             </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+      {isLoading && posts.length > 0 && (
+        <div className="flex justify-center py-4" aria-live="polite" aria-busy="true">
+          <Spinner size="md" />
+        </div>
+      )}
     </div>
   );
 };

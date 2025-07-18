@@ -3,7 +3,7 @@ import djangoApi from '../lib/django-api-new';
 import type { UserProfile } from '../lib/django-api-new';
 import { toast } from 'sonner';
 
-interface AuthContextType {
+export interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -18,17 +18,10 @@ interface AuthContextType {
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   refreshToken: () => Promise<boolean>;
+  getAccessToken: () => Promise<string | null>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -158,16 +151,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshUser = async () => {
     try {
-      const response = await djangoApi.getProfile();
-      if (response.data) {
-        console.log('[AuthContext] User Profile Refreshed:', response.data);
-        setUser(response.data);
+      const profile = await djangoApi.getProfile();
+      if (profile) {
+        console.log('[AuthContext] User Profile Refreshed:', profile);
+        setUser(profile);
       } else {
         // If profile fetch fails but tokens might be valid, try refreshing them.
+        console.log('[AuthContext] Profile fetch failed, attempting token refresh.');
         await refreshToken();
       }
     } catch (error) {
-      console.error('Failed to refresh user:', error);
+      console.error('Failed to refresh user, logging out:', error);
       await logout();
     }
   };
@@ -193,6 +187,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const getAccessToken = async (): Promise<string | null> => {
+    const accessToken = localStorage.getItem('access_token');
+    if (accessToken) {
+      return accessToken;
+    }
+    return null;
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated,
@@ -202,6 +204,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     refreshUser,
     refreshToken,
+    getAccessToken,
   };
 
   return (
@@ -209,4 +212,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Custom hook to use the AuthContext
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }; 

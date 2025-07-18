@@ -6,6 +6,8 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .models import *
+from .models import PhotoAlbum, Photo
+from .models import PostPoll
 
 # ========== Authentication & User Management ==========
 
@@ -100,7 +102,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'wallet_balance', 'mining_stats', 'created_at',
             'avatar_url', 'cover_url', 'is_verified', 'profile_complete'
         )
-        read_only_fields = ('id', 'is_alpha_user', 'created_at', 'avatar_url', 'cover_url')
+        read_only_fields = ('id', 'is_alpha_user', 'created_at')
     
     def get_display_name(self, obj):
         """Get display name from first_name + last_name or fallback to username"""
@@ -159,6 +161,16 @@ class AlphaAccessRequestSerializer(serializers.Serializer):
 
 # ========== Social Network ==========
 
+class StoryPollSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StoryPoll
+        fields = ['id', 'question', 'options', 'votes']
+
+class PostPollSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostPoll
+        fields = ['id', 'question', 'options', 'votes', 'expires_at']
+
 class PostSerializer(serializers.ModelSerializer):
     author = UserProfileSerializer(read_only=True)
     likes_count = serializers.IntegerField(read_only=True)
@@ -166,13 +178,16 @@ class PostSerializer(serializers.ModelSerializer):
     shares_count = serializers.SerializerMethodField()
     is_liked_by_user = serializers.SerializerMethodField()
     is_bookmarked_by_user = serializers.SerializerMethodField()
+    privacy = serializers.ChoiceField(choices=Post.PRIVACY_CHOICES, default='public')
+    author_role = serializers.SerializerMethodField()
+    poll = PostPollSerializer(read_only=True)
     
     class Meta:
         model = Post
         fields = (
-            'id', 'author', 'group', 'content', 'media_url', 'media_type', 'hashtags',
+            'id', 'author', 'group', 'content', 'media_url', 'media_type', 'privacy', 'hashtags',
             'likes_count', 'comments_count', 'shares_count', 'is_liked_by_user', 
-            'is_bookmarked_by_user', 'created_at', 'updated_at'
+            'is_bookmarked_by_user', 'author_role', 'created_at', 'updated_at', 'poll'
         )
         read_only_fields = ('id', 'author', 'shares_count', 'created_at', 'updated_at')
     
@@ -196,6 +211,17 @@ class PostSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.bookmarked_by.filter(user=request.user).exists()
         return False
+    
+    def get_author_role(self, obj):
+        """Get the role of the post author in the group"""
+        if not obj.group:
+            return None
+        
+        try:
+            membership = GroupMembership.objects.get(group=obj.group, user=obj.author)
+            return membership.role
+        except GroupMembership.DoesNotExist:
+            return None
 
 class CommentSerializer(serializers.ModelSerializer):
     author = UserProfileSerializer(read_only=True)
@@ -224,14 +250,69 @@ class GroupSerializer(serializers.ModelSerializer):
     member_count = serializers.IntegerField(read_only=True)
     posts_count = serializers.IntegerField(read_only=True)
     is_member = serializers.BooleanField(read_only=True)
+    is_admin = serializers.SerializerMethodField()
+    role = serializers.SerializerMethodField()
+    pinned_post = PostSerializer(read_only=True)
+    token_gated = serializers.BooleanField(default=False)
+    required_token_contract = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+    def get_is_admin(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        membership = obj.memberships.filter(user=request.user).first()
+        return membership and membership.role == 'admin'
+
+    def get_role(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+        membership = obj.memberships.filter(user=request.user).first()
+        return membership.role if membership else None
+
+    def to_internal_value(self, data):
+        import logging
+        logger = logging.getLogger('django')
+        logger.error('GroupSerializer.to_internal_value: raw data = %s', dict(data))
+        logger.error('GroupSerializer.to_internal_value: token_gated in data = %s', data.get('token_gated', 'NOT FOUND'))
+        result = super().to_internal_value(data)
+        logger.error('GroupSerializer.to_internal_value: validated result = %s', result)
+        return result
+
+    def validate_token_gated(self, value):
+        import logging
+        logger = logging.getLogger('django')
+        logger.error('GroupSerializer.validate_token_gated: input value = %s (type: %s)', value, type(value))
+        
+        # Akzeptiere 'true'/'false' (String) und echte Booleans
+        if isinstance(value, bool):
+            logger.error('GroupSerializer.validate_token_gated: returning bool = %s', value)
+            return value
+        if isinstance(value, str):
+            if value.lower() == 'true':
+                logger.error('GroupSerializer.validate_token_gated: converting "true" to True')
+                return True
+            elif value.lower() == 'false':
+                logger.error('GroupSerializer.validate_token_gated: converting "false" to False')
+                return False
+        logger.error('GroupSerializer.validate_token_gated: using default False')
+        return False
     
     class Meta:
         model = Group
         fields = (
             'id', 'name', 'description', 'creator', 'privacy',
-            'member_count', 'posts_count', 'is_member', 'created_at'
+            'avatar_url', 'banner_url', 'tags', 'type', 'join_questions',
+            'guidelines', 'pinned_post', 'post_approval', 'report_count',
+            'ai_summary', 'ai_recommendations',
+            'created_at', 'updated_at',
+            'token_gated', 'required_token_contract',
+            'member_count', 'posts_count', 'is_member', 'is_admin', 'role',
         )
-        read_only_fields = ('id', 'creator', 'created_at', 'member_count', 'posts_count', 'is_member')
+        read_only_fields = (
+            'id', 'creator', 'created_at', 'member_count', 'posts_count', 'is_member',
+            'is_admin', 'role', 'pinned_post', 'report_count', 'ai_summary', 'ai_recommendations'
+        )
 
 class FriendshipSerializer(serializers.ModelSerializer):
     requester = UserProfileSerializer(read_only=True)
@@ -512,21 +593,37 @@ class DemoTransactionSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'created_at')
 
 class StoryViewSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer(read_only=True)
     class Meta:
         model = StoryView
         fields = ['user', 'viewed_at']
 
+class StoryHighlightSerializer(serializers.ModelSerializer):
+    stories = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    class Meta:
+        model = StoryHighlight
+        fields = ['id', 'title', 'stories', 'created_at']
+
 class StorySerializer(serializers.ModelSerializer):
     author = UserProfileSerializer(read_only=True)
     is_viewed = serializers.SerializerMethodField()
-    viewed = serializers.SerializerMethodField()  # Frontend expects 'viewed' field
     views_count = serializers.SerializerMethodField()
-    type = serializers.CharField(source='story_type')
+    reactions = serializers.SerializerMethodField()
+    replies = serializers.SerializerMethodField()
+    stickers = serializers.SerializerMethodField()
+    music = serializers.SerializerMethodField()
+    poll = serializers.SerializerMethodField()
+    viewers = serializers.SerializerMethodField()
+    highlights = serializers.SerializerMethodField()
 
     class Meta:
         model = Story
-        fields = ('id', 'author', 'media_url', 'caption', 'type', 'expires_at', 'created_at', 'is_viewed', 'viewed', 'views_count')
-        read_only_fields = ('id', 'author', 'created_at', 'is_viewed', 'viewed', 'views_count')
+        fields = (
+            'id', 'author', 'media_url', 'type', 'caption', 'created_at', 'expires_at',
+            'privacy', 'tags', 'location', 'is_highlight', 'ai_data',
+            'music', 'poll', 'stickers', 'reactions', 'replies', 'viewers', 'views_count', 'is_viewed', 'highlights'
+        )
+        read_only_fields = ('id', 'author', 'created_at', 'expires_at', 'is_viewed', 'views_count', 'highlights')
 
     def get_views_count(self, obj):
         return obj.views.count()
@@ -534,12 +631,40 @@ class StorySerializer(serializers.ModelSerializer):
     def get_is_viewed(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return StoryView.objects.filter(story=obj, user=request.user).exists()
+            return obj.views.filter(user=request.user).exists()
         return False
 
-    def get_viewed(self, obj):
-        # Alias for is_viewed to match frontend expectations
-        return self.get_is_viewed(obj)
+    def get_reactions(self, obj):
+        from .serializers import StoryReactionSerializer
+        return StoryReactionSerializer(obj.reactions.all(), many=True, context=self.context).data
+
+    def get_replies(self, obj):
+        from .serializers import StoryReplySerializer
+        return StoryReplySerializer(obj.replies.all(), many=True, context=self.context).data
+
+    def get_stickers(self, obj):
+        from .serializers import StoryStickerSerializer
+        return StoryStickerSerializer(obj.stickers.all(), many=True, context=self.context).data
+
+    def get_music(self, obj):
+        from .serializers import StoryMusicSerializer
+        if hasattr(obj, 'music') and obj.music:
+            return StoryMusicSerializer(obj.music, context=self.context).data
+        return None
+
+    def get_poll(self, obj):
+        from .serializers import StoryPollSerializer
+        if hasattr(obj, 'poll') and obj.poll:
+            return StoryPollSerializer(obj.poll, context=self.context).data
+        return None
+
+    def get_viewers(self, obj):
+        from .serializers import StoryViewSerializer
+        return StoryViewSerializer(obj.views.all(), many=True, context=self.context).data
+
+    def get_highlights(self, obj):
+        from .serializers import StoryHighlightSerializer
+        return StoryHighlightSerializer(obj.highlights.all(), many=True, context=self.context).data
 
 class AchievementSerializer(serializers.ModelSerializer):
     class Meta:
@@ -548,6 +673,11 @@ class AchievementSerializer(serializers.ModelSerializer):
 
 class UserAchievementSerializer(serializers.ModelSerializer):
     achievement = AchievementSerializer(read_only=True)
+    progress = serializers.SerializerMethodField()
+    max_progress = serializers.SerializerMethodField()
+    is_completed = serializers.SerializerMethodField()
+    token_reward = serializers.SerializerMethodField()
+    points_reward = serializers.SerializerMethodField()
     
     class Meta:
         model = UserAchievement
@@ -560,4 +690,290 @@ class UserAchievementSerializer(serializers.ModelSerializer):
             'is_completed',
             'token_reward',
             'points_reward'
-        ] 
+        ]
+    
+    def get_progress(self, obj):
+        """Calculate progress - if unlocked, 100%, otherwise 0%"""
+        return 100 if obj.unlocked_at else 0
+    
+    def get_max_progress(self, obj):
+        """Max progress is always 100%"""
+        return 100
+    
+    def get_is_completed(self, obj):
+        """Achievement is completed if it has been unlocked"""
+        return bool(obj.unlocked_at)
+    
+    def get_token_reward(self, obj):
+        """Get token reward from related achievement"""
+        return getattr(obj.achievement, 'reward', 0) if obj.achievement else 0
+    
+    def get_points_reward(self, obj):
+        """Get points reward from related achievement (if field exists)"""
+        return getattr(obj.achievement, 'points', 0) if obj.achievement else 0
+
+class StoryGroupSerializer(serializers.Serializer):
+    """
+    Serializer for grouping stories by user
+    """
+    user_id = serializers.IntegerField()
+    username = serializers.CharField()
+    display_name = serializers.CharField()
+    avatar_url = serializers.CharField()
+    stories = StorySerializer(many=True)
+    hasUnviewed = serializers.BooleanField()
+
+    def to_representation(self, instance):
+        # Ensure we have a proper user_id field
+        if 'user_id' not in instance:
+            instance['user_id'] = instance.get('author_id', instance.get('user_id'))
+        return super().to_representation(instance)
+
+# ========== Story Interactions ==========
+
+# Entferne StoryLikeSerializer, StoryCommentSerializer, StoryShareSerializer, StoryBookmarkSerializer
+# da diese Models nicht existieren
+
+class StoryInteractionSerializer(serializers.ModelSerializer):
+    """
+    Enhanced Story Serializer with interaction counts and user status
+    """
+    author = UserProfileSerializer(read_only=True)
+    is_viewed = serializers.SerializerMethodField()
+    viewed = serializers.SerializerMethodField()
+    views_count = serializers.SerializerMethodField()
+    type = serializers.CharField(source='story_type')  # Frontend compatibility
+    
+    class Meta:
+        model = Story
+        fields = (
+            'id', 'author', 'media_url', 'caption', 'type', 'expires_at', 'created_at',
+            'is_viewed', 'viewed', 'views_count'
+        )
+        read_only_fields = (
+            'id', 'author', 'created_at', 'expires_at', 'is_viewed', 'viewed', 'views_count'
+        )
+    
+    def get_views_count(self, obj):
+        return obj.views.count()
+    
+    def get_is_viewed(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.views.filter(user=request.user).exists()
+        return False
+    
+    def get_viewed(self, obj):
+        return self.get_is_viewed(obj)
+
+class FollowRelationshipSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Follow/Unfollow operations
+    """
+    user = UserProfileSerializer(read_only=True)
+    friend = UserProfileSerializer(read_only=True)
+    
+    class Meta:
+        model = FollowRelationship
+        fields = ('id', 'user', 'friend', 'created_at')
+        read_only_fields = ('id', 'user', 'created_at')
+
+class FollowRequestSerializer(serializers.Serializer):
+    """
+    Serializer for follow requests
+    """
+    user_id = serializers.IntegerField(help_text="ID of the user to follow")
+    
+    def validate_user_id(self, value):
+        """
+        Validate that the user_id exists and is not the current user
+        """
+        try:
+            user = User.objects.get(id=value)
+            if user == self.context['request'].user:
+                raise serializers.ValidationError("You cannot follow yourself")
+            return value
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User not found") 
+
+class HashtagSerializer(serializers.ModelSerializer):
+    """Serializer for hashtags"""
+    posts_count = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = Hashtag
+        fields = ['id', 'name', 'description', 'posts_count', 'created_at']
+        read_only_fields = ['posts_count', 'created_at']
+
+class PostHashtagSerializer(serializers.ModelSerializer):
+    """Serializer for post-hashtag relationships"""
+    hashtag = HashtagSerializer(read_only=True)
+    
+    class Meta:
+        model = PostHashtag
+        fields = ['id', 'hashtag', 'created_at']
+        read_only_fields = ['created_at'] 
+
+# ========== Token Management Serializers ==========
+
+class StakingSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer(read_only=True)
+    
+    class Meta:
+        model = Staking
+        fields = (
+            'id', 'user', 'amount', 'status', 'staking_period', 'apy_rate',
+            'rewards_earned', 'start_date', 'end_date', 'last_reward_claim'
+        )
+        read_only_fields = ('id', 'user', 'start_date', 'last_reward_claim')
+
+class TokenStreamingSerializer(serializers.ModelSerializer):
+    sender = UserProfileSerializer(read_only=True)
+    receiver = UserProfileSerializer(read_only=True)
+    
+    class Meta:
+        model = TokenStreaming
+        fields = (
+            'id', 'sender', 'receiver', 'total_amount', 'amount_per_second',
+            'streamed_amount', 'status', 'start_time', 'end_time', 'last_update_time'
+        )
+        read_only_fields = ('id', 'sender', 'receiver', 'start_time', 'last_update_time')
+
+class SmartContractSerializer(serializers.ModelSerializer):
+    creator = UserProfileSerializer(read_only=True)
+    
+    class Meta:
+        model = SmartContract
+        fields = (
+            'id', 'name', 'contract_type', 'address', 'network', 'abi',
+            'bytecode', 'source_code', 'creator', 'transaction_hash', 'deployed_at'
+        )
+        read_only_fields = ('id', 'creator', 'deployed_at') 
+
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = '__all__' 
+
+class PhotoSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer(read_only=True)
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Photo
+        fields = (
+            'id', 'album', 'user', 'image', 'image_url', 'caption', 'created_at', 'updated_at', 'is_deleted'
+        )
+        read_only_fields = ('id', 'user', 'created_at', 'updated_at', 'is_deleted', 'image_url')
+
+    def get_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.image and hasattr(obj.image, 'url'):
+            url = obj.image.url
+            if request is not None:
+                return request.build_absolute_uri(url)
+            return url
+        return None
+
+class PhotoAlbumSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer(read_only=True)
+    photos = PhotoSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = PhotoAlbum
+        fields = (
+            'id', 'user', 'name', 'description', 'privacy', 'created_at', 'updated_at', 'photos'
+        )
+        read_only_fields = ('id', 'user', 'created_at', 'updated_at', 'photos')
+
+    def validate_name(self, value):
+        # Name muss pro User eindeutig sein
+        user = self.context['request'].user
+        if PhotoAlbum.objects.filter(user=user, name=value).exists():
+            raise serializers.ValidationError('Du hast bereits ein Album mit diesem Namen.')
+        return value 
+
+class StoryStickerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StorySticker
+        fields = ['id', 'sticker_url', 'x', 'y', 'scale', 'rotation']
+
+class StoryMusicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StoryMusic
+        fields = ['id', 'title', 'artist', 'url', 'start_time']
+
+class StoryPollSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StoryPoll
+        fields = ['id', 'question', 'options', 'votes']
+
+class PostPollSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostPoll
+        fields = ['id', 'question', 'options', 'votes', 'expires_at']
+
+class StoryReactionSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer(read_only=True)
+    class Meta:
+        model = StoryReaction
+        fields = ['id', 'user', 'reaction_type', 'value', 'created_at'] 
+
+class StoryReplySerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer(read_only=True)
+    class Meta:
+        model = StoryReply
+        fields = ['id', 'user', 'content', 'created_at'] 
+
+class GroupEventSerializer(serializers.ModelSerializer):
+    created_by = UserProfileSerializer(read_only=True)
+    rsvp_status = serializers.SerializerMethodField()
+
+    def get_rsvp_status(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+        rsvp = obj.rsvps.filter(user=request.user).first()
+        return rsvp.status if rsvp else None
+
+    class Meta:
+        model = GroupEvent
+        fields = (
+            'id', 'group', 'title', 'description', 'start_time', 'end_time',
+            'location', 'cover_image_url', 'created_by', 'created_at', 'updated_at', 'rsvp_status'
+        )
+        read_only_fields = ('id', 'created_by', 'created_at', 'updated_at', 'rsvp_status') 
+
+class GroupEventRSVPSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer(read_only=True)
+    class Meta:
+        model = GroupEventRSVP
+        fields = ('id', 'event', 'user', 'status', 'responded_at')
+        read_only_fields = ('id', 'user', 'responded_at') 
+
+class ContentReportSerializer(serializers.ModelSerializer):
+    reporter = UserProfileSerializer(read_only=True)
+    assigned_moderator = UserProfileSerializer(read_only=True)
+    class Meta:
+        model = ContentReport
+        fields = (
+            'id', 'reporter', 'content_type', 'content_id', 'report_type', 'reason', 'evidence',
+            'status', 'assigned_moderator', 'moderator_notes', 'resolution_action',
+            'created_at', 'updated_at', 'resolved_at'
+        )
+        read_only_fields = ('id', 'reporter', 'assigned_moderator', 'created_at', 'updated_at', 'resolved_at') 
+
+class GroupMembershipSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer(read_only=True)
+    is_online = serializers.SerializerMethodField()
+
+    def get_is_online(self, obj):
+        from django.utils import timezone
+        if not obj.user.last_login:
+            return False
+        # Online, wenn innerhalb der letzten 15 Minuten aktiv
+        return (timezone.now() - obj.user.last_login).total_seconds() < 900  # 15 Minuten
+
+    class Meta:
+        model = GroupMembership
+        fields = ('id', 'user', 'role', 'joined_at', 'is_online') 

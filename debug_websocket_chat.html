@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.connected { background-color: #d4edda; color: #155724; }
+        .status.disconnected { background-color: #f8d7da; color: #721c24; }
+        .status.connecting { background-color: #fff3cd; color: #856404; }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .message.sent { background: #e3f2fd; }
+        .message.received { background: #f3e5f5; }
+        .message.error { background: #ffebee; }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Chat Test</h1>
+    
+    <div class="container">
+        <!-- Feed WebSocket Test -->
+        <div class="test-section">
+            <h2>Feed WebSocket Test</h2>
+            <div id="feed-status" class="status disconnected">Disconnected</div>
+            <button id="feed-connect">Connect to Feed</button>
+            <button id="feed-disconnect" disabled>Disconnect</button>
+            <button id="feed-ping" disabled>Send Ping</button>
+            <div class="log" id="feed-log"></div>
+        </div>
+
+        <!-- Chat WebSocket Test -->
+        <div class="test-section">
+            <h2>Chat WebSocket Test</h2>
+            <div id="chat-status" class="status disconnected">Disconnected</div>
+            <button id="chat-connect">Connect to Chat</button>
+            <button id="chat-disconnect" disabled>Disconnect</button>
+            <button id="chat-ping" disabled>Send Ping</button>
+            <button id="chat-join-room" disabled>Join Room</button>
+            <button id="chat-leave-room" disabled>Leave Room</button>
+            <input type="text" id="room-name" placeholder="Room name" value="test-room">
+            <input type="text" id="chat-message" placeholder="Message to send">
+            <button id="chat-send" disabled>Send Message</button>
+            <div class="log" id="chat-log"></div>
+        </div>
+    </div>
+
+    <script>
+        // Test configuration
+        const BASE_URL = 'http://localhost:8000';
+        const WS_BASE_URL = 'ws://localhost:8000';
+        
+        // Test token (you need to get a real token from login)
+        const TEST_TOKEN = 'your-test-token-here'; // Replace with real token
+        
+        let feedWs = null;
+        let chatWs = null;
+        
+        // Feed WebSocket Functions
+        function connectFeed() {
+            const status = document.getElementById('feed-status');
+            const connectBtn = document.getElementById('feed-connect');
+            const disconnectBtn = document.getElementById('feed-disconnect');
+            const pingBtn = document.getElementById('feed-ping');
+            const log = document.getElementById('feed-log');
+            
+            status.textContent = 'Connecting...';
+            status.className = 'status connecting';
+            connectBtn.disabled = true;
+            
+            feedWs = new WebSocket(`${WS_BASE_URL}/ws/feed/?token=${TEST_TOKEN}`);
+            
+            feedWs.onopen = function() {
+                status.textContent = 'Connected to Feed';
+                status.className = 'status connected';
+                disconnectBtn.disabled = false;
+                pingBtn.disabled = false;
+                logMessage(log, 'Feed WebSocket connected', 'received');
+            };
+            
+            feedWs.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    logMessage(log, `Received: ${JSON.stringify(data, null, 2)}`, 'received');
+                } catch (e) {
+                    logMessage(log, `Raw message: ${event.data}`, 'received');
+                }
+            };
+            
+            feedWs.onclose = function(event) {
+                status.textContent = 'Disconnected from Feed';
+                status.className = 'status disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                pingBtn.disabled = true;
+                logMessage(log, `Feed WebSocket closed: ${event.code} ${event.reason}`, 'error');
+            };
+            
+            feedWs.onerror = function(error) {
+                logMessage(log, `Feed WebSocket error: ${error}`, 'error');
+            };
+        }
+        
+        function disconnectFeed() {
+            if (feedWs) {
+                feedWs.close();
+                feedWs = null;
+            }
+        }
+        
+        function pingFeed() {
+            if (feedWs && feedWs.readyState === WebSocket.OPEN) {
+                feedWs.send(JSON.stringify({ type: 'ping' }));
+                logMessage(document.getElementById('feed-log'), 'Sent ping to feed', 'sent');
+            }
+        }
+        
+        // Chat WebSocket Functions
+        function connectChat() {
+            const status = document.getElementById('chat-status');
+            const connectBtn = document.getElementById('chat-connect');
+            const disconnectBtn = document.getElementById('chat-disconnect');
+            const pingBtn = document.getElementById('chat-ping');
+            const joinBtn = document.getElementById('chat-join-room');
+            const leaveBtn = document.getElementById('chat-leave-room');
+            const sendBtn = document.getElementById('chat-send');
+            const log = document.getElementById('chat-log');
+            
+            status.textContent = 'Connecting...';
+            status.className = 'status connecting';
+            connectBtn.disabled = true;
+            
+            chatWs = new WebSocket(`${WS_BASE_URL}/ws/chat/?token=${TEST_TOKEN}`);
+            
+            chatWs.onopen = function() {
+                status.textContent = 'Connected to Chat';
+                status.className = 'status connected';
+                disconnectBtn.disabled = false;
+                pingBtn.disabled = false;
+                joinBtn.disabled = false;
+                sendBtn.disabled = false;
+                logMessage(log, 'Chat WebSocket connected', 'received');
+            };
+            
+            chatWs.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    logMessage(log, `Received: ${JSON.stringify(data, null, 2)}`, 'received');
+                } catch (e) {
+                    logMessage(log, `Raw message: ${event.data}`, 'received');
+                }
+            };
+            
+            chatWs.onclose = function(event) {
+                status.textContent = 'Disconnected from Chat';
+                status.className = 'status disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                pingBtn.disabled = true;
+                joinBtn.disabled = true;
+                leaveBtn.disabled = true;
+                sendBtn.disabled = true;
+                logMessage(log, `Chat WebSocket closed: ${event.code} ${event.reason}`, 'error');
+            };
+            
+            chatWs.onerror = function(error) {
+                logMessage(log, `Chat WebSocket error: ${error}`, 'error');
+            };
+        }
+        
+        function disconnectChat() {
+            if (chatWs) {
+                chatWs.close();
+                chatWs = null;
+            }
+        }
+        
+        function pingChat() {
+            if (chatWs && chatWs.readyState === WebSocket.OPEN) {
+                chatWs.send(JSON.stringify({ type: 'ping' }));
+                logMessage(document.getElementById('chat-log'), 'Sent ping to chat', 'sent');
+            }
+        }
+        
+        function joinRoom() {
+            const roomName = document.getElementById('room-name').value;
+            if (chatWs && chatWs.readyState === WebSocket.OPEN) {
+                chatWs.send(JSON.stringify({ 
+                    type: 'join_room', 
+                    room: roomName 
+                }));
+                logMessage(document.getElementById('chat-log'), `Joining room: ${roomName}`, 'sent');
+            }
+        }
+        
+        function leaveRoom() {
+            const roomName = document.getElementById('room-name').value;
+            if (chatWs && chatWs.readyState === WebSocket.OPEN) {
+                chatWs.send(JSON.stringify({ 
+                    type: 'leave_room', 
+                    room: roomName 
+                }));
+                logMessage(document.getElementById('chat-log'), `Leaving room: ${roomName}`, 'sent');
+            }
+        }
+        
+        function sendChatMessage() {
+            const message = document.getElementById('chat-message').value;
+            if (chatWs && chatWs.readyState === WebSocket.OPEN && message.trim()) {
+                chatWs.send(JSON.stringify({ 
+                    type: 'message', 
+                    content: message 
+                }));
+                logMessage(document.getElementById('chat-log'), `Sent: ${message}`, 'sent');
+                document.getElementById('chat-message').value = '';
+            }
+        }
+        
+        // Utility Functions
+        function logMessage(logElement, message, type) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `message ${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // Event Listeners
+        document.getElementById('feed-connect').addEventListener('click', connectFeed);
+        document.getElementById('feed-disconnect').addEventListener('click', disconnectFeed);
+        document.getElementById('feed-ping').addEventListener('click', pingFeed);
+        
+        document.getElementById('chat-connect').addEventListener('click', connectChat);
+        document.getElementById('chat-disconnect').addEventListener('click', disconnectChat);
+        document.getElementById('chat-ping').addEventListener('click', pingChat);
+        document.getElementById('chat-join-room').addEventListener('click', joinRoom);
+        document.getElementById('chat-leave-room').addEventListener('click', leaveRoom);
+        document.getElementById('chat-send').addEventListener('click', sendChatMessage);
+        
+        // Enter key for message sending
+        document.getElementById('chat-message').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
+        
+        // Instructions
+        console.log(`
+WebSocket Chat Test Instructions:
+1. Replace 'your-test-token-here' with a real JWT token from login
+2. Start the Django backend: python manage.py runserver 8000
+3. Test Feed WebSocket first (should work)
+4. Test Chat WebSocket (should now work with GenericChatConsumer)
+5. Check browser console for detailed logs
+        `);
+    </script>
+</body>
+</html> 

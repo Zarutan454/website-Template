@@ -1,152 +1,232 @@
-import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Camera, Loader2 } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
-import { Button } from '../../components/ui/button';
-import { useStories, StoryGroup } from '../../hooks/useStories';
-import { useAuth } from '@/context/AuthContext';
+import * as React from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { apiClient, storyAPI } from '@/lib/django-api-new';
+import { Plus, Play, Image, Type } from 'lucide-react';
+import StoryCreation from './StoryCreation';
 import StoryViewer from './StoryViewer';
-import StoryCreator from './StoryCreator';
+import { useAuth } from '@/hooks/useAuth';
+import { StoryBar, StoryBarRef } from './StoryBar';
+import ErrorBoundary from '../Feed/ErrorBoundary';
+import type { Story } from './StoryViewer';
 
-const BACKEND_ROOT_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace('/api', '');
-
-interface StoryListProps {
-  className?: string;
+interface UserStories {
+  user: {
+    id: number;
+    username: string;
+    avatar_url?: string;
+  };
+  stories: Story[];
+  has_unviewed: boolean;
 }
 
-const StoryList: React.FC<StoryListProps> = ({ className = '' }) => {
-  const { myStories, followingStories, isLoadingMyStories, isLoadingFollowingStories } = useStories();
-  const { user: profile } = useAuth();
-  const [isStoryViewerOpen, setIsStoryViewerOpen] = useState(false);
-  const [isStoryCreatorOpen, setIsStoryCreatorOpen] = useState(false);
-  const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
+// StoryCard-Komponente (minimal, für Fehlerfreiheit)
+const StoryCard = React.memo(({ story, isOwnStory }: { story: Story; isOwnStory?: boolean }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const isLoading = isLoadingMyStories || isLoadingFollowingStories;
+  const handleError = useCallback((error: Error) => {
+    console.error('StoryCard error:', error);
+    setError(error.message);
+  }, []);
 
-  const combinedStories = useMemo(() => {
-    const allStories: StoryGroup[] = followingStories ? [...followingStories] : [];
-
-    if (profile && myStories && myStories.length > 0) {
-      const avatarUrl = profile.avatar_url?.startsWith('http')
-        ? profile.avatar_url
-        : `${BACKEND_ROOT_URL}${profile.avatar_url}`;
-
-      const myStoryGroup: StoryGroup = {
-        user_id: profile.id.toString(),
-        username: profile.username,
-        display_name: 'Deine Story',
-        avatar_url: avatarUrl,
-        stories: myStories,
-        hasUnviewed: myStories.some(s => !s.viewed)
-      };
-
-      // Prevent duplicates if the backend also sends my own stories in the `following` list
-      const myStoryIndexInFollowing = allStories.findIndex(group => group.user_id === myStoryGroup.user_id);
-      if (myStoryIndexInFollowing > -1) {
-        allStories[myStoryIndexInFollowing] = myStoryGroup;
-      } else {
-        allStories.unshift(myStoryGroup);
-      }
-    }
-    
-    return allStories;
-  }, [myStories, followingStories, profile]);
-
-  const handleCreateStoryClick = () => {
-    setIsStoryCreatorOpen(true);
-  };
-
-  const handleStoryClick = (index: number) => {
-    setSelectedGroupIndex(index);
-    setIsStoryViewerOpen(true);
-  };
-
-  if (isLoading) {
+  if (error) {
     return (
-      <div className={`flex items-center space-x-4 p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 overflow-x-auto ${className}`}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex flex-col items-center space-y-2">
-            <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
-            <div className="w-12 h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+      <div className="flex-shrink-0 text-center">
+        <div className="relative w-[110px] h-[200px] rounded-xl shadow overflow-hidden flex flex-col justify-end cursor-pointer group border border-gray-200 dark:border-neutral-800 bg-red-50 dark:bg-red-900/20">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-xs text-red-600 dark:text-red-400">Fehler beim Laden</p>
           </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (combinedStories.length === 0) {
-    return (
-      <div className={`flex flex-col items-center justify-center p-6 bg-muted/50 rounded-lg ${className}`}>
-        <p className="text-muted-foreground text-center mb-4">
-          Keine Stories verfügbar. Sei der Erste!
-        </p>
-        <Button
-          size="sm"
-          className="gap-2"
-          onClick={() => setIsStoryCreatorOpen(true)}
-        >
-          <Camera className="h-4 w-4" />
-          Story erstellen
-        </Button>
-        <StoryCreator
-          isOpen={isStoryCreatorOpen}
-          onClose={() => setIsStoryCreatorOpen(false)}
-        />
+        </div>
       </div>
     );
   }
 
   return (
-    <>
-      <div className={`relative flex items-center space-x-4 p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 overflow-x-auto ${className}`}>
-        {/* Create Story Button */}
-        <div className="flex flex-col items-center space-y-1 flex-shrink-0">
-          <Button
-            variant="ghost"
-            className="w-16 h-16 rounded-full p-0 border-2 border-dashed border-gray-400 dark:border-gray-500 flex items-center justify-center hover:border-primary transition-colors"
-            onClick={handleCreateStoryClick}
-          >
-            <Plus className="w-6 h-6 text-gray-500 dark:text-gray-400" />
-          </Button>
-          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Erstellen</span>
+    <div className="flex-shrink-0 text-center">
+      <div className="relative w-[110px] h-[200px] rounded-xl shadow overflow-hidden flex flex-col justify-end cursor-pointer group border border-gray-200 dark:border-neutral-800 bg-gray-100 dark:bg-neutral-800">
+        {story.media_url ? (
+          <img 
+            src={story.media_url} 
+            alt="Story preview" 
+            className="absolute inset-0 w-full h-full object-cover"
+            onLoad={() => setIsLoading(false)}
+            onError={() => {
+              setIsLoading(false);
+              handleError(new Error('Story konnte nicht geladen werden'));
+            }}
+            loading="lazy"
+          />
+        ) : (
+          <div className="absolute inset-0 w-full h-full bg-gray-200 flex items-center justify-center text-4xl text-gray-400 font-bold">?</div>
+        )}
+        {isLoading && (
+          <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </div>
+        )}
+        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+          <span className="text-white font-semibold text-sm drop-shadow-lg">
+            {isOwnStory ? 'Deine Story' : story.author?.username}
+          </span>
         </div>
-        
-        {/* Story avatars */}
-        {combinedStories.map((group, index) => (
-            <div
-              key={group.user_id}
-              className="flex flex-col items-center space-y-1 cursor-pointer group flex-shrink-0"
-              onClick={() => handleStoryClick(index)}
-            >
-              <div className={`relative p-0.5 rounded-full ${group.hasUnviewed ? 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500' : 'bg-gray-300'}`}>
-                <Avatar className="w-16 h-16 border-2 border-white dark:border-gray-900">
-                  <AvatarImage src={group.avatar_url || ''} alt={group.display_name} />
-                  <AvatarFallback>{group.display_name?.charAt(0).toUpperCase()}</AvatarFallback>
-                </Avatar>
-              </div>
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate w-16 text-center">
-                {group.display_name}
-              </span>
-            </div>
-          ))}
       </div>
+    </div>
+  );
+});
 
-      <AnimatePresence>
-        {isStoryViewerOpen && (
-          <StoryViewer
-            isOpen={isStoryViewerOpen}
-            onClose={() => setIsStoryViewerOpen(false)}
-            storyGroups={combinedStories}
-            initialGroupIndex={selectedGroupIndex}
+StoryCard.displayName = 'StoryCard';
+
+const StoryList: React.FC = () => {
+  const { user } = useAuth();
+  const [showStoryCreation, setShowStoryCreation] = useState(false);
+  const [selectedStories, setSelectedStories] = useState<Story[]>([]);
+  const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
+  const [showStoryViewer, setShowStoryViewer] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const storyBarRef = useRef<StoryBarRef | null>(null);
+
+  // NEU: Stabilere Callbacks
+  const handleOpenStory = useCallback((stories: Story[], index: number) => {
+    try {
+      setSelectedStories(stories);
+      setSelectedStoryIndex(index);
+      setShowStoryViewer(true);
+    } catch (error) {
+      console.error('Error opening story:', error);
+      toast.error('Fehler beim Öffnen der Story');
+    }
+  }, []);
+
+  const handleCreateStory = useCallback(() => {
+    try {
+      setShowStoryCreation(true);
+    } catch (error) {
+      console.error('Error creating story:', error);
+      toast.error('Fehler beim Erstellen der Story');
+    }
+  }, []);
+
+  // NEU: Stabilere Story-Viewed-Handler
+  const handleStoryViewed = useCallback((storyId: number) => {
+    try {
+      setSelectedStories(prev =>
+        prev.map(story =>
+          story.id === storyId ? { ...story, is_viewed: true } : story
+        )
+      );
+    } catch (error) {
+      console.error('Error marking story as viewed:', error);
+    }
+  }, []);
+
+  const handleStoryViewerClose = useCallback(() => {
+    try {
+      setShowStoryViewer(false);
+      setSelectedStories([]);
+      setSelectedStoryIndex(0);
+    } catch (error) {
+      console.error('Error closing story viewer:', error);
+    }
+  }, []);
+
+  const handleStoryCreationClose = useCallback(() => {
+    try {
+      setShowStoryCreation(false);
+    } catch (error) {
+      console.error('Error closing story creation:', error);
+    }
+  }, []);
+
+  // NEU: Stabilere Callbacks
+  const handleStoryCreated = useCallback(() => {
+    try {
+      setShowStoryCreation(false);
+      // StoryBar neu laden, damit die neue Story sofort sichtbar ist
+      if (storyBarRef.current?.refreshStories) {
+        storyBarRef.current.refreshStories();
+      }
+      toast.success('Story erfolgreich erstellt!');
+    } catch (error) {
+      console.error('Error handling story creation:', error);
+      toast.error('Fehler beim Erstellen der Story');
+    }
+  }, []);
+
+  // NEU: Memoized StoryViewer Props
+  const storyViewerProps = useMemo(() => ({
+    stories: selectedStories,
+    initialStoryIndex: selectedStoryIndex,
+    isOpen: showStoryViewer,
+    onClose: handleStoryViewerClose,
+    onStoryView: handleStoryViewed
+  }), [selectedStories, selectedStoryIndex, showStoryViewer, handleStoryViewerClose, handleStoryViewed]);
+
+  // Error handling
+  const handleError = useCallback((error: Error, errorInfo: React.ErrorInfo) => {
+    console.error('StoryList error:', error, errorInfo);
+    setError(error.message);
+    toast.error('Ein Fehler ist aufgetreten beim Laden der Stories');
+  }, []);
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      // Cleanup beim Unmount
+      setSelectedStories([]);
+      setShowStoryViewer(false);
+      setShowStoryCreation(false);
+    };
+  }, []);
+
+  return (
+    <ErrorBoundary onError={handleError}>
+      <div className="w-full">
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm">{error}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setError(null)}
+              className="mt-2"
+            >
+              Erneut versuchen
+            </Button>
+          </div>
+        )}
+        
+        <StoryBar 
+          ref={storyBarRef}
+          onOpenStory={handleOpenStory} 
+          onCreateStory={handleCreateStory} 
+        />
+        
+        {/* Story Creation Modal */}
+        {showStoryCreation && (
+          <StoryCreation
+            onStoryCreated={handleStoryCreated}
+            onClose={handleStoryCreationClose}
           />
         )}
-      </AnimatePresence>
-
-      <StoryCreator
-        isOpen={isStoryCreatorOpen}
-        onClose={() => setIsStoryCreatorOpen(false)}
-      />
-    </>
+        
+        {/* Story Viewer Modal - STABILER */}
+        {showStoryViewer && selectedStories.length > 0 && (
+          <StoryViewer {...storyViewerProps} />
+        )}
+        
+        {/* Warnung im UI, falls Modal offen aber keine Stories */}
+        {showStoryViewer && selectedStories.length === 0 && (
+          <div className="p-4 bg-red-100 text-red-800 rounded mt-2 text-xs font-mono">
+            WARNUNG: showStoryViewer=true, aber keine Stories ausgewählt!
+          </div>
+        )}
+      </div>
+    </ErrorBoundary>
   );
 };
 

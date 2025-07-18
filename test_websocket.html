@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .log { background: #f5f5f5; padding: 10px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px; }
+        .status { padding: 5px 10px; border-radius: 3px; font-weight: bold; }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        .connecting { background: #fff3cd; color: #856404; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        input { width: 100%; padding: 8px; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Debug Test</h1>
+    
+    <div class="test">
+        <h3>1. Backend Status Check</h3>
+        <button onclick="checkBackend()">Check Backend (Port 8000)</button>
+        <div id="backend-status" class="status disconnected">Not checked</div>
+    </div>
+
+    <div class="test">
+        <h3>2. Token Setup</h3>
+        <input type="text" id="token" placeholder="Enter JWT token here" style="width: 300px;">
+        <button onclick="testToken()">Test Token</button>
+        <div id="token-status" class="status disconnected">No token</div>
+    </div>
+
+    <div class="test">
+        <h3>3. Feed WebSocket Test</h3>
+        <button onclick="testFeedWS()">Test Feed WebSocket</button>
+        <button onclick="disconnectFeed()">Disconnect</button>
+        <div id="feed-status" class="status disconnected">Disconnected</div>
+        <div class="log" id="feed-log"></div>
+    </div>
+
+    <div class="test">
+        <h3>4. Chat WebSocket Test</h3>
+        <button onclick="testChatWS()">Test Chat WebSocket</button>
+        <button onclick="disconnectChat()">Disconnect</button>
+        <div id="chat-status" class="status disconnected">Disconnected</div>
+        <div class="log" id="chat-log"></div>
+    </div>
+
+    <div class="test">
+        <h3>5. Test WebSocket Test</h3>
+        <button onclick="testTestWS()">Test Test WebSocket</button>
+        <button onclick="disconnectTest()">Disconnect</button>
+        <div id="test-status" class="status disconnected">Disconnected</div>
+        <div class="log" id="test-log"></div>
+    </div>
+
+    <script>
+        let feedWs = null;
+        let chatWs = null;
+        let testWs = null;
+
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            element.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            element.scrollTop = element.scrollHeight;
+        }
+
+        async function checkBackend() {
+            const status = document.getElementById('backend-status');
+            status.textContent = 'Checking...';
+            status.className = 'status connecting';
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/auth/user/', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    status.textContent = 'Backend OK (Port 8000)';
+                    status.className = 'status connected';
+                    log('feed-log', '✅ Backend is running on port 8000', 'success');
+                } else {
+                    status.textContent = `Backend Error: ${response.status}`;
+                    status.className = 'status disconnected';
+                    log('feed-log', `❌ Backend error: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                status.textContent = 'Backend not reachable';
+                status.className = 'status disconnected';
+                log('feed-log', `❌ Backend not reachable: ${error.message}`, 'error');
+            }
+        }
+
+        function testToken() {
+            const token = document.getElementById('token').value;
+            const status = document.getElementById('token-status');
+            
+            if (!token) {
+                status.textContent = 'No token provided';
+                status.className = 'status disconnected';
+                return;
+            }
+            
+            // Basic JWT token validation (just check format)
+            if (token.split('.').length === 3) {
+                status.textContent = 'Token format OK';
+                status.className = 'status connected';
+                log('feed-log', '✅ Token format looks valid', 'success');
+            } else {
+                status.textContent = 'Invalid token format';
+                status.className = 'status disconnected';
+                log('feed-log', '❌ Invalid token format', 'error');
+            }
+        }
+
+        function testFeedWS() {
+            const token = document.getElementById('token').value;
+            const status = document.getElementById('feed-status');
+            
+            if (!token) {
+                alert('Please enter a token first');
+                return;
+            }
+            
+            status.textContent = 'Connecting...';
+            status.className = 'status connecting';
+            
+            const wsUrl = `ws://localhost:8000/ws/feed/?token=${token}`;
+            log('feed-log', `🔌 Connecting to: ${wsUrl}`, 'info');
+            
+            feedWs = new WebSocket(wsUrl);
+            
+            feedWs.onopen = function() {
+                status.textContent = 'Connected to Feed';
+                status.className = 'status connected';
+                log('feed-log', '✅ Feed WebSocket connected successfully', 'success');
+            };
+            
+            feedWs.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    log('feed-log', `📨 Received: ${JSON.stringify(data, null, 2)}`, 'info');
+                } catch (e) {
+                    log('feed-log', `📨 Raw message: ${event.data}`, 'info');
+                }
+            };
+            
+            feedWs.onclose = function(event) {
+                status.textContent = 'Disconnected from Feed';
+                status.className = 'status disconnected';
+                log('feed-log', `❌ Feed WebSocket closed: ${event.code} ${event.reason}`, 'error');
+            };
+            
+            feedWs.onerror = function(error) {
+                log('feed-log', `❌ Feed WebSocket error: ${error}`, 'error');
+            };
+        }
+
+        function testChatWS() {
+            const token = document.getElementById('token').value;
+            const status = document.getElementById('chat-status');
+            
+            if (!token) {
+                alert('Please enter a token first');
+                return;
+            }
+            
+            status.textContent = 'Connecting...';
+            status.className = 'status connecting';
+            
+            const wsUrl = `ws://localhost:8000/ws/chat/?token=${token}`;
+            log('chat-log', `🔌 Connecting to: ${wsUrl}`, 'info');
+            
+            chatWs = new WebSocket(wsUrl);
+            
+            chatWs.onopen = function() {
+                status.textContent = 'Connected to Chat';
+                status.className = 'status connected';
+                log('chat-log', '✅ Chat WebSocket connected successfully', 'success');
+            };
+            
+            chatWs.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    log('chat-log', `📨 Received: ${JSON.stringify(data, null, 2)}`, 'info');
+                } catch (e) {
+                    log('chat-log', `📨 Raw message: ${event.data}`, 'info');
+                }
+            };
+            
+            chatWs.onclose = function(event) {
+                status.textContent = 'Disconnected from Chat';
+                status.className = 'status disconnected';
+                log('chat-log', `❌ Chat WebSocket closed: ${event.code} ${event.reason}`, 'error');
+            };
+            
+            chatWs.onerror = function(error) {
+                log('chat-log', `❌ Chat WebSocket error: ${error}`, 'error');
+            };
+        }
+
+        function testTestWS() {
+            const status = document.getElementById('test-status');
+            
+            status.textContent = 'Connecting...';
+            status.className = 'status connecting';
+            
+            const wsUrl = `ws://localhost:8000/ws/test/`;
+            log('test-log', `🔌 Connecting to: ${wsUrl}`, 'info');
+            
+            testWs = new WebSocket(wsUrl);
+            
+            testWs.onopen = function() {
+                status.textContent = 'Connected to Test';
+                status.className = 'status connected';
+                log('test-log', '✅ Test WebSocket connected successfully', 'success');
+                
+                // Send a test message
+                testWs.send(JSON.stringify({ type: 'test', message: 'Hello from browser' }));
+            };
+            
+            testWs.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    log('test-log', `📨 Received: ${JSON.stringify(data, null, 2)}`, 'info');
+                } catch (e) {
+                    log('test-log', `📨 Raw message: ${event.data}`, 'info');
+                }
+            };
+            
+            testWs.onclose = function(event) {
+                status.textContent = 'Disconnected from Test';
+                status.className = 'status disconnected';
+                log('test-log', `❌ Test WebSocket closed: ${event.code} ${event.reason}`, 'error');
+            };
+            
+            testWs.onerror = function(error) {
+                log('test-log', `❌ Test WebSocket error: ${error}`, 'error');
+            };
+        }
+
+        function disconnectFeed() {
+            if (feedWs) {
+                feedWs.close();
+                feedWs = null;
+            }
+        }
+
+        function disconnectChat() {
+            if (chatWs) {
+                chatWs.close();
+                chatWs = null;
+            }
+        }
+
+        function disconnectTest() {
+            if (testWs) {
+                testWs.close();
+                testWs = null;
+            }
+        }
+
+        // Auto-check backend on load
+        window.onload = function() {
+            checkBackend();
+        };
+    </script>
+</body>
+</html> 

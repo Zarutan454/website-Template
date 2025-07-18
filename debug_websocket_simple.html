@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple WebSocket Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.connected { background-color: #d4edda; color: #155724; }
+        .status.disconnected { background-color: #f8d7da; color: #721c24; }
+        .status.connecting { background-color: #fff3cd; color: #856404; }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple WebSocket Test</h1>
+    
+    <div class="test-section">
+        <h2>Configuration</h2>
+        <input type="text" id="token-input" placeholder="Enter JWT token here" style="width: 100%;">
+        <button onclick="testConnection()">Test Connection</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Feed WebSocket Test</h2>
+        <div id="feed-status" class="status disconnected">Disconnected</div>
+        <button onclick="connectFeed()">Connect to Feed</button>
+        <button onclick="disconnectFeed()">Disconnect</button>
+        <button onclick="pingFeed()">Send Ping</button>
+        <div class="log" id="feed-log"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Chat WebSocket Test</h2>
+        <div id="chat-status" class="status disconnected">Disconnected</div>
+        <button onclick="connectChat()">Connect to Chat</button>
+        <button onclick="disconnectChat()">Disconnect</button>
+        <button onclick="pingChat()">Send Ping</button>
+        <div class="log" id="chat-log"></div>
+    </div>
+
+    <script>
+        let feedWs = null;
+        let chatWs = null;
+        
+        function logMessage(logElement, message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.style.color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function testConnection() {
+            const token = document.getElementById('token-input').value;
+            if (!token) {
+                alert('Please enter a JWT token first');
+                return;
+            }
+            
+            console.log('Testing connection with token:', token);
+            logMessage(document.getElementById('feed-log'), 'Testing connection...', 'info');
+        }
+
+        function connectFeed() {
+            const token = document.getElementById('token-input').value;
+            if (!token) {
+                alert('Please enter a JWT token first');
+                return;
+            }
+
+            const status = document.getElementById('feed-status');
+            const log = document.getElementById('feed-log');
+            
+            status.textContent = 'Connecting...';
+            status.className = 'status connecting';
+            
+            const wsUrl = `ws://localhost:8000/ws/feed/?token=${token}`;
+            logMessage(log, `Connecting to: ${wsUrl}`, 'info');
+            
+            feedWs = new WebSocket(wsUrl);
+            
+            feedWs.onopen = function() {
+                status.textContent = 'Connected to Feed';
+                status.className = 'status connected';
+                logMessage(log, '✅ Feed WebSocket connected successfully', 'success');
+            };
+            
+            feedWs.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    logMessage(log, `📨 Received: ${JSON.stringify(data, null, 2)}`, 'info');
+                } catch (e) {
+                    logMessage(log, `📨 Raw message: ${event.data}`, 'info');
+                }
+            };
+            
+            feedWs.onclose = function(event) {
+                status.textContent = 'Disconnected from Feed';
+                status.className = 'status disconnected';
+                logMessage(log, `❌ Feed WebSocket closed: ${event.code} ${event.reason}`, 'error');
+            };
+            
+            feedWs.onerror = function(error) {
+                logMessage(log, `❌ Feed WebSocket error: ${error}`, 'error');
+            };
+        }
+
+        function disconnectFeed() {
+            if (feedWs) {
+                feedWs.close();
+                feedWs = null;
+            }
+        }
+
+        function pingFeed() {
+            if (feedWs && feedWs.readyState === WebSocket.OPEN) {
+                feedWs.send(JSON.stringify({ type: 'ping' }));
+                logMessage(document.getElementById('feed-log'), '📤 Sent ping to feed', 'info');
+            }
+        }
+
+        function connectChat() {
+            const token = document.getElementById('token-input').value;
+            if (!token) {
+                alert('Please enter a JWT token first');
+                return;
+            }
+
+            const status = document.getElementById('chat-status');
+            const log = document.getElementById('chat-log');
+            
+            status.textContent = 'Connecting...';
+            status.className = 'status connecting';
+            
+            const wsUrl = `ws://localhost:8000/ws/chat/?token=${token}`;
+            logMessage(log, `Connecting to: ${wsUrl}`, 'info');
+            
+            chatWs = new WebSocket(wsUrl);
+            
+            chatWs.onopen = function() {
+                status.textContent = 'Connected to Chat';
+                status.className = 'status connected';
+                logMessage(log, '✅ Chat WebSocket connected successfully', 'success');
+            };
+            
+            chatWs.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    logMessage(log, `📨 Received: ${JSON.stringify(data, null, 2)}`, 'info');
+                } catch (e) {
+                    logMessage(log, `📨 Raw message: ${event.data}`, 'info');
+                }
+            };
+            
+            chatWs.onclose = function(event) {
+                status.textContent = 'Disconnected from Chat';
+                status.className = 'status disconnected';
+                logMessage(log, `❌ Chat WebSocket closed: ${event.code} ${event.reason}`, 'error');
+            };
+            
+            chatWs.onerror = function(error) {
+                logMessage(log, `❌ Chat WebSocket error: ${error}`, 'error');
+            };
+        }
+
+        function disconnectChat() {
+            if (chatWs) {
+                chatWs.close();
+                chatWs = null;
+            }
+        }
+
+        function pingChat() {
+            if (chatWs && chatWs.readyState === WebSocket.OPEN) {
+                chatWs.send(JSON.stringify({ type: 'ping' }));
+                logMessage(document.getElementById('chat-log'), '📤 Sent ping to chat', 'info');
+            }
+        }
+
+        // Instructions
+        console.log(`
+WebSocket Test Instructions:
+1. Get a JWT token from login: http://localhost:8000/api/auth/login/
+2. Enter the token in the input field
+3. Test Feed WebSocket first (should work)
+4. Test Chat WebSocket (should work with GenericChatConsumer)
+5. Check browser console for detailed logs
+        `);
+    </script>
+</body>
+</html> 

@@ -80,6 +80,7 @@ export interface CreatePostData {
   media_type?: string | null;
   hashtags?: string[];
   action?: string; // Added this property to support action types in post creation
+  privacy?: 'public' | 'friends' | 'private';
 }
 
 export interface CreateCommentData {

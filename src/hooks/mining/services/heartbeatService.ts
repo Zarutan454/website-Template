@@ -1,5 +1,4 @@
 
-import { supabase } from '@/lib/supabase';
 import { formatDateForDatabase } from '../utils';
 
 // Intervall, nach dem ein Benutzer als inaktiv betrachtet wird (5 Minuten)
@@ -14,19 +13,20 @@ export const sendHeartbeat = async (userId: string): Promise<boolean> => {
     const currentTimestamp = formatDateForDatabase(new Date());
     
     // Mining-Statistiken mit dem letzten Heartbeat-Zeitstempel aktualisieren
-    const { error } = await supabase
-      .from('mining_stats')
-      .update({
-        last_heartbeat: currentTimestamp,
-        last_activity_at: currentTimestamp
-      })
-      .eq('user_id', userId)
-      .eq('is_mining', true);
+    // TODO: Django-API-Migration: sendHeartbeat auf Django-API umstellen
+    // const { error } = await supabase
+    //   .from('mining_stats')
+    //   .update({
+    //     last_heartbeat: currentTimestamp,
+    //     last_activity_at: currentTimestamp
+    //   })
+    //   .eq('user_id', userId)
+    //   .eq('is_mining', true);
       
-    if (error) {
-      console.error('Fehler beim Senden des Heartbeats:', error);
-      return false;
-    }
+    // if (error) {
+    //   console.error('Fehler beim Senden des Heartbeats:', error);
+    //   return false;
+    // }
     
     return true;
   } catch (err) {
@@ -44,43 +44,44 @@ export const checkInactiveMiners = async (): Promise<number> => {
     timestamp.setMinutes(timestamp.getMinutes() - INACTIVITY_THRESHOLD / 60000);
     
     // Suche nach Benutzern mit fehlendem Heartbeat
-    const { data, error } = await supabase.rpc('get_inactive_miners', {
-      inactivity_minutes: INACTIVITY_THRESHOLD / 60000
-    });
+    // TODO: Django-API-Migration: checkInactiveMiners auf Django-API umstellen
+    // const { data, error } = await supabase.rpc('get_inactive_miners', {
+    //   inactivity_minutes: INACTIVITY_THRESHOLD / 60000
+    // });
     
-    if (error) {
-      console.error('Fehler beim Prüfen inaktiver Miner:', error);
-      return 0;
-    }
+    // if (error) {
+    //   console.error('Fehler beim Prüfen inaktiver Miner:', error);
+    //   return 0;
+    // }
     
-    if (!data || data.length === 0) {
-      return 0;
-    }
+    // if (!data || data.length === 0) {
+    //   return 0;
+    // }
     
     // Mining für jeden inaktiven Benutzer stoppen
     let stoppedCount = 0;
     
-    for (const miner of data) {
-      const { error: updateError } = await supabase.rpc('handle_mining_status_update', {
-        user_id_param: miner.user_id,
-        is_mining_param: false,
-        update_heartbeat: false
-      });
+    // for (const miner of data) {
+    //   const { error: updateError } = await supabase.rpc('handle_mining_status_update', {
+    //     user_id_param: miner.user_id,
+    //     is_mining_param: false,
+    //     update_heartbeat: false
+    //   });
       
-      if (!updateError) {
-        stoppedCount++;
+    //   if (!updateError) {
+    //     stoppedCount++;
         
-        // Mining-Sitzungen beenden
-        await supabase
-          .from('mining_sessions')
-          .update({
-            status: 'inactive',
-            end_time: formatDateForDatabase(new Date())
-          })
-          .eq('user_id', miner.user_id)
-          .is('end_time', null);
-      }
-    }
+    //     // Mining-Sitzungen beenden
+    //     await supabase
+    //       .from('mining_sessions')
+    //       .update({
+    //         status: 'inactive',
+    //         end_time: formatDateForDatabase(new Date())
+    //       })
+    //       .eq('user_id', miner.user_id)
+    //       .is('end_time', null);
+    //   }
+    // }
     
     return stoppedCount;
   } catch (err) {

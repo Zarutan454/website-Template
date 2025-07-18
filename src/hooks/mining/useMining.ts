@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useMiningStore } from '@/store/useMiningStore';
+import { useAuth } from '@/context/AuthContext';
 
 /**
  * PERFECTED BSN Mining Hook
@@ -9,6 +10,7 @@ import { useMiningStore } from '@/store/useMiningStore';
  * All state logic is handled by the store, keeping components clean and synchronized.
  */
 export const useMining = () => {
+  const { user, isAuthenticated } = useAuth();
   const {
     miningStats,
     isLoading,
@@ -20,12 +22,12 @@ export const useMining = () => {
     clearError,
   } = useMiningStore();
 
-  // Fetch initial stats when the hook is first used
+  // Fetch initial stats when the hook is first used, but only if user is authenticated
   useEffect(() => {
-    if (!miningStats && !isLoading) {
+    if (isAuthenticated && user && !miningStats && !isLoading) {
       fetchStats();
     }
-  }, [fetchStats, miningStats, isLoading]);
+  }, [fetchStats, miningStats, isLoading, isAuthenticated, user]);
 
   return {
     miningStats,
@@ -37,5 +39,6 @@ export const useMining = () => {
     stopMining,
     heartbeat,
     clearError,
+    isAuthenticated,
   };
 }; 

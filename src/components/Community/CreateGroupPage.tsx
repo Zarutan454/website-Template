@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-// import { supabase } from '@/lib/supabase';
+import { groupAPI, uploadMedia } from '@/lib/django-api-new';
 import { FeedLayout } from '@/components/Feed/FeedLayout';
 import { ChevronLeft, Upload, X, Lock, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,11 @@ const CreateGroupPage: React.FC = () => {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  // State für neue Felder:
+  const [tokenGated, setTokenGated] = useState(false);
+  const [tokenContract, setTokenContract] = useState('');
+  const [aiEnabled, setAiEnabled] = useState(true);
+  const [adminOnlyUpload, setAdminOnlyUpload] = useState(true);
 
   // Create group mutation
   const createGroupMutation = useMutation({
@@ -36,64 +41,37 @@ const CreateGroupPage: React.FC = () => {
       // Upload avatar if selected
       let avatarUrl = null;
       if (avatarFile) {
-        const avatarFileName = `group-avatars/${Date.now()}-${avatarFile.name}`;
-        const { data: avatarData, error: avatarError } = await supabase.storage
-          .from('media')
-          .upload(avatarFileName, avatarFile);
-        
-        if (avatarError) throw avatarError;
-        
-        const { data: avatarUrlData } = supabase.storage
-          .from('media')
-          .getPublicUrl(avatarFileName);
-        
-        avatarUrl = avatarUrlData.publicUrl;
+        const res = await uploadMedia(avatarFile, 'group_avatar');
+        if (res?.url) {
+          avatarUrl = res.url;
+        } else {
+          throw new Error('Fehler beim Hochladen des Avatars');
+        }
       }
-      
       // Upload banner if selected
       let bannerUrl = null;
       if (bannerFile) {
-        const bannerFileName = `group-banners/${Date.now()}-${bannerFile.name}`;
-        const { data: bannerData, error: bannerError } = await supabase.storage
-          .from('media')
-          .upload(bannerFileName, bannerFile);
-        
-        if (bannerError) throw bannerError;
-        
-        const { data: bannerUrlData } = supabase.storage
-          .from('media')
-          .getPublicUrl(bannerFileName);
-        
-        bannerUrl = bannerUrlData.publicUrl;
+        const res = await uploadMedia(bannerFile, 'group_banner');
+        if (res?.url) {
+          bannerUrl = res.url;
+        } else {
+          throw new Error('Fehler beim Hochladen des Banners');
+        }
       }
-      
-      // Create the group
-      const { data: groupData, error: groupError } = await supabase
-        .from('groups')
-        .insert({
-          name: name.trim(),
-          description: description.trim() || null,
-          created_by: profile.id,
-          is_private: isPrivate,
-          avatar_url: avatarUrl,
-          banner_url: bannerUrl
-        })
-        .select()
-        .single();
-      
-      if (groupError) throw groupError;
-      
-      // Add the creator as admin
-      const { error: memberError } = await supabase
-        .from('group_members')
-        .insert({
-          group_id: groupData.id,
-          user_id: profile.id,
-          role: 'admin'
-        });
-      
-      if (memberError) throw memberError;
-      
+      // Gruppe anlegen
+      const formData = new FormData();
+      formData.append('name', name.trim());
+      formData.append('description', description.trim() || '');
+      formData.append('privacy', isPrivate ? 'private' : 'public');
+      if (avatarUrl) formData.append('avatar_url', avatarUrl);
+      if (bannerUrl) formData.append('banner_url', bannerUrl);
+      formData.append('token_gated', tokenGated ? 'true' : 'false');
+      if (tokenGated && tokenContract.trim()) formData.append('required_token_contract', tokenContract.trim());
+      formData.append('ai_enabled', aiEnabled ? 'true' : 'false');
+      formData.append('admin_only_upload', adminOnlyUpload ? 'true' : 'false');
+      // ggf. weitere Felder (z.B. tags, guidelines) ergänzen
+      const groupData = await groupAPI.createGroup(formData);
+      if (!groupData || groupData.error) throw new Error(groupData?.error || 'Fehler beim Erstellen der Gruppe');
       return groupData;
     },
     onSuccess: (data) => {
@@ -144,7 +122,7 @@ const CreateGroupPage: React.FC = () => {
   }
 
   return (
-    <FeedLayout>
+    <FeedLayout hideStoriesAndCreatePostBox>
       <div className="max-w-2xl mx-auto">
         <Button 
           variant="ghost" 
@@ -181,6 +159,7 @@ const CreateGroupPage: React.FC = () => {
                     />
                     <button 
                       type="button"
+                      aria-label="Banner entfernen"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleRemoveBanner();
@@ -204,6 +183,7 @@ const CreateGroupPage: React.FC = () => {
                   accept="image/*" 
                   className="hidden" 
                   onChange={handleBannerChange}
+                  title="Bannerbild auswählen"
                 />
               </div>
             </div>
@@ -229,6 +209,7 @@ const CreateGroupPage: React.FC = () => {
                       />
                       <button 
                         type="button"
+                        aria-label="Avatar entfernen"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRemoveAvatar();
@@ -252,6 +233,7 @@ const CreateGroupPage: React.FC = () => {
                     accept="image/*" 
                     className="hidden" 
                     onChange={handleAvatarChange}
+                    title="Gruppenbild auswählen"
                   />
                 </div>
               </div>
@@ -334,6 +316,31 @@ const CreateGroupPage: React.FC = () => {
                   </div>
                 </div>
               </div>
+            </div>
+            
+            {/* Token Gating */}
+            <div className="flex items-center gap-4">
+              <Switch id="token-gated" checked={tokenGated} onCheckedChange={setTokenGated} />
+              <Label htmlFor="token-gated">Token-Gated Gruppe</Label>
+              {tokenGated && (
+                <Input
+                  id="token-contract"
+                  value={tokenContract}
+                  onChange={e => setTokenContract(e.target.value)}
+                  placeholder="Contract-Adresse des Tokens (optional)"
+                  className={theme === 'dark' ? 'bg-dark-200 border-gray-700' : 'bg-white border-gray-300'}
+                />
+              )}
+            </div>
+            {/* AI Enabled */}
+            <div className="flex items-center gap-4">
+              <Switch id="ai-enabled" checked={aiEnabled} onCheckedChange={setAiEnabled} />
+              <Label htmlFor="ai-enabled">AI-Zusammenfassung & Empfehlungen aktivieren</Label>
+            </div>
+            {/* Admin Only Upload */}
+            <div className="flex items-center gap-4">
+              <Switch id="admin-only-upload" checked={adminOnlyUpload} onCheckedChange={setAdminOnlyUpload} />
+              <Label htmlFor="admin-only-upload">Nur Admins dürfen Dateien hochladen</Label>
             </div>
             
             <div className="flex justify-end gap-3 pt-4">

@@ -1,6 +1,5 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
 
 interface ProfileStats {
   postsCount: number;
@@ -36,55 +35,24 @@ export const useProfileStats = (userId: string | undefined) => {
       setStats(prev => ({ ...prev, isLoading: true, error: null }));
       
       // Fetch post count
-      const { count: postsCount, error: postsError } = await supabase
-        .from('posts')
-        .select('id', { count: 'exact', head: true })
-        .eq('author_id', userId);
-      
-      if (postsError) throw postsError;
+      // TODO: Django-API-Migration: useProfileStats auf Django-API umstellen
+      const postsCount = 0; // Placeholder
       
       // Fetch comments count
-      const { count: commentsCount, error: commentsError } = await supabase
-        .from('comments')
-        .select('id', { count: 'exact', head: true })
-        .eq('author_id', userId);
-      
-      if (commentsError) throw commentsError;
+      // TODO: Django-API-Migration: useProfileStats auf Django-API umstellen
+      const commentsCount = 0; // Placeholder
       
       // Fetch likes given count
-      const { count: likesCount, error: likesError } = await supabase
-        .from('likes')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId);
-      
-      if (likesError) throw likesError;
+      // TODO: Django-API-Migration: useProfileStats auf Django-API umstellen
+      const likesCount = 0; // Placeholder
       
       // Fetch mining stats
-      const { data: miningData, error: miningError } = await supabase
-        .from('mining_stats')
-        .select('total_tokens_earned, mining_rate, streak_days')
-        .eq('user_id', userId)
-        .single();
-      
-      if (miningError && miningError.code !== 'PGRST116') throw miningError;
+      // TODO: Django-API-Migration: useProfileStats auf Django-API umstellen
+      const miningData = { total_tokens_earned: 0, mining_rate: 0, streak_days: 0 }; // Placeholder
       
       // Calculate total mining days (approximate)
-      const { data: miningActivities, error: activitiesError } = await supabase
-        .from('mining_activities')
-        .select('created_at')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: true });
-      
-      if (activitiesError) throw activitiesError;
-      
-      // Get first and last mining activity to estimate total days
-      let totalMiningDays = 0;
-      if (miningActivities && miningActivities.length > 0) {
-        const firstActivity = new Date(miningActivities[0].created_at);
-        const lastActivity = new Date(miningActivities[miningActivities.length - 1].created_at);
-        const diffTime = Math.abs(lastActivity.getTime() - firstActivity.getTime());
-        totalMiningDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      }
+      // TODO: Django-API-Migration: useProfileStats auf Django-API umstellen
+      const totalMiningDays = 0; // Placeholder
       
       setStats({
         postsCount: postsCount || 0,

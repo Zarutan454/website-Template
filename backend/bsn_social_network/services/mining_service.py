@@ -5,6 +5,7 @@ from django.core.cache import cache
 from django.conf import settings
 from ..models import User, MiningProgress, Boost, Wallet, TokenTransaction
 import logging
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -314,29 +315,41 @@ class MiningService:
     
     @classmethod
     def create_boost(cls, user: User, boost_type: str, multiplier: Decimal = None, duration_hours: int = 24) -> Boost:
-        """Create a new boost for a user"""
-        # Default multipliers based on boost type
-        default_multipliers = {
-            'post': Decimal('2.0'),
-            'comment': Decimal('1.5'),
-            'like': Decimal('1.2'),
-            'share': Decimal('1.8'),
-            'login': Decimal('1.3'),
-            'referral': Decimal('3.0'),
-        }
-        
+        """
+        Creates a mining boost for a user.
+
+        Args:
+            user: The user to receive the boost.
+            boost_type: The type of boost (e.g., 'like', 'post').
+            multiplier: The boost multiplier. Defaults to settings.
+            duration_hours: The duration of the boost in hours.
+
+        Returns:
+            The created Boost object.
+        """
         if multiplier is None:
+            # Default multipliers from a settings file or hardcoded
+            default_multipliers = {
+                'like': Decimal('1.1'),
+                'post': Decimal('1.5'),
+                'comment': Decimal('1.2'),
+            }
             multiplier = default_multipliers.get(boost_type, Decimal('1.0'))
-        
-        boost = Boost.objects.create(
-            user=user,
-            boost_type=boost_type,
-            multiplier=multiplier,
-            duration_hours=duration_hours
-        )
-        
-        logger.info(f"Created {boost_type} boost for user {user.username} with {multiplier}x multiplier")
-        return boost
+
+        expires_at = timezone.now() + timedelta(hours=duration_hours)
+
+        try:
+            boost = Boost.objects.create(
+                user=user,
+                boost_type=boost_type,
+                multiplier=multiplier,
+                expires_at=expires_at
+            )
+            logger.info(f"Successfully created {boost_type} boost for user {user.id} with multiplier {multiplier}, expiring at {expires_at}")
+            return boost
+        except Exception as e:
+            logger.error(f"Failed to create mining boost for user {user.id} on {boost_type} action: {e}")
+            raise
     
     @classmethod
     def cleanup_expired_boosts(cls):
@@ -448,28 +461,79 @@ class MiningService:
         """Stops the current mining session for the user."""
         try:
             with transaction.atomic():
-                try:
-                    # Lock the row for the update
-                    progress = MiningProgress.objects.select_for_update().get(user=user)
-                except MiningProgress.DoesNotExist:
-                    logger.warning(f"Attempted to stop mining for user {user.username} with no mining progress record.")
-                    return True # No record, so it's not mining.
-
+                progress = cls.get_or_create_mining_progress(user)
+                
+                # Lock the row for update
+                progress = MiningProgress.objects.select_for_update().get(user=user)
+                
                 if not progress.is_mining:
                     return True  # Already stopped
-
-                # Update accumulated tokens before stopping
+                
+                # Final token accumulation before stopping
                 cls.update_accumulated_tokens(user)
                 
+                # Stop mining session
                 progress.is_mining = False
                 progress.save(update_fields=['is_mining'])
                 
-                # Clear the cache to force a refresh on next stats request
+                # Clear cache
                 cache_key = f"mining_stats_{user.id}"
                 cache.delete(cache_key)
                 
                 logger.info(f"Mining session stopped for user {user.id}")
                 return True
+                
         except Exception as e:
             logger.error(f"CRITICAL: Failed to stop mining session for user {user.username}: {e}")
-            return False 
+            return False
+
+    @classmethod
+    def monitor_inactive_sessions(cls) -> dict:
+        """
+        Monitor and report inactive mining sessions for debugging and monitoring
+        """
+        try:
+            timeout_minutes = 5
+            cutoff_time = timezone.now() - timezone.timedelta(minutes=timeout_minutes)
+            
+            # Find all active sessions
+            active_sessions = MiningProgress.objects.filter(is_mining=True)
+            
+            # Find inactive sessions
+            inactive_sessions = MiningProgress.objects.filter(
+                is_mining=True,
+                last_heartbeat__lt=cutoff_time
+            )
+            
+            # Collect detailed info
+            inactive_details = []
+            for session in inactive_sessions:
+                time_diff = timezone.now() - session.last_heartbeat if session.last_heartbeat else None
+                minutes_inactive = time_diff.total_seconds() / 60 if time_diff else 0
+                
+                inactive_details.append({
+                    'user_id': session.user.id,
+                    'user_email': session.user.email,
+                    'minutes_inactive': round(minutes_inactive, 2),
+                    'accumulated_tokens': float(session.accumulated_tokens),
+                    'last_heartbeat': session.last_heartbeat.isoformat() if session.last_heartbeat else None
+                })
+            
+            report = {
+                'total_active_sessions': active_sessions.count(),
+                'total_inactive_sessions': inactive_sessions.count(),
+                'inactive_details': inactive_details,
+                'checked_at': timezone.now().isoformat()
+            }
+            
+            if inactive_sessions.count() > 0:
+                logger.warning(f"Found {inactive_sessions.count()} inactive mining sessions that should be cleaned up")
+            
+            return report
+            
+        except Exception as e:
+            logger.error(f"Error monitoring inactive sessions: {e}")
+            return {
+                'error': str(e),
+                'checked_at': timezone.now().isoformat()
+            } 

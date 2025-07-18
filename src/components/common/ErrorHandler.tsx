@@ -33,7 +33,11 @@ export const errorMessages: Record<ErrorType, ErrorConfig> = {
 };
 
 export const handleError = (error: unknown, type: ErrorType = 'unknown') => {
-  console.error('Fehler aufgetreten:', error);
+  // Log error only in development
+  if (import.meta.env.DEV) {
+    console.error('Fehler aufgetreten:', error);
+  }
+  
   const errorConfig = errorMessages[type];
   
   toast.error(errorConfig.message, {

@@ -1,23 +1,43 @@
 
-import React, { useState, useEffect, memo, useMemo, useRef } from 'react';
+import * as React from 'react';
+import { useState, useEffect, memo, useMemo, useRef } from 'react';
+import { VirtualItem } from '@tanstack/react-virtual';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
 // FeedListItem außerhalb der Komponente laden, um zirkuläre Abhängigkeiten zu vermeiden
-const FeedListItem = React.lazy(() => import('../FeedListItem'));
+const FeedListItem = React.lazy(() => import('@/components/Feed/FeedListItem'));
+
+interface Post {
+  id: string;
+  content: string;
+  likesCount: number;
+  commentsCount: number;
+  isLiked: boolean;
+  media_url?: string;
+  image_url?: string;
+  media_type?: string;
+  video_url?: string;
+}
+
+interface VirtualRow extends VirtualItem {
+  index: number;
+  start: number;
+  size: number;
+}
 
 interface PostRendererProps {
-  virtualRow: any;
-  post: any;
+  virtualRow: VirtualRow;
+  post: Post;
   isVisible: boolean;
   shouldPreload: boolean;
   isDarkMode: boolean;
   showMiningRewards: boolean;
-  currentUser: any;
+  currentUser: unknown;
   onLike: (postId: string) => Promise<boolean>;
   onDelete: (postId: string) => Promise<boolean>;
-  onComment: (postId: string, content: string) => Promise<any>;
-  onGetComments: (postId: string) => Promise<any[]>;
+  onComment: (postId: string, content: string) => Promise<unknown>;
+  onGetComments: (postId: string) => Promise<unknown[]>;
   onShare: (postId: string) => Promise<boolean>;
   onReport?: (postId: string, reason: string) => Promise<boolean>;
   onMeasureHeight?: (height: number) => void;
@@ -46,7 +66,7 @@ const PostRenderer: React.FC<PostRendererProps> = ({
   onMeasureHeight
 }) => {
   const [loadedContent, setLoadedContent] = useState<boolean>(false);
-  const [loadedComments, setLoadedComments] = useState<any[]>([]);
+  const [loadedComments, setLoadedComments] = useState<unknown[]>([]);
   const [isCommentsLoading, setIsCommentsLoading] = useState<boolean>(false);
   const [showComments, setShowComments] = useState<boolean>(false);
   const postRef = useRef<HTMLDivElement>(null);
@@ -110,7 +130,6 @@ const PostRenderer: React.FC<PostRendererProps> = ({
       ref={postRef}
       style={itemStyle}
       data-testid={`post-item-${post.id}`}
-      aria-hidden={!isVisible}
     >
       {/* Nur rendern, wenn entweder der Post sichtbar ist oder vorgeladen werden soll */}
       {(loadedContent || isVisible || shouldPreload) && (

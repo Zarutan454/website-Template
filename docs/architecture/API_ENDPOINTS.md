@@ -8,13 +8,13 @@ Diese Dokumentation beschreibt die API-Endpunkte des BSN (Blockchain Social Netw
 
 Die API verwendet Token-basierte Authentifizierung. Für die meisten Endpunkte ist ein gültiger JWT-Token erforderlich, der im Authorization-Header übergeben wird:
 
-```
+```http
 Authorization: Bearer <your-jwt-token>
 ```
 
 ## Basis-URL
 
-```
+```text
 Entwicklung: http://localhost:8000/api/v1/
 Produktion: https://api.bsn.network/v1/
 ```
@@ -35,13 +35,14 @@ Produktion: https://api.bsn.network/v1/
 
 ### Registrierung
 
-```
+```http
 POST /api/v1/auth/register/
 ```
 
 Erstellt einen neuen Benutzeraccount.
 
 **Request-Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -56,6 +57,7 @@ Erstellt einen neuen Benutzeraccount.
 ```
 
 **Response (201 Created):**
+
 ```json
 {
   "success": true,
@@ -80,13 +82,14 @@ Erstellt einen neuen Benutzeraccount.
 
 ### Login
 
-```
+```http
 POST /api/v1/auth/login/
 ```
 
 Authentifiziert einen Benutzer und gibt Tokens zurück.
 
 **Request-Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -95,6 +98,7 @@ Authentifiziert einen Benutzer und gibt Tokens zurück.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -119,13 +123,14 @@ Authentifiziert einen Benutzer und gibt Tokens zurück.
 
 ### Token Refresh
 
-```
+```http
 POST /api/v1/auth/token/refresh/
 ```
 
 Erneuert den Access-Token mit einem gültigen Refresh-Token.
 
 **Request-Body:**
+
 ```json
 {
   "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
@@ -133,6 +138,7 @@ Erneuert den Access-Token mit einem gültigen Refresh-Token.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
@@ -141,13 +147,14 @@ Erneuert den Access-Token mit einem gültigen Refresh-Token.
 
 ### Logout
 
-```
+```http
 POST /api/v1/auth/logout/
 ```
 
 Invalidiert den Refresh-Token.
 
 **Request-Body:**
+
 ```json
 {
   "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
@@ -155,6 +162,7 @@ Invalidiert den Refresh-Token.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -164,13 +172,14 @@ Invalidiert den Refresh-Token.
 
 ### E-Mail-Verifizierung
 
-```
+```http
 POST /api/v1/auth/verify-email/
 ```
 
 Verifiziert die E-Mail-Adresse eines Benutzers.
 
 **Request-Body:**
+
 ```json
 {
   "token": "verification-token-from-email"
@@ -178,6 +187,7 @@ Verifiziert die E-Mail-Adresse eines Benutzers.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -187,13 +197,14 @@ Verifiziert die E-Mail-Adresse eines Benutzers.
 
 ### E-Mail-Verifizierung erneut senden
 
-```
+```http
 POST /api/v1/auth/resend-verification/
 ```
 
 Sendet eine neue Verifizierungs-E-Mail.
 
 **Request-Body:**
+
 ```json
 {
   "email": "user@example.com"
@@ -201,6 +212,7 @@ Sendet eine neue Verifizierungs-E-Mail.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -210,13 +222,14 @@ Sendet eine neue Verifizierungs-E-Mail.
 
 ### Passwort zurücksetzen
 
-```
+```http
 POST /api/v1/auth/password/reset/
 ```
 
 Sendet eine E-Mail mit einem Token zum Zurücksetzen des Passworts.
 
 **Request-Body:**
+
 ```json
 {
   "email": "user@example.com"
@@ -224,6 +237,7 @@ Sendet eine E-Mail mit einem Token zum Zurücksetzen des Passworts.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -231,13 +245,14 @@ Sendet eine E-Mail mit einem Token zum Zurücksetzen des Passworts.
 }
 ```
 
-```
+```http
 POST /api/v1/auth/password/reset/confirm/
 ```
 
 Setzt das Passwort mit einem gültigen Token zurück.
 
 **Request-Body:**
+
 ```json
 {
   "token": "reset-token-from-email",
@@ -247,6 +262,7 @@ Setzt das Passwort mit einem gültigen Token zurück.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -256,13 +272,14 @@ Setzt das Passwort mit einem gültigen Token zurück.
 
 ### Passwort ändern
 
-```
+```http
 POST /api/v1/auth/password/change/
 ```
 
 Ändert das Passwort eines authentifizierten Benutzers.
 
 **Request-Body:**
+
 ```json
 {
   "old_password": "currentPassword123",
@@ -272,6 +289,7 @@ POST /api/v1/auth/password/change/
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -283,13 +301,14 @@ POST /api/v1/auth/password/change/
 
 ### Benutzerprofil abrufen
 
-```
+```http
 GET /api/v1/users/me/
 ```
 
 Gibt das Profil des aktuell authentifizierten Benutzers zurück.
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -327,13 +346,14 @@ Gibt das Profil des aktuell authentifizierten Benutzers zurück.
 
 ### Benutzerprofil aktualisieren
 
-```
+```http
 PATCH /api/v1/users/me/
 ```
 
 Aktualisiert das Profil des aktuell authentifizierten Benutzers.
 
 **Request-Body:**
+
 ```json
 {
   "first_name": "John",
@@ -351,6 +371,7 @@ Aktualisiert das Profil des aktuell authentifizierten Benutzers.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -378,18 +399,20 @@ Aktualisiert das Profil des aktuell authentifizierten Benutzers.
 
 ### Avatar hochladen
 
-```
+```http
 POST /api/v1/users/me/avatar/
 ```
 
 Lädt ein neues Avatar-Bild hoch.
 
 **Request-Body (multipart/form-data):**
-```
+
+```text
 avatar: <image-file>
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -402,13 +425,14 @@ avatar: <image-file>
 
 ### Benutzer löschen
 
-```
+```http
 DELETE /api/v1/users/me/
 ```
 
 Löscht den Account des authentifizierten Benutzers.
 
 **Request-Body:**
+
 ```json
 {
   "password": "currentPassword123",
@@ -417,6 +441,7 @@ Löscht den Account des authentifizierten Benutzers.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -428,13 +453,14 @@ Löscht den Account des authentifizierten Benutzers.
 
 ### Faucet-Status abrufen
 
-```
+```http
 GET /api/v1/faucet/status/
 ```
 
 Gibt den aktuellen Faucet-Status für den authentifizierten Benutzer zurück.
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -472,13 +498,14 @@ Gibt den aktuellen Faucet-Status für den authentifizierten Benutzer zurück.
 
 ### Faucet-Claim durchführen
 
-```
+```http
 POST /api/v1/faucet/claim/
 ```
 
 Führt einen Faucet-Claim für den authentifizierten Benutzer durch.
 
 **Request-Body:**
+
 ```json
 {
   "captcha_token": "valid-captcha-token",
@@ -487,6 +514,7 @@ Führt einen Faucet-Claim für den authentifizierten Benutzer durch.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -520,19 +548,21 @@ Führt einen Faucet-Claim für den authentifizierten Benutzer durch.
 
 ### Faucet-Historie abrufen
 
-```
+```http
 GET /api/v1/faucet/history/
 ```
 
 Gibt die Claim-Historie des authentifizierten Benutzers zurück.
 
 **Query Parameters:**
+
 - `page` (optional): Seitennummer (default: 1)
 - `limit` (optional): Anzahl Einträge pro Seite (default: 20, max: 100)
 - `start_date` (optional): Startdatum (YYYY-MM-DD)
 - `end_date` (optional): Enddatum (YYYY-MM-DD)
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -585,13 +615,14 @@ Gibt die Claim-Historie des authentifizierten Benutzers zurück.
 
 ### Referral-Code abrufen
 
-```
+```http
 GET /api/v1/referral/code/
 ```
 
 Gibt den Referral-Code des authentifizierten Benutzers zurück.
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -607,13 +638,14 @@ Gibt den Referral-Code des authentifizierten Benutzers zurück.
 
 ### Referral-Statistiken abrufen
 
-```
+```http
 GET /api/v1/referral/stats/
 ```
 
 Gibt Statistiken zu den Referrals des authentifizierten Benutzers zurück.
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -654,18 +686,20 @@ Gibt Statistiken zu den Referrals des authentifizierten Benutzers zurück.
 
 ### Referral-Liste abrufen
 
-```
+```http
 GET /api/v1/referral/list/
 ```
 
 Gibt eine Liste der Referrals des authentifizierten Benutzers zurück.
 
 **Query Parameters:**
+
 - `page` (optional): Seitennummer (default: 1)
 - `limit` (optional): Anzahl Einträge pro Seite (default: 20, max: 100)
 - `status` (optional): Filter nach Status (pending, verified, active)
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -712,13 +746,14 @@ Gibt eine Liste der Referrals des authentifizierten Benutzers zurück.
 
 ### Referral-Code validieren
 
-```
+```http
 GET /api/v1/referral/validate/{code}/
 ```
 
 Validiert einen Referral-Code.
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -742,13 +777,14 @@ Validiert einen Referral-Code.
 
 ### Einladungs-E-Mail senden
 
-```
+```http
 POST /api/v1/referral/invite/
 ```
 
 Sendet eine Einladungs-E-Mail mit dem Referral-Code des authentifizierten Benutzers.
 
 **Request-Body:**
+
 ```json
 {
   "emails": ["friend1@example.com", "friend2@example.com"],
@@ -758,6 +794,7 @@ Sendet eine Einladungs-E-Mail mit dem Referral-Code des authentifizierten Benutz
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -775,13 +812,14 @@ Sendet eine Einladungs-E-Mail mit dem Referral-Code des authentifizierten Benutz
 
 ### Token reservieren
 
-```
+```http
 POST /api/v1/token/reserve/
 ```
 
 Erstellt eine neue Token-Reservierung für den authentifizierten Benutzer.
 
 **Request-Body:**
+
 ```json
 {
   "amount": 1000.0,
@@ -797,6 +835,7 @@ Erstellt eine neue Token-Reservierung für den authentifizierten Benutzer.
 ```
 
 **Response (201 Created):**
+
 ```json
 {
   "success": true,
@@ -829,18 +868,20 @@ Erstellt eine neue Token-Reservierung für den authentifizierten Benutzer.
 
 ### Reservierungen abrufen
 
-```
+```http
 GET /api/v1/token/reservations/
 ```
 
 Gibt die Token-Reservierungen des authentifizierten Benutzers zurück.
 
 **Query Parameters:**
+
 - `page` (optional): Seitennummer (default: 1)
 - `limit` (optional): Anzahl Einträge pro Seite (default: 20, max: 100)
 - `status` (optional): Filter nach Status (pending_payment, confirmed, cancelled, expired)
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -881,13 +922,14 @@ Gibt die Token-Reservierungen des authentifizierten Benutzers zurück.
 
 ### Aktuelle Sale-Phase abrufen
 
-```
+```http
 GET /api/v1/token/phase/
 ```
 
 Gibt Informationen zur aktuellen Token-Sale-Phase zurück.
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -929,13 +971,14 @@ Gibt Informationen zur aktuellen Token-Sale-Phase zurück.
 
 ### Whitelist-Status abrufen
 
-```
+```http
 GET /api/v1/token/whitelist/status/
 ```
 
 Gibt den Whitelist-Status des authentifizierten Benutzers zurück.
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -961,13 +1004,14 @@ Gibt den Whitelist-Status des authentifizierten Benutzers zurück.
 
 ### Für Whitelist bewerben
 
-```
+```http
 POST /api/v1/token/whitelist/apply/
 ```
 
 Bewirbt den authentifizierten Benutzer für die Whitelist.
 
 **Request-Body:**
+
 ```json
 {
   "telegram_handle": "@johndoe",
@@ -981,6 +1025,7 @@ Bewirbt den authentifizierten Benutzer für die Whitelist.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1003,13 +1048,14 @@ Bewirbt den authentifizierten Benutzer für die Whitelist.
 
 ### Newsletter-Anmeldung
 
-```
+```http
 POST /api/v1/newsletter/subscribe/
 ```
 
 Meldet eine E-Mail-Adresse für den Newsletter an.
 
 **Request-Body:**
+
 ```json
 {
   "email": "subscriber@example.com",
@@ -1022,6 +1068,7 @@ Meldet eine E-Mail-Adresse für den Newsletter an.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1039,13 +1086,14 @@ Meldet eine E-Mail-Adresse für den Newsletter an.
 
 ### Newsletter-Abmeldung
 
-```
+```http
 POST /api/v1/newsletter/unsubscribe/
 ```
 
 Meldet eine E-Mail-Adresse vom Newsletter ab.
 
 **Request-Body:**
+
 ```json
 {
   "email": "subscriber@example.com",
@@ -1054,6 +1102,7 @@ Meldet eine E-Mail-Adresse vom Newsletter ab.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1063,13 +1112,14 @@ Meldet eine E-Mail-Adresse vom Newsletter ab.
 
 ### Newsletter-Einstellungen aktualisieren
 
-```
+```http
 PATCH /api/v1/newsletter/preferences/
 ```
 
 Aktualisiert die Newsletter-Einstellungen.
 
 **Request-Body:**
+
 ```json
 {
   "email": "subscriber@example.com",
@@ -1081,6 +1131,7 @@ Aktualisiert die Newsletter-Einstellungen.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1099,13 +1150,14 @@ Aktualisiert die Newsletter-Einstellungen.
 
 ### Posts erstellen
 
-```
+```http
 POST /api/v1/social/posts/
 ```
 
 Erstellt einen neuen Social Media Post.
 
 **Request-Body:**
+
 ```json
 {
   "content": "Gerade meine ersten BSN Token über den Faucet erhalten! 🚀",
@@ -1116,6 +1168,7 @@ Erstellt einen neuen Social Media Post.
 ```
 
 **Response (201 Created):**
+
 ```json
 {
   "success": true,
@@ -1146,13 +1199,14 @@ Erstellt einen neuen Social Media Post.
 
 ### Posts abrufen
 
-```
+```http
 GET /api/v1/social/posts/
 ```
 
 Gibt eine Liste von Posts zurück.
 
 **Query Parameters:**
+
 - `page` (optional): Seitennummer (default: 1)
 - `limit` (optional): Anzahl Einträge pro Seite (default: 20, max: 100)
 - `user_id` (optional): Filter nach Benutzer-ID
@@ -1160,6 +1214,7 @@ Gibt eine Liste von Posts zurück.
 - `sort` (optional): Sortierung (newest, oldest, popular)
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1208,13 +1263,14 @@ Gibt eine Liste von Posts zurück.
 
 ### Wallet-Adresse validieren
 
-```
+```http
 POST /api/v1/blockchain/validate-address/
 ```
 
 Validiert eine Blockchain-Wallet-Adresse.
 
 **Request-Body:**
+
 ```json
 {
   "address": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
@@ -1223,6 +1279,7 @@ Validiert eine Blockchain-Wallet-Adresse.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1237,13 +1294,14 @@ Validiert eine Blockchain-Wallet-Adresse.
 
 ### Transaktions-Status abrufen
 
-```
+```http
 GET /api/v1/blockchain/transaction/{tx_hash}/
 ```
 
 Gibt den Status einer Blockchain-Transaktion zurück.
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1265,17 +1323,19 @@ Gibt den Status einer Blockchain-Transaktion zurück.
 
 ### Token-Balance abrufen
 
-```
+```http
 GET /api/v1/blockchain/balance/{address}/
 ```
 
 Gibt die Token-Balance einer Wallet-Adresse zurück.
 
 **Query Parameters:**
+
 - `network` (optional): Blockchain-Netzwerk (default: ethereum)
 - `token_contract` (optional): Token-Contract-Adresse
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1366,7 +1426,7 @@ Die API implementiert Rate-Limiting zur Vermeidung von Missbrauch:
 
 ### Rate-Limit-Header
 
-```
+```http
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
 X-RateLimit-Reset: 1687012800
@@ -1376,6 +1436,7 @@ X-RateLimit-Reset-After: 45
 ## Versionierung
 
 Die API verwendet Versionierung über die URL:
+
 - Aktuelle Version: `v1`
 - Basis-URL: `/api/v1/`
 - Deprecated Versionen werden 6 Monate unterstützt
@@ -1385,10 +1446,12 @@ Die API verwendet Versionierung über die URL:
 Alle Listen-Endpunkte unterstützen Paginierung:
 
 ### Query Parameters
+
 - `page`: Seitennummer (Standard: 1)
 - `limit`: Einträge pro Seite (Standard: 20, Maximum: 100)
 
 ### Response-Format
+
 ```json
 {
   "pagination": {
@@ -1409,6 +1472,7 @@ Alle Listen-Endpunkte unterstützen Paginierung:
 Für Echtzeit-Benachrichtigungen unterstützt die API Webhooks:
 
 ### Verfügbare Events
+
 - `user.registered`: Neue Benutzerregistrierung
 - `user.verified`: E-Mail-Verifizierung abgeschlossen
 - `faucet.claimed`: Faucet-Claim durchgeführt
@@ -1417,11 +1481,13 @@ Für Echtzeit-Benachrichtigungen unterstützt die API Webhooks:
 - `referral.completed`: Referral-Bonus ausgezahlt
 
 ### Webhook-Konfiguration
-```
+
+```http
 POST /api/v1/webhooks/
 ```
 
 **Request-Body:**
+
 ```json
 {
   "url": "https://your-app.com/webhooks/bsn",
@@ -1433,7 +1499,41 @@ POST /api/v1/webhooks/
 ## Support
 
 Für weitere Unterstützung:
+
 - **Dokumentation**: [BSN API Docs](https://docs.bsn.network)
 - **Support**: [support@bsn.network](mailto:support@bsn.network)
 - **Status Page**: [status.bsn.network](https://status.bsn.network)
 - **GitHub**: [BSN Repository](https://github.com/bsn-network/api)
+
+---
+
+## Supabase→Django-API Migration (Frontend)
+
+### Status (Stand: [heutiges Datum eintragen])
+
+- Die gesamte Supabase-Logik wurde aus dem Frontend entfernt.
+- Alle Komponenten, Hooks und Services, die zuvor Supabase nutzten, sind jetzt entweder auf Django-API umgestellt oder mit `TODO: Django-API-Migration` markiert.
+- Test- und Mock-Dateien mit Supabase-Bezug sind für die Migration irrelevant und können bei Bedarf entfernt werden.
+
+### Best Practices für die Django-API-Integration
+
+- **Nur Django-API verwenden:** Keine Supabase-Imports oder -Abfragen mehr im produktiven Code.
+- **Zentrale API-Clients:** Alle API-Aufrufe erfolgen über zentrale, wiederverwendbare API-Clients/Services (z.B. `api/`, `services/`).
+- **Fehlerbehandlung:** Fehler werden konsistent behandelt und an die UI weitergegeben.
+- **Typisierung:** Alle API-Responses sind sauber typisiert (TypeScript-Interfaces).
+- **Keine doppelten Komponenten:** Legacy-Komponenten mit Supabase-Logik wurden entfernt.
+- **TODO-Kommentare:** Offene Migrationsstellen sind mit `TODO: Django-API-Migration` markiert und im Task-Board dokumentiert.
+
+### Offene Aufgaben
+
+- Migration der mit `TODO: Django-API-Migration` markierten Komponenten/Hooks auf die Django-API.
+- Entfernen nicht mehr benötigter Supabase-Typen und Mock-Dateien.
+- Abschluss-Review und Test der neuen API-Integration.
+
+### Hinweise
+
+- Nach jeder Backend-Änderung: Frontend-Server neu starten.
+- Nach Migration: Testabdeckung und Dokumentation aktualisieren.
+- Bei Fragen zur API-Struktur siehe die API-Endpoint-Tabellen oben in dieser Datei.
+
+---

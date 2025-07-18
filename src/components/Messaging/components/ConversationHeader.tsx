@@ -4,10 +4,17 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
+interface UserProfile {
+  id?: string;
+  username?: string;
+  display_name?: string;
+  avatar_url?: string;
+  [key: string]: unknown;
+}
 interface ConversationHeaderProps {
   isMobile: boolean;
   handleBackToList: () => void;
-  partnerProfile: any;
+  partnerProfile: UserProfile;
   isFollowingUser: boolean;
   handleToggleFollow: () => void;
   setShowUserProfile: (show: boolean) => void;

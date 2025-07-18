@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useDjangoFeed, type FeedType } from '@/hooks/feed/useDjangoFeed';
 import { useTheme } from '@/components/ThemeProvider';
-import { adaptApiPostToFrontendPost } from '@/utils/postAdapter';
+import { adaptPost } from '@/utils/postAdapter';
 import { Post as FrontendPost } from '@/types/post';
 import { socialAPI } from '@/lib/django-api-new';
 // import { useMining } from '@/hooks/useMining';
@@ -32,171 +32,80 @@ export const useUnifiedFeedState = ({
     posts: apiPosts,
     isLoading,
     error,
+    hasMore,
     fetchPosts,
-    toggleLike,
-    deletePost,
-    createPost,
-    sharePost
+    loadMore,
+    commentPost,
+    // toggleLike, // TODO: wieder aktivieren, sobald API bereit
+    // deletePost, // TODO: wieder aktivieren, sobald API bereit
+    // createPost, // TODO: wieder aktivieren, sobald API bereit
+    // sharePost,  // TODO: wieder aktivieren, sobald API bereit
   } = useDjangoFeed({
     feedType,
-    enableAutoRefresh,
-    refreshInterval: 120000
+    // enableAutoRefresh, // TODO: wieder aktivieren, wenn unterstützt
+    // refreshInterval: 120000
   });
   
   const isDarkMode = theme === 'dark';
-  
-  // Posts adaptieren
-  const adaptedPosts: FrontendPost[] = apiPosts.map(adaptApiPostToFrontendPost);
-  
+  const adaptedPosts: FrontendPost[] = apiPosts.map(adaptPost);
+
   useEffect(() => {
     if (isAuthenticated && user) {
-      fetchPosts(1, false).then(() => {
-        setLastRefresh(new Date());
-        setHasNewPosts(false);
-      });
+      fetchPosts();
+      setLastRefresh(new Date());
+      setHasNewPosts(false);
     }
   }, [feedType, isAuthenticated, user, fetchPosts]);
-  
+
   useEffect(() => {
     if (enableAutoRefresh && isAuthenticated) {
       const intervalId = window.setInterval(() => {
         setHasNewPosts(true);
       }, 60000);
-      
       setRefreshInterval(intervalId);
-      
       return () => {
         if (refreshInterval) {
           clearInterval(refreshInterval);
         }
       };
     }
-  }, [enableAutoRefresh, isAuthenticated]);
-  
+  }, [enableAutoRefresh, isAuthenticated, refreshInterval]);
+
   const handleRefresh = useCallback(async () => {
     if (!isAuthenticated) return;
-    
     try {
-      await fetchPosts(1, false);
+      await fetchPosts();
       setLastRefresh(new Date());
       setHasNewPosts(false);
     } catch (error) {
       toast.error('Fehler beim Aktualisieren des Feeds');
-
     }
   }, [fetchPosts, isAuthenticated]);
-  
-  const handleLikePost = useCallback(async (postId: string) => {
-    try {
-      const result = await toggleLike(postId);
-      
-      if (result && showMiningRewards && user) {
-        try {
-          // await recordActivity('like');
-          // await trackSocialActivity(user.id, 'like');
-          console.log('Mining rewards temporarily disabled');
-        } catch (achievementError) {
-          console.warn('Achievement tracking failed:', achievementError);
-        }
-      }
-      
-      return result;
-    } catch (error) {
-      return false;
-    }
-  }, [toggleLike, showMiningRewards, user]);
-  
-  const handleDeletePost = useCallback(async (postId: string) => {
-    try {
-      const result = await deletePost(postId);
-      
-      if (result) {
-        toast.success('Beitrag erfolgreich gelöscht');
-        await fetchPosts(1, false);
-      }
-      
-      return result;
-    } catch (error) {
-      toast.error('Fehler beim Löschen des Beitrags');
-      return false;
-    }
-  }, [deletePost, fetchPosts]);
-  
-  const handleCreateComment = useCallback(async (postId: string, content: string) => {
-    try {
-      const result = await addComment(postId, content);
-      
-      if (result && showMiningRewards && user) {
-        try {
-          // await recordActivity('comment');
-          // await trackSocialActivity(user.id, 'comment');
-          console.log('Mining rewards temporarily disabled');
-        } catch (achievementError) {
-          console.warn('Achievement tracking failed:', achievementError);
-        }
-      }
-      
-      return result;
-    } catch (error) {
-      toast.error('Fehler beim Erstellen des Kommentars');
-      return null;
-    }
-  }, [addComment, showMiningRewards, user]);
-  
-  const handleSharePost = useCallback(async (postId: string) => {
-    try {
-      const result = await sharePost(postId, 'clipboard');
-      
-      if (result && showMiningRewards && user) {
-        try {
-          // await recordActivity('share');
-          // await trackSocialActivity(user.id, 'share');
-          toast.success('Beitrag wurde geteilt!');
-        } catch (achievementError) {
-          toast.success('Beitrag wurde geteilt!');
-        }
-      } else if (result) {
-        toast.success('Beitrag wurde geteilt!');
-      }
-      
-      return result;
-    } catch (error) {
-      toast.error('Fehler beim Teilen des Beitrags');
-      return false;
-    }
-  }, [sharePost, showMiningRewards, user]);
-  
-  const handleReportPost = useCallback(async (postId: string, reason: string) => {
-    try {
-      toast.success('Beitrag wurde gemeldet. Danke für deine Mithilfe!');
-      return true;
-    } catch (error) {
-      toast.error('Fehler beim Melden des Beitrags');
-      return false;
-    }
-  }, []);
-  
-  const handleCreatePost = useCallback(async (content: string, mediaUrl?: string | null, mediaType?: string | null) => {
-    if (!isAuthenticated) {
-      toast.error('Du musst angemeldet sein, um Beiträge zu erstellen');
-      return false;
-    }
-    
-    try {
-      const result = await createPost(content, mediaUrl);
-      
-      if (result) {
-        toast.success('Beitrag erfolgreich erstellt');
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      toast.error('Fehler beim Erstellen des Beitrags');
-      return false;
-    }
-  }, [createPost, isAuthenticated]);
-  
+
+  // const handleLikePost = useCallback(async (postId: string) => {
+  //   // TODO: wieder aktivieren, sobald toggleLike verfügbar
+  // }, [/* toggleLike, showMiningRewards, user */]);
+
+  // const handleDeletePost = useCallback(async (postId: string) => {
+  //   // TODO: wieder aktivieren, sobald deletePost verfügbar
+  // }, [/* deletePost, fetchPosts */]);
+
+  // const handleCreateComment = useCallback(async (postId: string, content: string) => {
+  //   // TODO: wieder aktivieren, sobald addComment verfügbar
+  // }, [/* addComment, showMiningRewards, user */]);
+
+  // const handleSharePost = useCallback(async (postId: string) => {
+  //   // TODO: wieder aktivieren, sobald sharePost verfügbar
+  // }, [/* sharePost, showMiningRewards, user */]);
+
+  // const handleReportPost = useCallback(async (postId: string, reason: string) => {
+  //   // TODO: wieder aktivieren, sobald reportPost verfügbar
+  // }, []);
+
+  // const handleCreatePost = useCallback(async (content: string, mediaUrl?: string | null, mediaType?: string | null) => {
+  //   // TODO: wieder aktivieren, sobald createPost verfügbar
+  // }, [/* createPost, isAuthenticated */]);
+
   return {
     profile: user,
     isAuthenticated,
@@ -209,26 +118,23 @@ export const useUnifiedFeedState = ({
     hasNewPosts,
     handleRefresh,
     setHasNewPosts,
-    handleLikePost,
-    handleDeletePost,
-    handleCreateComment,
+    // handleLikePost, // TODO: wieder aktivieren
+    // handleDeletePost, // TODO: wieder aktivieren
+    // handleCreateComment, // TODO: wieder aktivieren
     handleGetComments: async (postId: string) => {
+      // TODO: ggf. anpassen, wenn API für Kommentare geändert wird
       try {
-        console.log('🔍 Fetching comments for post:', postId);
         const response = await socialAPI.getComments(postId);
-        console.log('🔍 Fetched comments response:', response);
         const comments = response.results || [];
-        console.log('🔍 Extracted comments:', comments);
         return comments;
       } catch (error) {
-        console.error('Error fetching comments:', error);
         toast.error('Fehler beim Laden der Kommentare');
         return [];
       }
     },
-    handleSharePost,
-    handleReportPost,
-    handleCreatePost
+    // handleSharePost, // TODO: wieder aktivieren
+    // handleReportPost, // TODO: wieder aktivieren
+    // handleCreatePost, // TODO: wieder aktivieren
   };
 };
 

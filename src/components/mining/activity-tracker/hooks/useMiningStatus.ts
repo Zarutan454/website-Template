@@ -152,6 +152,7 @@ export function useMiningStatus(
           }
         }
       } catch (error) {
+        // Intentionally left empty: errors are handled by optimistic update revert below
       } finally {
         setIsProcessingQueue(false);
       }

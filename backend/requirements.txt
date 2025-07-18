@@ -13,11 +13,6 @@ dj-rest-auth==5.0.1
 psycopg2-binary==2.9.9
 dj-database-url==2.1.0
 
-# Celery
-celery==5.3.6
-django-celery-beat==2.6.0
-redis==5.0.1
-
 # Web3 & Blockchain
 web3==6.13.0
 eth-account==0.10.0

@@ -40,47 +40,8 @@ export const useUnifiedFeed = (feedType: FeedType) => {
   
   // Filtern und Sortieren der Posts
   useEffect(() => {
-    if (posts.length > 0) {
-      let filtered = [...posts];
-      
-      // Filter anwenden
-      if (filterType === 'tokens' || feedType === 'tokens') {
-        filtered = filtered.filter(isTokenRelatedPost);
-      } else if (filterType === 'nfts' || feedType === 'nfts') {
-        filtered = filtered.filter(isNFTRelatedPost);
-      } else if (filterType === 'following' && profile) {
-        const userFollowing: string[] = (profile as any).following || [];
-        filtered = filtered.filter(post => 
-          userFollowing.includes(post.author_id) || post.author_id === profile.id
-        );
-      }
-      
-      // Sortierung anwenden
-      if (sortType === 'newest') {
-        filtered = filtered.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-      } else if (sortType === 'popular') {
-        filtered = filtered.sort((a, b) => 
-          (b.likes_count || 0) - (a.likes_count || 0)
-        );
-      } else if (sortType === 'trending') {
-        filtered = filtered.sort((a, b) => 
-          ((b.comments_count || 0) + (b.likes_count || 0) + (b.shares_count || 0)) - 
-          ((a.comments_count || 0) + (a.likes_count || 0) + (a.shares_count || 0))
-        );
-      }
-      
-      // Adaptierte Posts für die UI
-      const adaptedPosts = filtered.map(post => 
-        adaptPostForCardSync(post, profile?.id || '')
-      );
-      
-      setFilteredPosts(adaptedPosts);
-    } else {
-      setFilteredPosts([]);
-    }
-  }, [posts, filterType, sortType, profile, feedType]);
+    setFilteredPosts(posts || []);
+  }, [posts]);
   
   // Feed aktualisieren
   const refreshFeed = useCallback(() => {

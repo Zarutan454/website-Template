@@ -1,40 +1,93 @@
-import axios from 'axios';
+import { API_BASE_URL } from '../config/env';
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const API_BASE_URL_FINAL = API_BASE_URL;
 
-// Create axios instance with default config
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
+// Utility function to handle avatar URLs correctly
+export const getAvatarUrl = (avatarUrl: string | null | undefined): string => {
+  if (!avatarUrl) return '';
+  
+  // Wenn die URL bereits absolut ist (mit http/https), verwende sie direkt
+  if (avatarUrl.startsWith('http')) {
+    return avatarUrl;
+  }
+  
+  // Wenn es eine relative URL ist, füge die API_BASE_URL hinzu
+  return `${API_BASE_URL_FINAL}${avatarUrl}`;
+};
+
+// Centralized API utility functions
+export const api = {
+  // Base configuration
+  baseURL: API_BASE_URL_FINAL,
+  
+  // Request headers
+  getHeaders: () => ({
     'Content-Type': 'application/json',
-  },
-});
+    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+  }),
 
-// Request interceptor to add auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+  // Generic request method
+  async request(endpoint: string, options: RequestInit = {}) {
+    const url = `${API_BASE_URL_FINAL}${endpoint}`;
+    const headers = {
+      ...this.getHeaders(),
+      ...options.headers,
+    };
 
-// Response interceptor to handle errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('API request failed:', error);
+      throw error;
     }
-    return Promise.reject(error);
-  }
-);
+  },
+
+  // GET request
+  async get(endpoint: string) {
+    return this.request(endpoint, { method: 'GET' });
+  },
+
+  // POST request
+  async post(endpoint: string, data: unknown) {
+    return this.request(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // PUT request
+  async put(endpoint: string, data: unknown) {
+    return this.request(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // DELETE request
+  async delete(endpoint: string) {
+    return this.request(endpoint, { method: 'DELETE' });
+  },
+
+  // PATCH request
+  async patch(endpoint: string, data: unknown) {
+    return this.request(endpoint, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+};
+
+// Export for backward compatibility
+export default api;
 
 // Token API
 export const tokenAPI = {
@@ -102,12 +155,12 @@ export const miningAPI = {
   },
 
   startMining: async () => {
-    const response = await api.post('/mining/start/');
+    const response = await api.post('/mining/start/', {});
     return response.data;
   },
 
   stopMining: async () => {
-    const response = await api.post('/mining/stop/');
+    const response = await api.post('/mining/stop/', {});
     return response.data;
   },
 
@@ -130,7 +183,7 @@ export const socialAPI = {
   },
 
   likePost: async (postId: number) => {
-    const response = await api.post(`/posts/${postId}/like/`);
+    const response = await api.post(`/posts/${postId}/like/`, {});
     return response.data;
   },
 
@@ -154,7 +207,7 @@ export const socialAPI = {
         response = await api.delete(`/posts/${postId}/like/`);
       } else {
         // Like the post
-        response = await api.post(`/posts/${postId}/like/`);
+        response = await api.post(`/posts/${postId}/like/`, {});
       }
       
       // Hole aktualisierte Post-Daten
@@ -202,7 +255,14 @@ export const socialAPI = {
   },
 
   getPosts: async (params?: { page?: number; limit?: number }) => {
-    const response = await api.get('/posts/', { params });
+    let url = '/posts/';
+    if (params) {
+      const query = new URLSearchParams();
+      if (params.page) query.append('page', params.page.toString());
+      if (params.limit) query.append('limit', params.limit.toString());
+      url += `?${query.toString()}`;
+    }
+    const response = await api.get(url);
     return response.data;
   },
 };

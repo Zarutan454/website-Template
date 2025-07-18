@@ -1,17 +1,22 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useProfile } from '@/hooks/useProfile';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Heart } from 'lucide-react';
 import { timeAgo } from '@/utils/dateUtils';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import useComments from '@/hooks/post/useComments';
+import { useComments } from '@/hooks/post/useComments';
 import { useAuth } from '@/context/AuthContext';
 
 interface PostCardCommentsProps {
   postId: string;
   darkMode?: boolean;
   onCommentCountChange?: (count: number) => void;
+}
+
+interface User {
+  id: number;
+  username: string;
+  display_name?: string;
+  avatar_url?: string;
 }
 
 const MIN_COMMENT_LENGTH = 3;
@@ -24,19 +29,17 @@ const PostCardComments: React.FC<PostCardCommentsProps> = ({
   const [commentText, setCommentText] = useState('');
   const { user: profile } = useAuth();
   
+  // Konvertiere postId zu Number für useComments
+  const numericPostId = parseInt(postId);
+  
   const {
     comments,
-    isLoading: isLoadingComments,
-    isSubmitting: isSubmittingComment,
+    loading,
+    error,
     createComment,
-    deleteComment,
-    toggleCommentLike
-  } = useComments(postId, profile?.id, () => {
-    // Callback, wenn ein Kommentar erstellt wurde
-    if (onCommentCountChange) {
-      onCommentCountChange(comments.length + 1);
-    }
-  });
+    likeComment,
+    refresh
+  } = useComments(numericPostId);
 
   // Benachrichtige Parent-Komponente über Änderungen der Kommentar-Anzahl
   useEffect(() => {
@@ -59,34 +62,32 @@ const PostCardComments: React.FC<PostCardCommentsProps> = ({
     }
 
     try {
-      const newComment = await createComment(trimmedComment);
-      if (newComment) {
+      const success = await createComment(trimmedComment);
+      if (success) {
         setCommentText('');
+        toast.success('Kommentar veröffentlicht');
+      } else {
+        toast.error('Fehler beim Veröffentlichen des Kommentars');
       }
     } catch (error) {
       toast.error('Fehler beim Veröffentlichen des Kommentars');
     }
   };
 
-  const handleLikeComment = async (commentId: string) => {
+  const handleLikeComment = async (commentId: number) => {
     if (!profile) {
       toast.error('Du musst angemeldet sein, um zu liken');
       return;
     }
     
-    await toggleCommentLike(commentId);
-  };
-
-  const handleDeleteComment = async (commentId: string) => {
-    if (!profile) {
-      toast.error('Du musst angemeldet sein, um zu löschen');
-      return;
+    try {
+      await likeComment(commentId);
+    } catch (error) {
+      toast.error('Fehler beim Liken des Kommentars');
     }
-    
-    await deleteComment(commentId);
   };
 
-  const renderAvatar = (user: any) => (
+  const renderAvatar = (user: User | undefined) => (
     user?.avatar_url ? (
       <img
         src={user.avatar_url}
@@ -118,12 +119,12 @@ const PostCardComments: React.FC<PostCardCommentsProps> = ({
             className={`flex-1 ${darkMode ? 'bg-dark-200 text-white' : 'bg-gray-100 text-gray-900'} rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500`}
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            disabled={isSubmittingComment}
+            disabled={loading}
           />
           <button
             type="submit"
             className={`ml-2 ${darkMode ? 'text-primary-400' : 'text-primary-500'} disabled:opacity-50`}
-            disabled={!commentText.trim() || isSubmittingComment}
+            disabled={!commentText.trim() || loading}
             aria-label="Kommentar senden"
           >
             <Send size={18} />
@@ -131,9 +132,16 @@ const PostCardComments: React.FC<PostCardCommentsProps> = ({
         </form>
       )}
 
+      {/* Error Message */}
+      {error && (
+        <div className="text-red-500 text-sm mb-2">
+          {error}
+        </div>
+      )}
+
       {/* Comments List */}
       <AnimatePresence>
-        {isLoadingComments ? (
+        {loading ? (
           <div className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-center text-sm py-2`}>
             Kommentare werden geladen...
           </div>
@@ -158,21 +166,10 @@ const PostCardComments: React.FC<PostCardCommentsProps> = ({
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                        {comment.author?.display_name || comment.author?.username || 'Unbekannter Nutzer'}
+                        {comment.author?.username || 'Unbekannter Nutzer'}
                       </h4>
                       <p className="text-xs text-gray-400">{timeAgo(new Date(comment.created_at))}</p>
                     </div>
-                    
-                    {profile && comment.author_id === profile.id && (
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="h-6 text-xs hover:bg-red-500/10 hover:text-red-500"
-                        onClick={() => handleDeleteComment(comment.id)}
-                      >
-                        Löschen
-                      </Button>
-                    )}
                   </div>
                   
                   <p className={`mt-1 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -181,10 +178,10 @@ const PostCardComments: React.FC<PostCardCommentsProps> = ({
                   
                   <div className="mt-2 flex items-center">
                     <button
-                      className={`flex items-center text-xs ${comment.is_liked_by_user ? 'text-pink-500' : darkMode ? 'text-gray-400' : 'text-gray-500'} hover:text-pink-500`}
+                      className={`flex items-center text-xs ${comment.is_liked ? 'text-pink-500' : darkMode ? 'text-gray-400' : 'text-gray-500'} hover:text-pink-500`}
                       onClick={() => handleLikeComment(comment.id)}
                     >
-                      <Heart size={14} className={comment.is_liked_by_user ? 'fill-current' : ''} />
+                      <Heart size={14} className={comment.is_liked ? 'fill-current' : ''} />
                       <span className="ml-1">{comment.likes_count || 0}</span>
                     </button>
                   </div>

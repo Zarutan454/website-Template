@@ -216,7 +216,11 @@ const Footer: React.FC = () => {
             <a href="#" className="text-gray-500 hover:text-primary-400 text-sm transition-colors">Datenschutz</a>
             <a href="#" className="text-gray-500 hover:text-primary-400 text-sm transition-colors">AGB</a>
             <a href="#" className="text-gray-500 hover:text-primary-400 text-sm transition-colors">Sicherheit</a>
-            <select className="bg-dark-200 border border-gray-700 text-gray-400 text-sm rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500/50 px-2 py-1">
+            <select 
+              className="bg-dark-200 border border-gray-700 text-gray-400 text-sm rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500/50 px-2 py-1"
+              aria-label="Sprache auswählen"
+              title="Sprache auswählen"
+            >
               <option value="de">Deutsch</option>
               <option value="en">English</option>
             </select>

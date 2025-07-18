@@ -3,7 +3,7 @@ import React from 'react';
 import { useUnifiedFeedState } from '@/hooks/feed/useUnifiedFeedState';
 import VirtualizedFeedList from './OptimizedFeed/VirtualizedFeedList';
 import FeedHeaderWithActions from './FeedHeaderWithActions';
-import CreatePostBox from './CreatePostBox';
+import CreatePostBoxFacebook from '../Feed/CreatePostBoxFacebook';
 import { useInitializeAchievements } from '@/hooks/mining/useInitializeAchievements';
 import { FeedType } from '@/hooks/feed/useFeedData';
 import { type CreatePostData } from '@/types/posts';
@@ -66,11 +66,7 @@ const EnhancedFeedPage: React.FC<EnhancedFeedPageProps> = ({
       {/* Create Post Box */}
       {isAuthenticated && (
         <div className="mb-4">
-          <CreatePostBox 
-            onCreatePost={createPost}
-            darkMode={isDarkMode}
-            initialContent=""
-          />
+          <CreatePostBoxFacebook onCreatePost={createPost} darkMode={isDarkMode} />
         </div>
       )}
 

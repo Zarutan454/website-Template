@@ -25,18 +25,23 @@ const NFTDetails = () => {
       if (!id) return;
       
       try {
-        const nftData = await fetchNFTById(id);
+        setIsLoading(true);
+        const [nftData, txData] = await Promise.all([
+          fetchNFTById(id),
+          fetchTransactions(id)
+        ]);
         setNft(nftData);
-        
-        const txData = await fetchTransactions(id);
         setTransactions(txData);
       } catch (error) {
-        toast.error('Error loading NFT details');
+        console.error('Error loading NFT details:', error);
+        toast.error('Failed to load NFT details');
+      } finally {
+        setIsLoading(false);
       }
     };
     
     loadData();
-  }, [id]);
+  }, [id, fetchNFTById, fetchTransactions]);
   
   const handlePurchase = async () => {
     if (!nft || !nft.listed) return;

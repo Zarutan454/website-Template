@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Media } from '@/types/media';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useMobile } from '@/hooks/use-mobile';
 import { 
@@ -211,6 +211,7 @@ const MediaLightbox: React.FC<MediaLightboxProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black border-none">
+        <DialogTitle className="sr-only">Media Viewer</DialogTitle>
         {renderMediaContent()}
       </DialogContent>
     </Dialog>

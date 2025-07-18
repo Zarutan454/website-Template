@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { djangoApi, type ApiResponse } from '@/lib/django-api-new';
+import djangoApi from '@/lib/django-api-new';
 
 export interface Comment {
   id: number;
@@ -31,17 +31,18 @@ export const useComments = (postId: number) => {
     setError(null);
 
     try {
-      const response: ApiResponse<Comment[]> = await djangoApi.getComments(postId);
+      const response = await djangoApi.getComments(postId);
       
-      if (response.error) {
-        setError(response.error);
-        return;
-      }
-
-      if (response.data) {
-        // Filter comments by postId for safety
-        const filtered = response.data.filter(c => c.post == postId);
+      if (response && Array.isArray(response)) {
+        // Response is directly an array of comments
+        const filtered = response.filter(c => c.post == postId);
         setComments(filtered);
+      } else if (response && response.results) {
+        // Response is paginated
+        const filtered = response.results.filter(c => c.post == postId);
+        setComments(filtered);
+      } else {
+        setComments([]);
       }
     } catch (err) {
       setError('Failed to fetch comments');
@@ -56,10 +57,10 @@ export const useComments = (postId: number) => {
     setError(null);
 
     try {
-      const response = await djangoApi.createComment(postId, content);
+      const response = await djangoApi.createComment(postId, { content });
       
-      if (response.error) {
-        setError(response.error);
+      if (!response) {
+        setError('Failed to create comment');
         return false;
       }
 
@@ -78,24 +79,21 @@ export const useComments = (postId: number) => {
   const likeComment = useCallback(async (commentId: number): Promise<boolean> => {
     try {
       const response = await djangoApi.likeComment(commentId);
-      
-      if (response.error) {
-        setError(response.error);
+      if (!response) {
+        setError('Failed to like comment');
         return false;
       }
-
-      // Update the comment in the local state
+      // Update the comment in the local state mit echten Werten aus der Response
       setComments(prev => prev.map(comment => {
         if (comment.id === commentId) {
           return {
             ...comment,
-            is_liked: response.data?.liked || !comment.is_liked,
-            likes_count: response.data?.like_count || comment.likes_count
+            is_liked: response.liked,
+            likes_count: response.like_count || 0
           };
         }
         return comment;
       }));
-
       return true;
     } catch (err) {
       setError('Failed to like comment');

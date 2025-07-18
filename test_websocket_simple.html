@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .error { background-color: #fff3cd; color: #856404; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        input, button {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket Chat Test</h1>
+        
+        <div class="input-group">
+            <label for="token">JWT Token:</label>
+            <input type="text" id="token" placeholder="Gib deinen JWT Token ein" style="width: 400px;">
+            <button onclick="connect()">Verbinden</button>
+            <button onclick="disconnect()">Trennen</button>
+        </div>
+        
+        <div id="status" class="status disconnected">Nicht verbunden</div>
+        
+        <div class="input-group">
+            <label for="message">Nachricht:</label>
+            <input type="text" id="message" placeholder="Gib eine Nachricht ein">
+            <button onclick="sendMessage()" id="sendBtn" disabled>Senden</button>
+        </div>
+        
+        <div class="input-group">
+            <button onclick="sendPing()" id="pingBtn" disabled>Ping senden</button>
+            <button onclick="clearLog()">Log löschen</button>
+        </div>
+        
+        <h3>WebSocket Log:</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        let ws = null;
+        let isConnected = false;
+        
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function updateStatus(message, className) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${className}`;
+        }
+        
+        function updateButtons() {
+            document.getElementById('sendBtn').disabled = !isConnected;
+            document.getElementById('pingBtn').disabled = !isConnected;
+        }
+        
+        function connect() {
+            const token = document.getElementById('token').value.trim();
+            if (!token) {
+                alert('Bitte gib einen JWT Token ein!');
+                return;
+            }
+            
+            try {
+                const wsUrl = `ws://localhost:8000/ws/chat/?token=${token}`;
+                log(`Verbinde mit: ${wsUrl}`);
+                
+                ws = new WebSocket(wsUrl);
+                
+                ws.onopen = function(event) {
+                    isConnected = true;
+                    updateStatus('Verbunden', 'connected');
+                    updateButtons();
+                    log('✅ WebSocket verbunden');
+                    
+                    // Sende Bestätigung
+                    ws.send(JSON.stringify({
+                        type: 'connection_established',
+                        user_id: 'test_user',
+                        username: 'test_user'
+                    }));
+                };
+                
+                ws.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        log(`📨 Empfangen: ${JSON.stringify(data, null, 2)}`);
+                        
+                        if (data.type === 'connection_established') {
+                            log('✅ Verbindung bestätigt');
+                        } else if (data.type === 'pong') {
+                            log('🏓 Pong empfangen');
+                        } else if (data.type === 'error') {
+                            log(`❌ Fehler: ${data.message}`);
+                        }
+                    } catch (error) {
+                        log(`❌ Parse-Fehler: ${error.message}`);
+                    }
+                };
+                
+                ws.onclose = function(event) {
+                    isConnected = false;
+                    updateStatus(`Getrennt (Code: ${event.code})`, 'disconnected');
+                    updateButtons();
+                    log(`🔌 WebSocket getrennt - Code: ${event.code}, Grund: ${event.reason}`);
+                };
+                
+                ws.onerror = function(error) {
+                    log(`❌ WebSocket Fehler: ${error}`);
+                    updateStatus('Fehler', 'error');
+                };
+                
+            } catch (error) {
+                log(`❌ Verbindungsfehler: ${error.message}`);
+                updateStatus('Verbindungsfehler', 'error');
+            }
+        }
+        
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+        
+        function sendMessage() {
+            if (!isConnected || !ws) {
+                alert('Nicht verbunden!');
+                return;
+            }
+            
+            const message = document.getElementById('message').value.trim();
+            if (!message) {
+                alert('Bitte gib eine Nachricht ein!');
+                return;
+            }
+            
+            const data = {
+                type: 'message',
+                content: message
+            };
+            
+            ws.send(JSON.stringify(data));
+            log(`📤 Gesendet: ${JSON.stringify(data)}`);
+            document.getElementById('message').value = '';
+        }
+        
+        function sendPing() {
+            if (!isConnected || !ws) {
+                alert('Nicht verbunden!');
+                return;
+            }
+            
+            const data = { type: 'ping' };
+            ws.send(JSON.stringify(data));
+            log(`🏓 Ping gesendet`);
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        // Enter-Taste für Nachrichten
+        document.getElementById('message').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Initialisierung
+        log('🚀 WebSocket Chat Test gestartet');
+        log('1. Gib deinen JWT Token ein');
+        log('2. Klicke auf "Verbinden"');
+        log('3. Teste die Verbindung');
+    </script>
+</body>
+</html> 

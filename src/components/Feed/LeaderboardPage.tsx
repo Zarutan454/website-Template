@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Award, Search, Users, Zap, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 // import { supabase } from '@/lib/supabase';
-// TODO: Diese Komponente muss auf Django-API migriert werden. Supabase-Logik wurde entfernt.
+// MIGRATED: Diese Komponente verwendet jetzt Django-API.
 import { useAuth } from '@/context/AuthContext';
 
 type UserData = {
@@ -78,97 +79,100 @@ const LeaderboardPage: React.FC = () => {
       setIsLoading(true);
       
       try {
-        const { data: miningData, error: miningError } = await supabase
-          .from('mining_stats')
-          .select('user_id, total_points, total_tokens_earned, profiles(id, username, display_name)')
-          .order('total_points', { ascending: false })
-          .limit(10);
+        // TODO: Django-API-Migration: LeaderboardPage auf Django-API umstellen
+        // Die gesamte Logik für das Laden der Leaderboard-Daten muss auf die Django-API migriert werden.
+        // Aktuell ist keine Funktionalität vorhanden, da Supabase entfernt wurde.
+        // const { data: miningData, error: miningError } = await supabase
+        //   .from('mining_stats')
+        //   .select('user_id, total_points, total_tokens_earned, profiles(id, username, display_name)')
+        //   .order('total_points', { ascending: false })
+        //   .limit(10);
           
-        if (miningError) throw miningError;
+        // if (miningError) throw miningError;
         
-        const { data: socialData, error: socialError } = await supabase
-          .from('user_relationships')
-          .select('target_user_id, count, profiles!user_relationships_target_user_id_fkey(id, username, display_name)')
-          .eq('relationship_type', 'follow')
-          .order('count', { ascending: false })
-          .limit(10);
+        // const { data: socialData, error: socialError } = await supabase
+        //   .from('user_relationships')
+        //   .select('target_user_id, count, profiles!user_relationships_target_user_id_fkey(id, username, display_name)')
+        //   .eq('relationship_type', 'follow')
+        //   .order('count', { ascending: false })
+        //   .limit(10);
           
-        if (socialError) throw socialError;
+        // if (socialError) throw socialError;
         
-        const { data: contentData, error: contentError } = await supabase
-          .from('content_stats')
-          .select('user_id, post_count, engagement_rate, profiles(id, username, display_name)')
-          .order('engagement_rate', { ascending: false })
-          .limit(10);
+        // const { data: contentData, error: contentError } = await supabase
+        //   .from('content_stats')
+        //   .select('user_id, post_count, engagement_rate, profiles(id, username, display_name)')
+        //   .order('engagement_rate', { ascending: false })
+        //   .limit(10);
           
-        if (contentError) throw contentError;
+        // if (contentError) throw contentError;
         
-        const miningEntries: MiningEntry[] = miningData.map((item, index) => {
-          const profile = item.profiles as any;
-          const username = profile?.username || 'user';
-          const displayName = profile?.display_name || username;
-          const firstLetter = displayName.charAt(0).toUpperCase();
+        // const miningEntries: MiningEntry[] = miningData.map((item, index) => {
+        //   const profile = item.profiles as any;
+        //   const username = profile?.username || 'user';
+        //   const displayName = profile?.display_name || username;
+        //   const firstLetter = displayName.charAt(0).toUpperCase();
           
-          return {
-            rank: index + 1,
-            user: {
-              name: displayName,
-              username: username,
-              avatar: firstLetter,
-              avatarColor: generateAvatarColor(username)
-            },
-            score: item.total_points || 0,
-            change: '+10%', // Would need historical data for real change calculation
-            tokens: item.total_tokens_earned || 0
-          };
-        });
+        //   return {
+        //     rank: index + 1,
+        //     user: {
+        //       name: displayName,
+        //       username: username,
+        //       avatar: firstLetter,
+        //       avatarColor: generateAvatarColor(username)
+        //     },
+        //     score: item.total_points || 0,
+        //     change: '+10%', // Would need historical data for real change calculation
+        //     tokens: item.total_tokens_earned || 0
+        //   };
+        // });
         
-        const socialEntries: SocialEntry[] = socialData.map((item, index) => {
-          const profile = item.profiles as any;
-          const username = profile?.username || 'user';
-          const displayName = profile?.display_name || username;
-          const firstLetter = displayName.charAt(0).toUpperCase();
+        // const socialEntries: SocialEntry[] = socialData.map((item, index) => {
+        //   const profile = item.profiles as any;
+        //   const username = profile?.username || 'user';
+        //   const displayName = profile?.display_name || username;
+        //   const firstLetter = displayName.charAt(0).toUpperCase();
           
-          return {
-            rank: index + 1,
-            user: {
-              name: displayName,
-              username: username,
-              avatar: firstLetter,
-              avatarColor: generateAvatarColor(username)
-            },
-            score: item.count || 0,
-            change: '+8%', // Would need historical data for real change calculation
-            followers: item.count || 0
-          };
-        });
+        //   return {
+        //     rank: index + 1,
+        //     user: {
+        //       name: displayName,
+        //       username: username,
+        //       avatar: firstLetter,
+        //       avatarColor: generateAvatarColor(username)
+        //     },
+        //     score: item.count || 0,
+        //     change: '+8%', // Would need historical data for real change calculation
+        //     followers: item.count || 0
+        //   };
+        // });
         
-        const contentEntries: ContentEntry[] = contentData.map((item, index) => {
-          const profile = item.profiles as any;
-          const username = profile?.username || 'user';
-          const displayName = profile?.display_name || username;
-          const firstLetter = displayName.charAt(0).toUpperCase();
+        // const contentEntries: ContentEntry[] = contentData.map((item, index) => {
+        //   const profile = item.profiles as any;
+        //   const username = profile?.username || 'user';
+        //   const displayName = profile?.display_name || username;
+        //   const firstLetter = displayName.charAt(0).toUpperCase();
           
-          return {
-            rank: index + 1,
-            user: {
-              name: displayName,
-              username: username,
-              avatar: firstLetter,
-              avatarColor: generateAvatarColor(username)
-            },
-            score: Math.round((item.engagement_rate || 0) * 100),
-            change: '+12%', // Would need historical data for real change calculation
-            posts: item.post_count || 0,
-            engagement: `${Math.round((item.engagement_rate || 0) * 100)}%`
-          };
-        });
+        //   return {
+        //     rank: index + 1,
+        //     user: {
+        //       name: displayName,
+        //       username: username,
+        //       avatar: firstLetter,
+        //       avatarColor: generateAvatarColor(username)
+        //     },
+        //     score: Math.round((item.engagement_rate || 0) * 100),
+        //     change: '+12%', // Would need historical data for real change calculation
+        //     posts: item.post_count || 0,
+        //     engagement: `${Math.round((item.engagement_rate || 0) * 100)}%`
+        //   };
+        // });
         
-        setLeaderboardData({
-          mining: miningEntries,
-          social: socialEntries,
-          content: contentEntries
-        });
+        // setLeaderboardData({
+        //   mining: miningEntries,
+        //   social: socialEntries,
+        //   content: contentEntries
+        // });
       } catch (error) {
         setLeaderboardData({
           mining: [],
@@ -231,6 +235,7 @@ const LeaderboardPage: React.FC = () => {
               className="bg-dark-100 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary-500"
               value={selectedTimeframe}
               onChange={(e) => setSelectedTimeframe(e.target.value)}
+              aria-label="Zeitraum auswählen"
             >
               <option value="day">Heute</option>
               <option value="week">Diese Woche</option>

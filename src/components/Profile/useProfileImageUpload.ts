@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { userAPI } from '@/lib/django-api-new';
+import { AuthContext } from '@/context/AuthContext';
 
 interface UseProfileImageUploadResult {
   avatarUploading: boolean;
@@ -12,7 +13,8 @@ interface UseProfileImageUploadResult {
   uploadCover: (file: File) => Promise<string | null>;
 }
 
-export function useProfileImageUpload(): UseProfileImageUploadResult {
+export function useProfileImageUpload(onProfileUpdate?: () => void): UseProfileImageUploadResult {
+  const { refreshUser } = useContext(AuthContext);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
@@ -33,9 +35,21 @@ export function useProfileImageUpload(): UseProfileImageUploadResult {
         setAvatarError('Die Datei ist zu groß. Maximale Größe: 5MB');
         return null;
       }
-      const result = await userAPI.uploadAvatar(file, (progress) => setAvatarProgress(progress));
-      return result.avatar_url;
+      // Upload
+      const result = await userAPI.uploadAvatar(file);
+      console.log('[UploadAvatar] API Response:', result);
+      if (result.url) {
+        // PATCH-Profil mit neuer avatar_url
+        await userAPI.updateProfile({ avatar_url: result.url });
+        if (onProfileUpdate) onProfileUpdate();
+        if (refreshUser) await refreshUser();
+        return result.url;
+      } else {
+        setAvatarError('Ungültige Antwort vom Server');
+        return null;
+      }
     } catch (error: unknown) {
+      console.error('[UploadAvatar] Error:', error);
       setAvatarError('Fehler beim Hochladen des Profilbilds. Bitte versuche es erneut.');
       return null;
     } finally {
@@ -57,9 +71,21 @@ export function useProfileImageUpload(): UseProfileImageUploadResult {
         setCoverError('Die Datei ist zu groß. Maximale Größe: 10MB');
         return null;
       }
-      const result = await userAPI.uploadCover(file, (progress) => setCoverProgress(progress));
-      return result.cover_url;
+      // Upload
+      const result = await userAPI.uploadCover(file);
+      console.log('[UploadCover] API Response:', result);
+      if (result.url) {
+        // PATCH-Profil mit neuer cover_url
+        await userAPI.updateProfile({ cover_url: result.url });
+        if (onProfileUpdate) onProfileUpdate();
+        if (refreshUser) await refreshUser();
+        return result.url;
+      } else {
+        setCoverError('Ungültige Antwort vom Server');
+        return null;
+      }
     } catch (error: unknown) {
+      console.error('[UploadCover] Error:', error);
       setCoverError('Fehler beim Hochladen des Banners. Bitte versuche es erneut.');
       return null;
     } finally {

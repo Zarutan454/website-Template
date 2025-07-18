@@ -1,4 +1,5 @@
 import { socialAPI } from '@/lib/django-api-new';
+import { userRelationshipAPI } from '@/lib/django-api-new';
 import { toast } from 'sonner';
 import { extractYoutubeVideoId } from '@/utils/youtubeUtils';
 
@@ -105,6 +106,34 @@ class InteractionRepository {
       console.error('[InteractionRepository] Fehler beim Extrahieren des YouTube-Links:', error);
       return null;
     }
+  }
+
+  /**
+   * Get followers for a user (delegates to userRelationshipAPI)
+   */
+  async getFollowers(userId: number, params: Record<string, string> = {}) {
+    return await userRelationshipAPI.getFollowers(userId, params);
+  }
+
+  /**
+   * Get following for a user (delegates to userRelationshipAPI)
+   */
+  async getFollowing(userId: number, params: Record<string, string> = {}) {
+    return await userRelationshipAPI.getFollowing(userId, params);
+  }
+
+  /**
+   * Follow a user (delegates to userRelationshipAPI)
+   */
+  async followUser(userId: number) {
+    return await userRelationshipAPI.followUser(userId);
+  }
+
+  /**
+   * Unfollow a user (delegates to userRelationshipAPI)
+   */
+  async unfollowUser(userId: number) {
+    return await userRelationshipAPI.unfollowUser(userId);
   }
 }
 

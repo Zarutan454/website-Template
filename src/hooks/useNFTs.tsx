@@ -1,65 +1,55 @@
-import { useState, useCallback } from 'react';
-import { NFT, NFTTransaction, NFTCollection } from '@/types/nft';
-// import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
+import { useState, useCallback, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
-// import { nftAPI } from '@/lib/django-api-new'; // TODO: Implement Django API calls
+import { apiClient } from '../lib/django-api-new';
+
+export interface NFT {
+  id: string;
+  name: string;
+  description: string;
+  image_url: string;
+  token_id: string;
+  owner_id: string;
+  owner_name: string;
+  creator_id: string;
+  creator_name: string;
+  price?: number;
+  currency?: string;
+  listed: boolean;
+  view_count: number;
+  favorite_count: number;
+  created_at: string;
+  updated_at: string;
+  metadata?: Record<string, unknown>;
+  rarity?: string;
+  collection?: string;
+  network?: string;
+  contract_address?: string;
+  last_sale_price?: number;
+  last_sale_currency?: string;
+}
+
+export interface NFTTransaction {
+  id: string;
+  nft_id: string;
+  from_address: string;
+  from_name: string;
+  to_address: string;
+  to_name: string;
+  transaction_hash: string;
+  transaction_type: 'mint' | 'sale' | 'transfer' | 'list' | 'unlist';
+  price?: number;
+  currency?: string;
+  network: string;
+  status: 'pending' | 'completed' | 'failed';
+  created_at: string;
+}
 
 export const useNFTs = () => {
+  const [nfts, setNfts] = useState<NFT[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [collections, setCollections] = useState<NFTCollection[]>([]);
-  const [nfts, setNfts] = useState<NFT[]>([]);
-  const { user: profile } = useAuth();
-
-  // Fetch all NFT collections
-  const fetchCollections = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Use any type to bypass TypeScript checking
-      const { data, error } = await (supabase as any)
-        .from('nft_collections')
-        .select('*');
-
-      if (error) throw error;
-
-      const typedCollections = data as unknown as NFTCollection[];
-      setCollections(typedCollections);
-      return typedCollections;
-    } catch (err) {
-      setError(err as Error);
-      return [];
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Fetch a specific NFT collection by ID
-  const fetchCollectionById = useCallback(async (id: string) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Use any type to bypass TypeScript checking
-      const { data, error } = await (supabase as any)
-        .from('nft_collections')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-
-      return data as unknown as NFTCollection;
-    } catch (err) {
-      console.error('Error fetching collection by ID:', err);
-      setError(err as Error);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const { user } = useAuth();
 
   // Fetch all NFTs
   const fetchNFTs = useCallback(async () => {
@@ -67,14 +57,8 @@ export const useNFTs = () => {
     setError(null);
 
     try {
-      // Use any type to bypass TypeScript checking
-      const { data, error } = await (supabase as any)
-        .from('nfts')
-        .select('*');
-
-      if (error) throw error;
-
-      const typedNFTs = data as unknown as NFT[];
+      const response = await apiClient.get('/nfts/') as { data: NFT[] };
+      const typedNFTs = response.data;
       setNfts(typedNFTs);
       return typedNFTs;
     } catch (err) {
@@ -86,20 +70,18 @@ export const useNFTs = () => {
     }
   }, []);
 
+  // Initialize NFTs on mount
+  useEffect(() => {
+    fetchNFTs();
+  }, [fetchNFTs]);
+
   const fetchFeaturedNFTs = useCallback(async (limit = 8) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Fetch NFTs from Supabase
-      const { data, error } = await (supabase as any)
-        .from('nfts')
-        .select('*')
-        .limit(limit);
-
-      if (error) throw error;
-
-      return data as unknown as NFT[];
+      const response = await apiClient.get(`/nfts/?featured=true&limit=${limit}`) as { data: NFT[] };
+      return response.data;
     } catch (err) {
       console.error('Error fetching featured NFTs:', err);
       setError(err as Error);
@@ -114,16 +96,8 @@ export const useNFTs = () => {
     setError(null);
 
     try {
-      // Fetch NFTs from Supabase sorted by viewCount or favoriteCount
-      const { data, error } = await (supabase as any)
-        .from('nfts')
-        .select('*')
-        .order('view_count', { ascending: false })
-        .limit(limit);
-
-      if (error) throw error;
-
-      return data as unknown as NFT[];
+      const response = await apiClient.get(`/nfts/?popular=true&limit=${limit}`) as { data: NFT[] };
+      return response.data;
     } catch (err) {
       console.error('Error fetching popular NFTs:', err);
       setError(err as Error);
@@ -138,24 +112,18 @@ export const useNFTs = () => {
     setError(null);
 
     try {
-      // Fetch a specific NFT by ID
-      const { data, error } = await (supabase as any)
-        .from('nfts')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-
-      // Increment view count
-      if (profile) {
-        await (supabase as any)
-          .from('nfts')
-          .update({ view_count: (data.view_count || 0) + 1 })
-          .eq('id', id);
+      const response = await apiClient.get(`/nfts/${id}/`) as { data: NFT };
+      
+      // Increment view count if user is logged in
+      if (user) {
+        try {
+          await apiClient.post(`/nfts/${id}/view/`);
+        } catch (viewError) {
+          console.warn('Failed to increment view count:', viewError);
+        }
       }
 
-      return data as unknown as NFT;
+      return response.data;
     } catch (err) {
       console.error('Error fetching NFT by ID:', err);
       setError(err as Error);
@@ -163,23 +131,15 @@ export const useNFTs = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [profile]);
+  }, [user]);
 
   const fetchTransactions = useCallback(async (nftId: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Fetch transactions for a specific NFT
-      const { data, error } = await (supabase as any)
-        .from('nft_transactions')
-        .select('*')
-        .eq('nft_id', nftId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      return data as unknown as NFTTransaction[];
+      const response = await apiClient.get(`/nfts/${nftId}/transactions/`) as { data: NFTTransaction[] };
+      return response.data;
     } catch (err) {
       console.error('Error fetching NFT transactions:', err);
       setError(err as Error);
@@ -190,7 +150,7 @@ export const useNFTs = () => {
   }, []);
 
   const buyNFT = useCallback(async (nftId: string) => {
-    if (!profile) {
+    if (!user) {
       toast.error('Du musst angemeldet sein, um ein NFT zu kaufen');
       return false;
     }
@@ -199,286 +159,271 @@ export const useNFTs = () => {
     setError(null);
 
     try {
-      // Get NFT details
-      const { data: nft, error: nftError } = await (supabase as any)
-        .from('nfts')
-        .select('*')
-        .eq('id', nftId)
-        .single();
-
-      if (nftError) throw nftError;
+      // Get NFT details first
+      const nft = await fetchNFTById(nftId);
 
       if (!nft.listed) {
         toast.error('Dieses NFT steht nicht zum Verkauf');
         return false;
       }
 
-      if (nft.owner_id === profile.id) {
+      if (nft.owner_id === String(user.id)) {
         toast.error('Du besitzt dieses NFT bereits');
         return false;
       }
 
-      // Create transaction
-      const { error: txError } = await (supabase as any)
-        .from('nft_transactions')
-        .insert({
-          nft_id: nftId,
-          from_address: nft.owner_id,
-          from_name: nft.owner_name,
-          to_address: profile.id,
-          to_name: profile.display_name || profile.username,
-          transaction_hash: 'tx_' + Math.random().toString(36).substring(2, 15),
-          transaction_type: 'sale',
-          price: nft.price,
-          currency: nft.currency,
-          network: nft.network,
-          status: 'completed'
-        });
+      // Create purchase transaction
+      const response = await apiClient.post(`/nfts/${nftId}/buy/`, {
+        buyer_id: user.id,
+        price: nft.price,
+        currency: nft.currency
+      }) as { data: { success: boolean; error?: string } };
 
-      if (txError) throw txError;
-
-      // Update NFT ownership
-      const { error: updateError } = await (supabase as any)
-        .from('nfts')
-        .update({
-          owner_id: profile.id,
-          owner_name: profile.display_name || profile.username,
-          listed: false,
-          last_sale_price: nft.price,
-          last_sale_currency: nft.currency
-        })
-        .eq('id', nftId);
-
-      if (updateError) throw updateError;
-
-      toast.success('NFT erfolgreich gekauft!');
-      return true;
+      if (response.data.success) {
+        toast.success('NFT erfolgreich gekauft!');
+        // Refresh NFTs list
+        await fetchNFTs();
+        return true;
+      } else {
+        toast.error(response.data.error || 'Fehler beim Kauf des NFTs');
+        return false;
+      }
     } catch (err) {
       console.error('Error buying NFT:', err);
       setError(err as Error);
+      toast.error('Fehler beim Kauf des NFTs');
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, [profile]);
+  }, [user, fetchNFTById, fetchNFTs]);
 
-  const likeNFT = useCallback(async (nftId: string) => {
-    if (!profile) {
-      toast.error('Du musst angemeldet sein, um ein NFT zu liken');
+  const listNFT = useCallback(async (nftId: string, price: number, currency: string = 'ETH') => {
+    if (!user) {
+      toast.error('Du musst angemeldet sein, um ein NFT zu listen');
       return false;
-    }
-
-    try {
-      // Check if user already liked this NFT
-      const { data: existingLike, error: likeError } = await (supabase as any)
-        .from('nft_likes')
-        .select('*')
-        .eq('nft_id', nftId)
-        .eq('user_id', profile.id)
-        .maybeSingle();
-
-      if (likeError && likeError.code !== 'PGRST116') {
-        // PGRST116 means no rows returned, which is fine
-        console.error('Error checking like status:', likeError);
-        return false;
-      }
-
-      if (existingLike) {
-        // User already liked, so unlike
-        const { error: unlikeError } = await (supabase as any)
-          .from('nft_likes')
-          .delete()
-          .eq('nft_id', nftId)
-          .eq('user_id', profile.id);
-
-        if (unlikeError) {
-          console.error('Error unliking NFT:', unlikeError);
-          return false;
-        }
-
-        // Update favorite count by calling our custom function
-        const { error: rpcError } = await (supabase as any).rpc('decrement_nft_favorites', { nft_id: nftId });
-        
-        if (rpcError) {
-          console.error('Error updating favorite count:', rpcError);
-        }
-
-        return true;
-      } else {
-        // Add new like
-        const { error: addLikeError } = await (supabase as any)
-          .from('nft_likes')
-          .insert({
-            nft_id: nftId,
-            user_id: profile.id
-          });
-
-        if (addLikeError) {
-          console.error('Error liking NFT:', addLikeError);
-          return false;
-        }
-
-        // Update favorite count by calling our custom function
-        const { error: rpcError } = await (supabase as any).rpc('increment_nft_favorites', { nft_id: nftId });
-        
-        if (rpcError) {
-          console.error('Error updating favorite count:', rpcError);
-        }
-
-        return true;
-      }
-    } catch (err) {
-      console.error('Error toggling NFT like:', err);
-      return false;
-    }
-  }, [profile]);
-
-  const isNFTLiked = useCallback(async (nftId: string) => {
-    if (!profile) return false;
-
-    try {
-      const { data, error } = await (supabase as any)
-        .from('nft_likes')
-        .select('*')
-        .eq('nft_id', nftId)
-        .eq('user_id', profile.id)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error checking like status:', error);
-      }
-
-      return !!data;
-    } catch (err) {
-      console.error('Error checking if NFT is liked:', err);
-      return false;
-    }
-  }, [profile]);
-
-  // Create a new NFT
-  const createNFT = useCallback(async (nftData: Partial<NFT>) => {
-    if (!profile) {
-      toast.error('Du musst angemeldet sein, um ein NFT zu erstellen');
-      throw new Error('Authentication required');
     }
 
     setIsLoading(true);
     setError(null);
 
     try {
-      // Get collection details
-      const { data: collection, error: collectionError } = await (supabase as any)
-        .from('nft_collections')
-        .select('name')
-        .eq('id', nftData.collectionId)
-        .single();
+      const response = await apiClient.post(`/nfts/${nftId}/list/`, {
+        price,
+        currency
+      }) as { data: { success: boolean; error?: string } };
 
-      if (collectionError) throw collectionError;
-
-      const tokenId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-
-      // Insert the new NFT
-      const { data, error } = await (supabase as any)
-        .from('nfts')
-        .insert({
-          name: nftData.name,
-          description: nftData.description || '',
-          image_url: nftData.imageUrl,
-          collection_id: nftData.collectionId,
-          collection_name: collection.name,
-          creator_id: profile.id,
-          creator_name: profile.display_name || profile.username,
-          owner_id: profile.id,
-          owner_name: profile.display_name || profile.username,
-          token_id: tokenId,
-          network: nftData.network,
-          listed: false,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Insert attributes if provided
-      if (nftData.attributes && nftData.attributes.length > 0) {
-        const attributesData = nftData.attributes.map(attr => ({
-          nft_id: data.id,
-          trait_type: attr.trait_type,
-          value: attr.value.toString(),
-          display_type: attr.display_type || null
-        }));
-
-        const { error: attrError } = await (supabase as any)
-          .from('nft_attributes')
-          .insert(attributesData);
-
-        if (attrError) {
-          console.error('Error adding NFT attributes:', attrError);
-        }
+      if (response.data.success) {
+        toast.success('NFT erfolgreich zum Verkauf angeboten!');
+        await fetchNFTs();
+        return true;
+      } else {
+        toast.error(response.data.error || 'Fehler beim Listen des NFTs');
+        return false;
       }
-
-      // Create a mint transaction
-      const { error: txError } = await (supabase as any)
-        .from('nft_transactions')
-        .insert({
-          nft_id: data.id,
-          nft_name: data.name,
-          nft_image: data.image_url,
-          from_address: '0x0000000000000000000000000000000000000000', // Minting address
-          from_name: 'Mint',
-          to_address: profile.id,
-          to_name: profile.display_name || profile.username,
-          transaction_hash: 'tx_mint_' + Math.random().toString(36).substring(2, 15),
-          transaction_type: 'mint',
-          network: data.network
-        });
-
-      if (txError) {
-        console.error('Error creating mint transaction:', txError);
-      }
-
-      return data as unknown as NFT;
     } catch (err) {
-      console.error('Error creating NFT:', err);
+      console.error('Error listing NFT:', err);
       setError(err as Error);
-      throw err;
+      toast.error('Fehler beim Listen des NFTs');
+      return false;
     } finally {
       setIsLoading(false);
     }
-  }, [profile]);
+  }, [user, fetchNFTs]);
+
+  const unlistNFT = useCallback(async (nftId: string) => {
+    if (!user) {
+      toast.error('Du musst angemeldet sein, um ein NFT zu unlisten');
+      return false;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await apiClient.post(`/nfts/${nftId}/unlist/`) as { data: { success: boolean; error?: string } };
+
+      if (response.data.success) {
+        toast.success('NFT erfolgreich vom Verkauf entfernt!');
+        await fetchNFTs();
+        return true;
+      } else {
+        toast.error(response.data.error || 'Fehler beim Unlisten des NFTs');
+        return false;
+      }
+    } catch (err) {
+      console.error('Error unlisting NFT:', err);
+      setError(err as Error);
+      toast.error('Fehler beim Unlisten des NFTs');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, fetchNFTs]);
+
+  const favoriteNFT = useCallback(async (nftId: string) => {
+    if (!user) {
+      toast.error('Du musst angemeldet sein, um ein NFT zu favorisieren');
+      return false;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await apiClient.post(`/nfts/${nftId}/favorite/`) as { data: { success: boolean; error?: string } };
+
+      if (response.data.success) {
+        toast.success('NFT erfolgreich favorisiert!');
+        await fetchNFTs();
+        return true;
+      } else {
+        toast.error(response.data.error || 'Fehler beim Favorisieren des NFTs');
+        return false;
+      }
+    } catch (err) {
+      console.error('Error favoriting NFT:', err);
+      setError(err as Error);
+      toast.error('Fehler beim Favorisieren des NFTs');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, fetchNFTs]);
+
+  const unfavoriteNFT = useCallback(async (nftId: string) => {
+    if (!user) {
+      toast.error('Du musst angemeldet sein, um ein NFT zu unfavorisieren');
+      return false;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await apiClient.post(`/nfts/${nftId}/unfavorite/`) as { data: { success: boolean; error?: string } };
+
+      if (response.data.success) {
+        toast.success('NFT erfolgreich unfavorisiert!');
+        await fetchNFTs();
+        return true;
+      } else {
+        toast.error(response.data.error || 'Fehler beim Unfavorisieren des NFTs');
+        return false;
+      }
+    } catch (err) {
+      console.error('Error unfavoriting NFT:', err);
+      setError(err as Error);
+      toast.error('Fehler beim Unfavorisieren des NFTs');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, fetchNFTs]);
+
+  const createNFT = useCallback(async (nftData: {
+    name: string;
+    description: string;
+    image_url: string;
+    price?: number;
+    currency?: string;
+    metadata?: Record<string, unknown>;
+  }) => {
+    if (!user) {
+      toast.error('Du musst angemeldet sein, um ein NFT zu erstellen');
+      return null;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await apiClient.post('/nfts/create/', {
+        ...nftData,
+        creator_id: user.id
+      }) as { data: { success: boolean; error?: string; nft_id?: string } };
+
+      if (response.data.success) {
+        toast.success('NFT erfolgreich erstellt!');
+        await fetchNFTs();
+        return response.data.nft_id;
+      } else {
+        toast.error(response.data.error || 'Fehler beim Erstellen des NFTs');
+        return null;
+      }
+    } catch (err) {
+      console.error('Error creating NFT:', err);
+      setError(err as Error);
+      toast.error('Fehler beim Erstellen des NFTs');
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, fetchNFTs]);
 
   const fetchUserNFTs = async (userId: string) => {
     setIsLoading(true);
+    setError(null);
+
     try {
-      // TODO: Replace with Django API call
-      // const data = await nftAPI.getUserNFTs(userId);
-      // setNfts(data);
-      setNfts([]); // Temporary placeholder
-    } catch (error) {
-      console.error('Error fetching user NFTs:', error);
-      setError('Failed to fetch NFTs');
+      const response = await apiClient.get(`/nfts/?owner_id=${userId}`) as { data: NFT[] };
+      return response.data;
+    } catch (err) {
+      console.error('Error fetching user NFTs:', err);
+      setError(err as Error);
+      return [];
     } finally {
       setIsLoading(false);
     }
   };
 
+  const searchNFTs = useCallback(async (query: string, filters?: {
+    minPrice?: number;
+    maxPrice?: number;
+    currency?: string;
+    rarity?: string;
+    collection?: string;
+  }) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+      if (query) params.append('search', query);
+      if (filters?.minPrice) params.append('min_price', filters.minPrice.toString());
+      if (filters?.maxPrice) params.append('max_price', filters.maxPrice.toString());
+      if (filters?.currency) params.append('currency', filters.currency);
+      if (filters?.rarity) params.append('rarity', filters.rarity);
+      if (filters?.collection) params.append('collection', filters.collection);
+
+      const response = await apiClient.get(`/nfts/search/?${params.toString()}`) as { data: NFT[] };
+      return response.data;
+    } catch (err) {
+      console.error('Error searching NFTs:', err);
+      setError(err as Error);
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return {
+    nfts,
     isLoading,
     error,
-    collections,
-    nfts,
-    fetchCollections,
-    fetchCollectionById,
     fetchNFTs,
     fetchFeaturedNFTs,
     fetchPopularNFTs,
     fetchNFTById,
     fetchTransactions,
     buyNFT,
-    likeNFT,
-    isNFTLiked,
+    listNFT,
+    unlistNFT,
+    favoriteNFT,
+    unfavoriteNFT,
     createNFT,
-    fetchUserNFTs
+    fetchUserNFTs,
+    searchNFTs,
   };
 };
+

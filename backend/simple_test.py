@@ -1,56 +1,59 @@
 #!/usr/bin/env python
-import os
-import sys
-import django
+"""
+Einfaches Test-Skript für Gruppen-Endpoints
+"""
+import requests
+import json
 
-# Setup Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'bsn.settings')
-django.setup()
+BASE_URL = "http://localhost:8000/api"
 
-from django.contrib.auth import get_user_model
-from users.serializers import UserSerializer
+def test_login():
+    """Teste Login"""
+    print("=== Testing Login ===")
+    
+    login_data = {
+        "username": "testuser",
+        "password": "test123"
+    }
+    
+    try:
+        response = requests.post(f"{BASE_URL}/auth/login/", json=login_data)
+        print(f"Login Status: {response.status_code}")
+        print(f"Response: {response.text}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            return data.get('token')  # Django REST Framework verwendet 'token' statt 'access'
+        else:
+            return None
+    except Exception as e:
+        print(f"Login Error: {e}")
+        return None
 
-User = get_user_model()
+def test_groups(token):
+    """Teste Gruppen-Endpoints"""
+    print("\n=== Testing Groups ===")
+    
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+    
+    # Test groups list
+    try:
+        response = requests.get(f"{BASE_URL}/groups/", headers=headers)
+        print(f"Groups Status: {response.status_code}")
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Groups found: {len(data.get('results', []))}")
+        else:
+            print(f"Groups Error: {response.text}")
+    except Exception as e:
+        print(f"Groups Error: {e}")
 
-print("=== Testing User Model & Serializer ===")
-
-# Check if users exist
-user_count = User.objects.count()
-print(f"Total users: {user_count}")
-
-if user_count == 0:
-    # Create a test user
-    user = User.objects.create_user(
-        username='testuser',
-        email='test@example.com',
-        password='testpass123',
-        first_name='Test',
-        last_name='User'
-    )
-    print(f"Created test user: {user.username}")
-else:
-    user = User.objects.first()
-    print(f"Using existing user: {user.username}")
-
-# Test the serializer
-print("\n=== Testing UserSerializer ===")
-try:
-    serializer = UserSerializer(user)
-    data = serializer.data
-    print("✅ Serializer works!")
-    print("User data:")
-    for key, value in data.items():
-        print(f"  {key}: {value}")
-except Exception as e:
-    print(f"❌ Serializer error: {e}")
-
-print("\n=== Testing User Model Properties ===")
-print(f"User ID: {user.id}")
-print(f"Username: {user.username}")
-print(f"Email: {user.email}")
-print(f"Full name: {user.full_name}")
-print(f"First name: {user.first_name}")
-print(f"Last name: {user.last_name}")
-print(f"Is alpha user: {user.is_alpha_user}")
-print(f"Wallet address: {user.wallet_address}")
-print(f"Created at: {user.created_at}") 
+if __name__ == "__main__":
+    token = test_login()
+    if token:
+        test_groups(token)
+    else:
+        print("Login failed!") 

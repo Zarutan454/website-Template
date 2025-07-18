@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -7,17 +7,26 @@ import { Heart, MessageCircle, Share2, MoreHorizontal, Flag, Bookmark, BookmarkC
 import { Separator } from '@/components/ui/separator';
 import { timeAgo, formatRelativeTime } from '@/utils/dateUtils';
 import djangoApi from '../../lib/django-api-new';
-import type { Post, Comment, UserProfile } from '../../lib/django-api-new';
+import type { Post, UserProfile } from '../../lib/django-api-new';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { socialAPI } from '@/lib/django-api-new';
 import { deleteComment } from '@/utils/commentUtils';
+import { getAvatarUrl } from '../../utils/api';
+import axios from 'axios';
 
 import PostContent from './Post/PostContent';
 import SimpleShareModal from './SimpleShareModal';
+import MediaLightbox from './components/MediaLightbox';
+import type { MediaItem } from './components/MediaLightbox';
+import PrivacyIcon, { PrivacyValue } from './components/PrivacyIcon';
+import ReactionButton from './components/ReactionButton';
+import ErrorBoundary from './ErrorBoundary';
+import LazyMedia from './components/LazyMedia';
+import type { Comment } from '../../lib/django-api-new';
 
 // BASE_URL für Media-URLs - direkt die Backend-URL verwenden
-const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:8000';
+const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:8080';
 
 // Die Logik in dieser Komponente ist korrekt und bleibt unverändert.
 // Sie kann sowohl mit absoluten als auch mit relativen URLs umgehen.
@@ -45,21 +54,22 @@ const PostMedia: React.FC<{ mediaUrl: string; mediaType?: string }> = ({ mediaUr
   switch (mediaType) {
     case 'image':
       return (
-        <img 
-          src={safeMediaUrl} 
-          alt="Post media" 
+        <LazyMedia
+          src={safeMediaUrl}
+          alt="Post media"
+          type="image"
           className="w-full h-auto object-cover"
         />
       );
     case 'video':
       return (
-        <video 
-          src={safeMediaUrl} 
-          controls 
+        <LazyMedia
+          src={safeMediaUrl}
+          alt="Post video"
+          type="video"
           className="w-full h-auto"
-        >
-          Your browser does not support the video tag.
-        </video>
+          showControls={true}
+        />
       );
     default:
       return (
@@ -84,235 +94,274 @@ export interface UnifiedPostCardProps {
   darkMode?: boolean;
 }
 
-// Wiederhergestellte und umbenannte Hilfsfunktion, nur für Avatare
-function getAbsoluteAvatarUrl(url?: string): string {
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
-  return `${MEDIA_BASE_URL}${url}`;
+// Erweiterung für Poll- und Media-Felder
+interface Poll {
+  question: string;
+  options: string[];
+  votes: Record<string, string[]>;
+  expires_at?: string;
+  // Add any other fields as needed from backend
 }
 
-const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
-  post,
-  onLike,
-  onDelete,
-  onComment,
-  onGetComments,
-  onShare,
-  onReport,
-  onDeleteComment,
-  currentUserId,
-  currentUser,
-  darkMode = true,
-}) => {
-  // State für Interaktionen
-  const [isLiked, setIsLiked] = useState(post.is_liked_by_user || false);
-  const [likeCount, setLikeCount] = useState(post.likes_count || 0);
-  const [shareCount, setShareCount] = useState(post.shares_count || 0);
-  const [isBookmarked, setIsBookmarked] = useState(post.is_bookmarked_by_user || false);
+interface PostWithPoll extends Post {
+  poll?: Poll;
+  media_urls?: string[];
+  media_url?: string;
+  media_type?: string; // match base Post type
+  privacy?: PrivacyValue;
+}
 
-  const [isLiking, setIsLiking] = useState(false);
-  const [shareAnimating, setShareAnimating] = useState(false);
-  const [shareModalOpen, setShareModalOpen] = useState(false);
+// Memoized PostCard component for better performance
+const UnifiedPostCard: React.FC<UnifiedPostCardProps> = React.memo((props) => {
+  const { post: _post, onLike, onDelete, onComment, onGetComments, onShare, onReport, onDeleteComment, currentUserId, currentUser, darkMode = true } = props;
+  const post: PostWithPoll = _post;
+  const navigate = useNavigate();
+  
+  // State für Interaktionen
+  const [isLiked, setIsLiked] = React.useState(post.is_liked_by_user || false);
+  const [likeCount, setLikeCount] = React.useState(post.likes_count || 0);
+  const [shareCount, setShareCount] = React.useState(post.shares_count || 0);
+  const [isBookmarked, setIsBookmarked] = React.useState(post.is_bookmarked_by_user || false);
+
+  const [isLiking, setIsLiking] = React.useState(false);
+  const [shareAnimating, setShareAnimating] = React.useState(false);
+  const [shareModalOpen, setShareModalOpen] = React.useState(false);
 
   // State für Kommentare
-  const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [isLoadingComments, setIsLoadingComments] = useState(false);
-  const [newComment, setNewComment] = useState('');
+  const [showComments, setShowComments] = React.useState(false);
+  // Typisiere Kommentare explizit als Comment[]
+  const [comments, setComments] = React.useState<Comment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = React.useState(false);
+  const [newComment, setNewComment] = React.useState('');
+
+  // State für Medien-Preview
+  const [showLightbox, setShowLightbox] = React.useState(false);
+  const [lightboxUrl, setLightboxUrl] = React.useState<string | null>(null);
+  const [lightboxType, setLightboxType] = React.useState<'image' | 'video'>('image');
+  const [lightboxIndex, setLightboxIndex] = React.useState(0);
+
+  // Im State:
+  const [userReaction, setUserReaction] = React.useState<string | null>(null);
+
+  // --- Poll State ---
+  const [poll, setPoll] = React.useState(post.poll);
+  const [pollLoading, setPollLoading] = React.useState(false);
+  const [userVotedOption, setUserVotedOption] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setPoll(post.poll);
+  }, [post.poll]);
+
+  // Prüfe, ob der User schon abgestimmt hat
+  React.useEffect(() => {
+    if (poll && currentUserId) {
+      const voted = Object.entries(poll.votes || {}).find(([option, voters]) => (voters as string[]).includes(String(currentUserId)));
+      setUserVotedOption(voted ? voted[0] : null);
+    }
+  }, [poll, currentUserId]);
+
+  // Voting-Handler
+  const handleVote = async (option: string) => {
+    if (!poll || pollLoading || userVotedOption) return;
+    setPollLoading(true);
+    try {
+      const res = await axios.post(`/api/posts/${post.id}/poll/vote/`, { option });
+      setPoll(res.data);
+      setUserVotedOption(option);
+      toast.success('Deine Stimme wurde gezählt!');
+    } catch (e) {
+      toast.error('Fehler beim Abstimmen');
+    } finally {
+      setPollLoading(false);
+    }
+  };
 
   // Synchronisiere State mit Props, falls sich der Post von außen ändert
-  useEffect(() => {
+  React.useEffect(() => {
     setIsLiked(post.is_liked_by_user || false);
     setLikeCount(post.likes_count || 0);
     setShareCount(post.shares_count || 0);
     setIsBookmarked(post.is_bookmarked_by_user || false);
   }, [post.is_liked_by_user, post.likes_count, post.shares_count, post.is_bookmarked_by_user]);
 
-  // Debug-Log für media_url
-  useEffect(() => {
-    console.log('[UnifiedPostCard] post.media_url:', post.media_url);
-  }, [post.media_url]);
+  // Memoized values
+  const formattedTimeAgo = React.useMemo(() => {
+    return formatRelativeTime(new Date(post.created_at));
+  }, [post.created_at]);
 
-  const formattedTimeAgo = formatRelativeTime(post.created_at);
-  const isCurrentUserAuthor = currentUserId && post.author?.id === currentUserId;
+  const avatarUrl = React.useMemo(() => {
+    return getAvatarUrl(post.author?.avatar_url);
+  }, [post.author?.avatar_url]);
 
-  const handleLike = async () => {
+  const displayName = React.useMemo(() => {
+    return post.author?.display_name || post.author?.username || 'Unbekannter Nutzer';
+  }, [post.author?.display_name, post.author?.username]);
+
+  // Optimized handlers
+  const handleLike = React.useCallback(async () => {
     if (isLiking) return;
+    
     setIsLiking(true);
     try {
-      const success = await djangoApi.togglePostLike(post.id);
+      const success = await onLike(post.id);
       if (success) {
         setIsLiked(!isLiked);
         setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
       }
     } catch (error) {
-      console.error('[Like] Fehler beim Liken:', error);
-      toast.error('Fehler beim Liken');
+      console.error('Like error:', error);
+      toast.error('Fehler beim Liken des Posts');
     } finally {
       setIsLiking(false);
     }
-  };
+  }, [isLiking, isLiked, onLike, post.id]);
 
-  const handleShare = async () => {
+  const handleComment = React.useCallback(async (content: string) => {
     try {
-      const success = await djangoApi.sharePost(post.id);
+      const newComment = await onComment(post.id, content);
+      if (newComment) {
+        setComments(prev => [...prev, newComment]);
+        setNewComment('');
+        toast.success('Kommentar hinzugefügt');
+      }
+    } catch (error) {
+      console.error('Comment error:', error);
+      toast.error('Fehler beim Hinzufügen des Kommentars');
+    }
+  }, [onComment, post.id]);
+
+  const handleShare = React.useCallback(async () => {
+    setShareAnimating(true);
+    try {
+      const success = await onShare(post.id);
       if (success) {
         setShareCount(prev => prev + 1);
-        setShareAnimating(true);
-        setTimeout(() => setShareAnimating(false), 1000);
-        toast.success('Beitrag geteilt!');
-        setShareModalOpen(true);
+        toast.success('Post geteilt');
       }
     } catch (error) {
-      console.error('[Share] Fehler beim Teilen:', error);
-      toast.error('Fehler beim Teilen');
+      console.error('Share error:', error);
+      toast.error('Fehler beim Teilen des Posts');
+    } finally {
+      setTimeout(() => setShareAnimating(false), 1000);
     }
-  };
+  }, [onShare, post.id]);
 
-  const handleBookmark = async () => {
+  const handleDelete = React.useCallback(async () => {
+    if (!onDelete) return;
+    
+    if (!confirm('Möchtest du diesen Post wirklich löschen?')) return;
+    
     try {
-      if (isBookmarked) {
-        await djangoApi.unbookmarkPost(post.id);
-        setIsBookmarked(false);
-        toast.success('Bookmark entfernt');
-      } else {
-        await djangoApi.bookmarkPost(post.id);
-        setIsBookmarked(true);
-        toast.success('Bookmark hinzugefügt');
+      const success = await onDelete(post.id);
+      if (success) {
+        toast.success('Post gelöscht');
+        // Post aus der Liste entfernen (wird vom Parent gehandhabt)
       }
     } catch (error) {
-      console.error('[Bookmark] Fehler:', error);
-      toast.error('Fehler bei Bookmark-Aktion');
+      console.error('Delete error:', error);
+      toast.error('Fehler beim Löschen des Posts');
     }
-  };
+  }, [onDelete, post.id]);
 
-  // Direkte API-Aufrufe für Kommentare
-  const loadComments = async () => {
-    console.log('[UnifiedPostCard] Loading comments for post:', post.id);
+  const handleGetComments = React.useCallback(async () => {
+    if (showComments) return;
+    
     setIsLoadingComments(true);
     try {
-      const response = await djangoApi.getComments(String(post.id), { page: 1 });
-      console.log('[UnifiedPostCard] Comments response:', response);
-      
-      // Django API gibt direkt ein Array zurück oder { results: [...] }
-      let commentsData = [];
-      if (Array.isArray(response)) {
-        commentsData = response;
-      } else if (response && response.results && Array.isArray(response.results)) {
-        commentsData = response.results;
-      } else if (response && response.data && response.data.results && Array.isArray(response.data.results)) {
-        commentsData = response.data.results;
-      }
-      
-      console.log('[UnifiedPostCard] Comments loaded:', commentsData.length);
+      const commentsData = await onGetComments(post.id);
       setComments(commentsData);
+      setShowComments(true);
     } catch (error) {
-      console.error('[UnifiedPostCard] Error loading comments:', error);
-      toast.error("Fehler beim Laden der Kommentare.");
-      setComments([]);
+      console.error('Get comments error:', error);
+      toast.error('Fehler beim Laden der Kommentare');
     } finally {
       setIsLoadingComments(false);
     }
-  };
+  }, [showComments, onGetComments, post.id]);
 
-  const createCommentDirect = async (content: string) => {
-    console.log('[UnifiedPostCard] Creating comment for post:', post.id);
-    console.log('[UnifiedPostCard] Post ID type:', typeof post.id);
-    console.log('[UnifiedPostCard] Content:', content);
-    try {
-      const response = await djangoApi.createComment(String(post.id), { content });
-      console.log('[UnifiedPostCard] Create comment response:', response);
-      
-      if (response) {
-        console.log('[UnifiedPostCard] Comment created:', response);
-        setComments(prev => [response, ...prev]);
-        return response;
-      } else {
-        console.warn('[UnifiedPostCard] No comment data in response');
-        return null;
-      }
-    } catch (error) {
-      console.error('[UnifiedPostCard] Error creating comment:', error);
-      toast.error("Fehler beim Senden des Kommentars.");
-      return null;
+  const handleMediaClick = React.useCallback((url: string, type: 'image' | 'video', index: number = 0) => {
+    setLightboxUrl(url);
+    setLightboxType(type);
+    setLightboxIndex(index);
+    setShowLightbox(true);
+  }, []);
+
+  const getMediaList = React.useCallback((): MediaItem[] => {
+    if (post.media_urls && post.media_urls.length > 0) {
+      return post.media_urls.map((url: string) => ({
+        url: url.startsWith('http') ? url : `${MEDIA_BASE_URL}${url}`,
+        type: /\.(mp4|webm|ogg)$/i.test(url) ? 'video' : 'image' as 'image' | 'video',
+      }));
+    } else if (post.media_url) {
+      return [{
+        url: post.media_url.startsWith('http') ? post.media_url : `${MEDIA_BASE_URL}${post.media_url}`,
+        type: (post.media_type as 'image' | 'video') || 'image',
+      }];
     }
-  };
+    return [];
+  }, [post.media_urls, post.media_url, post.media_type]);
 
-  const toggleComments = async () => {
-    console.log('[UnifiedPostCard] Toggle comments called for post:', post.id);
-    console.log('[UnifiedPostCard] Current showComments:', showComments);
-    console.log('[UnifiedPostCard] Current comments length:', comments.length);
+  const renderDropdownMenu = React.useCallback(() => {
+    const isAuthor = currentUserId === post.author?.id;
     
-    setShowComments(prev => !prev);
-    if (!showComments && comments.length === 0) {
-      await loadComments();
-    }
-  };
-  
-  const handleCommentSubmit = async () => {
-    if (!newComment.trim()) return;
-    try {
-      const newCommentData = await createCommentDirect(newComment);
-      if (newCommentData) {
-        setNewComment('');
-      }
-    } catch (error) {
-      toast.error("Fehler beim Senden des Kommentars.");
-    }
-  };
-  
-  const handleDelete = async () => {
-    if(onDelete) {
-      const success = await onDelete(post.id);
-      if (success) {
-        toast.success("Beitrag erfolgreich gelöscht.");
-      } else {
-        toast.error("Fehler beim Löschen des Beitrags.");
-      }
-    }
-  };
-
-  const handleDeleteComment = async (commentId: number) => {
-    try {
-      const success = await deleteComment(commentId);
-      if (success) {
-        toast.success("Kommentar erfolgreich gelöscht.");
-        // Kommentar aus der lokalen Liste entfernen
-        setComments(prev => prev.filter(comment => comment.id !== commentId));
-        return true;
-      } else {
-        toast.error("Fehler beim Löschen des Kommentars.");
-        return false;
-      }
-    } catch (error) {
-      console.error('[UnifiedPostCard] Error deleting comment:', error);
-      toast.error("Fehler beim Löschen des Kommentars.");
-      return false;
-    }
-  };
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {isAuthor && (
+            <>
+              <DropdownMenuItem onClick={handleDelete}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Löschen
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          <DropdownMenuItem onClick={() => setShareModalOpen(true)}>
+            <Share2 className="mr-2 h-4 w-4" />
+            Teilen
+          </DropdownMenuItem>
+          {onReport && (
+            <DropdownMenuItem onClick={() => onReport(post.id, 'spam')}>
+              <Flag className="mr-2 h-4 w-4" />
+              Melden
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }, [currentUserId, post.author?.id, post.id, handleDelete, onReport]);
 
   return (
-    <Card className={`border-0 shadow-sm ${darkMode ? 'bg-dark-100' : 'bg-white/80'} my-4`}>
-      <CardHeader className="pt-4 pb-2">
-        <div className="flex items-start">
-          <Link to={`/profile/${post.author?.username}`} className="flex items-start group">
-            <Avatar className="mr-3 h-10 w-10 group-hover:ring-2 group-hover:ring-primary">
-              <AvatarImage 
-                src={getAbsoluteAvatarUrl(post.author?.avatar_url)}
-                alt={post.author?.display_name || post.author?.username}
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-              <AvatarFallback>
-                {post.author?.display_name?.charAt(0) || post.author?.username?.charAt(0) || 'A'}
-              </AvatarFallback>
+    <ErrorBoundary>
+      <Card className={`border-0 shadow-2xl rounded-3xl transition-shadow duration-200 focus-within:ring-2 focus-within:ring-primary my-8 px-0 max-w-2xl mx-auto group
+  ${darkMode ? 'bg-[#18191a] text-gray-100 border-gray-900' : 'bg-white text-gray-900 border-gray-100'}`}
+  tabIndex={0} aria-label="Beitrag">
+        {/* MediaLightbox Overlay bleibt */}
+        <MediaLightbox
+          open={showLightbox}
+          mediaList={getMediaList()}
+          initialIndex={lightboxIndex}
+          onClose={() => setShowLightbox(false)}
+        />
+        {/* Header: dynamisch */}
+        <CardHeader className={`pt-7 pb-4 px-8 border-b flex flex-row items-center gap-5
+    ${darkMode ? 'bg-[#18191a] border-gray-900' : 'bg-white/90 border-gray-100'}`}>
+          <Link to={`/profile/${post.author?.username}`} className="flex items-center group">
+            <Avatar className={`mr-6 h-16 w-16 group-hover:ring-2 group-hover:ring-primary transition-all duration-150 shadow-md ${darkMode ? 'border-2 border-gray-800' : 'border border-gray-200'}`} tabIndex={0} aria-label="Profilbild">
+              <AvatarImage src={avatarUrl} alt={displayName} />
+              <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-              <div className="text-sm font-medium leading-none group-hover:text-primary">
-                {post.author?.display_name || post.author?.username}
+              <div className="text-xl font-bold leading-none group-hover:text-primary flex items-center gap-2">
+                {displayName}
+                {post.privacy && <PrivacyIcon value={post.privacy as PrivacyValue} />}
               </div>
-              <div className="text-sm text-gray-400">
+              <div className={`text-sm flex items-center gap-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}> 
                 <span>@{post.author?.username}</span>
                 <span className="mx-1">•</span>
                 <span>{formattedTimeAgo}</span>
@@ -320,130 +369,188 @@ const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
             </div>
           </Link>
           <div className="flex-1" />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {isCurrentUserAuthor && onDelete && (
-                <>
-                  <DropdownMenuItem onClick={handleDelete} className="text-red-500 focus:text-red-500">Beitrag löschen</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
-              )}
-              {onReport && !isCurrentUserAuthor && (
-                 <DropdownMenuItem onClick={() => onReport(post.id, 'spam')}><Flag className="h-4 w-4 mr-2" /> Beitrag melden</DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="px-5 py-2">
-        <PostContent content={post.content} />
-        {(post.media_url || (post.media_urls && post.media_urls.length > 0)) && (
-          <div className="mt-4 rounded-xl overflow-hidden border">
-            {post.media_url ? (
-              <PostMedia mediaUrl={post.media_url} mediaType={post.media_type} />
-            ) : (
-              post.media_urls && post.media_urls.map((url, index) => (
-                <PostMedia key={index} mediaUrl={url} mediaType={post.media_type} />
-              ))
-            )}
-          </div>
-        )}
-      </CardContent>
-      
-      <CardFooter className="flex flex-col items-start px-5 pb-4 pt-2">
-        <div className="flex w-full items-center justify-between text-xs text-gray-500 mb-2">
-          <div className="flex items-center gap-1 text-gray-400 text-sm">
-            {/* Like Button */}
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleLike} disabled={isLiking}>
-              <Heart className={`h-5 w-5 ${isLiked ? 'text-red-500 fill-current' : ''}`} />
-            </Button>
-            <span>{likeCount}</span>
-            
-            {/* Comment Button */}
-            <Button variant="ghost" size="icon" className="h-9 w-9 ml-4" onClick={toggleComments}>
-              <MessageCircle className={`h-5 w-5 ${showComments ? 'text-primary' : ''}`} />
-            </Button>
-            <span>{post.comments_count || 0}</span>
-            
-            {/* Share Button */}
-            <Button variant="ghost" size="icon" className="h-9 w-9 ml-4" onClick={handleShare}>
-              <Share2 className={`h-5 w-5 ${shareAnimating ? 'text-green-500' : ''}`} />
-            </Button>
-            <span className={shareAnimating ? 'text-green-500 font-bold' : ''}>{String(shareCount)}</span>
-            
-            {/* Bookmark Button */}
-            <Button variant="ghost" size="icon" className="h-9 w-9 ml-4" onClick={handleBookmark}>
-              {isBookmarked ? <BookmarkCheck className="h-5 w-5 text-primary" /> : <Bookmark className="h-5 w-5" />}
-            </Button>
-          </div>
-        </div>
-        
-        {showComments && (
-          <div className="w-full mt-4">
-            <Separator className="my-3" />
-            <div className="flex space-x-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={getAbsoluteAvatarUrl(currentUser?.avatar_url)} />
-                <AvatarFallback>{currentUser?.username?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 flex">
-                <input type="text" value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Schreibe einen Kommentar..." className="flex-1 bg-transparent border-b border-gray-700 focus:outline-none focus:border-primary" />
-                <Button variant="ghost" size="sm" onClick={handleCommentSubmit} disabled={!newComment.trim()}>Senden</Button>
-              </div>
+          {/* Dropdown bleibt */}
+          {renderDropdownMenu()}
+        </CardHeader>
+        {/* Content: dynamisch */}
+        <CardContent className={`px-8 py-6 ${darkMode ? 'bg-[#242526]' : 'bg-white/95'}`}>
+          <PostContent content={post.content} />
+          {(post.media_url || (post.media_urls && post.media_urls.length > 0)) && (
+            <div className={`mt-6 rounded-2xl overflow-hidden border flex gap-2 ${darkMode ? 'bg-[#18191a] border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+              {post.media_urls && post.media_urls.length > 0
+                ? post.media_urls.map((url, idx) => (
+                    <div
+                      key={idx}
+                      className="w-1/2 cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => handleMediaClick(url, /\.(mp4|webm|ogg)$/i.test(url) ? 'video' : 'image', idx)}
+                    >
+                      <PostMedia mediaUrl={url} mediaType={/\.(mp4|webm|ogg)$/i.test(url) ? 'video' : 'image'} />
+                    </div>
+                  ))
+                : post.media_url && (
+                    <div className="cursor-pointer hover:opacity-90 transition-opacity" onClick={() => handleMediaClick(post.media_url, post.media_type)}>
+                      <PostMedia mediaUrl={post.media_url} mediaType={post.media_type} />
+                    </div>
+                  )}
             </div>
-            <div className="space-y-4 mt-4">
-              {isLoadingComments && <div className="text-center">Lade Kommentare...</div>}
-              {!isLoadingComments && comments.length === 0 && <div className="text-center text-gray-500">Keine Kommentare.</div>}
-              {comments
-                .filter(comment => comment && comment.id && comment.author)
-                .map((comment) => (
-                <div key={comment.id} className="flex space-x-2 text-sm">
-                  <Link to={`/profile/${comment.author?.username}`} className="flex items-center group">
-                    <Avatar className="h-8 w-8 group-hover:ring-2 group-hover:ring-primary">
-                      <AvatarImage src={getAbsoluteAvatarUrl(comment.author?.avatar_url)} />
-                      <AvatarFallback>{comment.author?.username?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                  </Link>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <Link to={`/profile/${comment.author?.username}`} className="font-medium group-hover:text-primary">
-                          {comment.author?.display_name || comment.author?.username}
-                        </Link>
-                        <span className="ml-2 text-xs text-gray-400">{formatRelativeTime(comment.created_at)}</span>
-                      </div>
-                      {currentUserId === comment.author?.id && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-gray-400 hover:text-red-500"
-                          onClick={() => handleDeleteComment(comment.id)}
-                        >
-                          <Trash2 size={14} />
-                        </Button>
+          )}
+          {/* Poll-Anzeige */}
+          {poll && (
+            <div className={`my-4 p-4 rounded-lg ${darkMode ? 'bg-dark-100 border border-primary/30' : 'bg-gray-100 border border-primary/30'}`}>
+              <div className="font-semibold text-white mb-2">{poll.question}</div>
+              <div className="space-y-3">
+                {poll.options.map((opt: string, idx: number) => {
+                  const votes: string[] = (poll.votes?.[opt] || []) as string[];
+                  const votesObj: Record<string, string[]> = poll.votes as Record<string, string[]> || {};
+                  const totalVotes = Object.values(votesObj).reduce((acc, arr) => acc + arr.length, 0);
+                  const percent = totalVotes > 0 ? Math.round((votes.length / totalVotes) * 100) : 0;
+                  const isSelected = userVotedOption === opt;
+                  return (
+                    <div key={idx} className="flex flex-col gap-1">
+                      <button
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors font-medium
+                        ${isSelected ? 'bg-primary text-white border-primary' : darkMode ? 'bg-dark-200 text-gray-200 border-gray-700 hover:bg-primary/10' : 'bg-white text-gray-800 border-gray-300 hover:bg-primary/10'}
+                        ${userVotedOption && !isSelected ? 'opacity-70' : ''}`}
+                        disabled={!!userVotedOption || pollLoading}
+                        onClick={() => handleVote(opt)}
+                      >
+                        <span className="flex-1 text-left">{opt}</span>
+                        {userVotedOption && (
+                          <span className="text-xs font-semibold min-w-[40px] text-right">{percent}%</span>
+                        )}
+                      </button>
+                      {/* Fortschrittsbalken */}
+                      {userVotedOption && (
+                        <div className="w-full h-2 rounded bg-gray-700/40 mt-1">
+                          <div
+                            className={`h-2 rounded ${isSelected ? 'bg-primary' : 'bg-primary/40'}`}
+                            style={{ width: `${percent}%`, transition: 'width 0.5s' }}
+                          />
+                        </div>
                       )}
                     </div>
-                    <p>{comment.content}</p>
+                  );
+                })}
+              </div>
+              {userVotedOption && (
+                <div className="mt-3 text-xs text-gray-400">{Object.values(poll.votes as Record<string, string[]>).reduce((acc, arr) => acc + arr.length, 0)} Stimmen insgesamt</div>
+              )}
+            </div>
+          )}
+        </CardContent>
+        {/* Footer: dynamisch */}
+        <CardFooter className={`px-8 py-4 ${darkMode ? 'bg-[#18191a] border-t border-gray-900' : 'bg-white/90 border-t border-gray-100'}`}>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-4">
+              <ReactionButton
+                isActive={isLiked}
+                count={likeCount}
+                onLike={handleLike}
+                onReactionSelect={(reaction) => setUserReaction(reaction as string)}
+                disabled={isLiking}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleGetComments}
+                className="flex items-center gap-2"
+                disabled={isLoadingComments}
+              >
+                <MessageCircle className="h-5 w-5" />
+                <span>{post.comments_count || 0}</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleShare}
+                className={`flex items-center gap-2 ${shareAnimating ? 'animate-bounce' : ''}`}
+              >
+                <Share2 className="h-5 w-5" />
+                <span>{shareCount}</span>
+              </Button>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsBookmarked(!isBookmarked)}
+              className="flex items-center gap-2"
+            >
+              {isBookmarked ? <BookmarkCheck className="h-5 w-5" /> : <Bookmark className="h-5 w-5" />}
+            </Button>
+          </div>
+        </CardFooter>
+        
+        {/* Comments Section */}
+        {showComments && (
+          <div className={`px-8 py-4 border-t ${darkMode ? 'bg-[#18191a] border-gray-900' : 'bg-white/90 border-gray-100'}`}>
+            <div className="space-y-3">
+              {comments.map(comment => (
+                <div key={comment.id} className="flex items-start gap-3">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage 
+                      src={getAvatarUrl(comment.author?.avatar_url)} 
+                      alt={comment.author?.username} 
+                    />
+                    <AvatarFallback>{comment.author?.username?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-sm">{comment.author?.display_name || comment.author?.username}</span>
+                      <span className="text-xs text-gray-500">{formatRelativeTime(new Date(comment.created_at))}</span>
+                    </div>
+                    <p className="text-sm">{comment.content}</p>
                   </div>
+                  {onDeleteComment && (currentUserId === comment.author?.id || currentUserId === post.author?.id) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDeleteComment(comment.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
+            
+            {/* Add Comment */}
+            <div className="mt-4 flex gap-2">
+              <input
+                type="text"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Kommentar hinzufügen..."
+                className="flex-1 px-3 py-2 border rounded-lg bg-transparent"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && newComment.trim()) {
+                    handleComment(newComment.trim());
+                  }
+                }}
+              />
+              <Button
+                size="sm"
+                onClick={() => handleComment(newComment.trim())}
+                disabled={!newComment.trim()}
+              >
+                Senden
+              </Button>
+            </div>
           </div>
         )}
-      </CardFooter>
-
+      </Card>
+      
+      {/* Share Modal */}
       <SimpleShareModal
         isOpen={shareModalOpen}
         onClose={() => setShareModalOpen(false)}
-        shareUrl={`${window.location.origin}/post/${String(post.id)}`}
-        postTitle={String(post.content)}
+        post={post}
+        onShare={handleShare}
       />
-    </Card>
+    </ErrorBoundary>
   );
-};
+});
+
+UnifiedPostCard.displayName = 'UnifiedPostCard';
 
 export default UnifiedPostCard; 

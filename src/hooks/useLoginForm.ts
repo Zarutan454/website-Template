@@ -49,13 +49,52 @@ export const useLoginForm = () => {
       } else {
         toast.error("Anmeldung fehlgeschlagen");
       }
-    } catch (error: any) {
-      if (error?.response?.data?.detail) {
-        toast.error(error.response.data.detail);
-      } else if (error?.response?.data?.error) {
-        toast.error(error.response.data.error);
+    } catch (error: unknown) {
+      // Type guards for error shape
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: unknown }).response === 'object' &&
+        (error as { response?: unknown }).response !== null
+      ) {
+        const response = (error as { response?: unknown }).response;
+        if (
+          typeof response === 'object' &&
+          response !== null &&
+          'data' in response &&
+          typeof (response as { data?: unknown }).data === 'object' &&
+          (response as { data?: unknown }).data !== null
+        ) {
+          const data = (response as { data?: unknown }).data;
+          if (
+            typeof data === 'object' &&
+            data !== null &&
+            'detail' in data
+          ) {
+            toast.error((data as { detail: string }).detail);
+          } else if (
+            typeof data === 'object' &&
+            data !== null &&
+            'error' in data
+          ) {
+            toast.error((data as { error: string }).error);
+          } else if (
+            typeof data === 'object' &&
+            data !== null &&
+            'message' in data
+          ) {
+            toast.error("Login fehlgeschlagen: " + ((data as { message?: string }).message || 'Unbekannter Fehler'));
+          } else {
+            toast.error("Login fehlgeschlagen: Unbekannter Fehler");
+          }
+        } else {
+          toast.error("Login fehlgeschlagen: Unbekannter Fehler");
+        }
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        toast.error("Login fehlgeschlagen: " + ((error as { message?: string }).message || 'Unbekannter Fehler'));
       } else {
-        toast.error("Login fehlgeschlagen: " + (error.message || 'Unbekannter Fehler'));
+        toast.error("Login fehlgeschlagen: Unbekannter Fehler");
       }
     } finally {
       updateFormState('isLoading', false);

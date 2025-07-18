@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+// TODO: Django-API-Migration: intervals auf Django-API umstellen
 
 interface MiningInterval {
   id: string;
@@ -20,25 +20,27 @@ export const createMiningInterval = async (userId: string): Promise<string | nul
   try {
     const now = new Date().toISOString();
     
-    const { data, error } = await supabase
-      .from('mining_intervals')
-      .insert([{
-        user_id: userId,
-        start_time: now,
-        end_time: null,
-        tokens_earned: 0,
-        points_earned: 0,
-        is_active: true
-      }])
-      .select('id')
-      .single();
+    // TODO: Django-API-Migration: intervals auf Django-API umstellen
+    // const { data, error } = await supabase
+    //   .from('mining_intervals')
+    //   .insert([{
+    //     user_id: userId,
+    //     start_time: now,
+    //     end_time: null,
+    //     tokens_earned: 0,
+    //     points_earned: 0,
+    //     is_active: true
+    //   }])
+    //   .select('id')
+    //   .single();
       
-    if (error) {
-      console.error('Error creating mining interval:', error);
-      return null;
-    }
+    // if (error) {
+    //   console.error('Error creating mining interval:', error);
+    //   return null;
+    // }
     
-    return data.id;
+    // return data.id;
+    return null; // Placeholder for Django API call
   } catch (err) {
     console.error('Error in createMiningInterval:', err);
     return null;
@@ -58,39 +60,40 @@ export const endMiningInterval = async (
   try {
     const now = new Date().toISOString();
     
-    // Finde das aktive Intervall für diesen Benutzer
-    const { data: intervalData, error: fetchError } = await supabase
-      .from('mining_intervals')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .order('start_time', { ascending: false })
-      .limit(1);
+    // TODO: Django-API-Migration: intervals auf Django-API umstellen
+    // // Finde das aktive Intervall für diesen Benutzer
+    // const { data: intervalData, error: fetchError } = await supabase
+    //   .from('mining_intervals')
+    //   .select('id')
+    //   .eq('user_id', userId)
+    //   .eq('is_active', true)
+    //   .order('start_time', { ascending: false })
+    //   .limit(1);
       
-    if (fetchError || !intervalData || intervalData.length === 0) {
-      console.error('No active mining interval found:', fetchError);
-      return false;
-    }
+    // if (fetchError || !intervalData || intervalData.length === 0) {
+    //   console.error('No active mining interval found:', fetchError);
+    //   return false;
+    // }
     
-    const intervalId = intervalData[0].id;
+    // const intervalId = intervalData[0].id;
     
-    // Aktualisiere das Intervall
-    const { error: updateError } = await supabase
-      .from('mining_intervals')
-      .update({
-        end_time: now,
-        tokens_earned: tokensEarned,
-        points_earned: pointsEarned,
-        is_active: false
-      })
-      .eq('id', intervalId);
+    // // Aktualisiere das Intervall
+    // const { error: updateError } = await supabase
+    //   .from('mining_intervals')
+    //   .update({
+    //     end_time: now,
+    //     tokens_earned: tokensEarned,
+    //     points_earned: pointsEarned,
+    //     is_active: false
+    //   })
+    //   .eq('id', intervalId);
       
-    if (updateError) {
-      console.error('Error ending mining interval:', updateError);
-      return false;
-    }
+    // if (updateError) {
+    //   console.error('Error ending mining interval:', updateError);
+    //   return false;
+    // }
     
-    return true;
+    return true; // Placeholder for Django API call
   } catch (err) {
     console.error('Error in endMiningInterval:', err);
     return false;
@@ -104,19 +107,21 @@ export const getMiningIntervals = async (userId: string, limit: number = 10): Pr
   if (!userId) return [];
   
   try {
-    const { data, error } = await supabase
-      .from('mining_intervals')
-      .select('*')
-      .eq('user_id', userId)
-      .order('start_time', { ascending: false })
-      .limit(limit);
+    // TODO: Django-API-Migration: intervals auf Django-API umstellen
+    // const { data, error } = await supabase
+    //   .from('mining_intervals')
+    //   .select('*')
+    //   .eq('user_id', userId)
+    //   .order('start_time', { ascending: false })
+    //   .limit(limit);
       
-    if (error) {
-      console.error('Error getting mining intervals:', error);
-      return [];
-    }
+    // if (error) {
+    //   console.error('Error getting mining intervals:', error);
+    //   return [];
+    // }
     
-    return data || [];
+    // return data || [];
+    return []; // Placeholder for Django API call
   } catch (err) {
     console.error('Error in getMiningIntervals:', err);
     return [];
@@ -130,19 +135,21 @@ export const getActiveMiningIntervals = async (userId: string): Promise<MiningIn
   if (!userId) return [];
   
   try {
-    const { data, error } = await supabase
-      .from('mining_intervals')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .order('start_time', { ascending: false });
+    // TODO: Django-API-Migration: intervals auf Django-API umstellen
+    // const { data, error } = await supabase
+    //   .from('mining_intervals')
+    //   .select('*')
+    //   .eq('user_id', userId)
+    //   .eq('is_active', true)
+    //   .order('start_time', { ascending: false });
       
-    if (error) {
-      console.error('Error getting active mining intervals:', error);
-      return [];
-    }
+    // if (error) {
+    //   console.error('Error getting active mining intervals:', error);
+    //   return [];
+    // }
     
-    return data || [];
+    // return data || [];
+    return []; // Placeholder for Django API call
   } catch (err) {
     console.error('Error in getActiveMiningIntervals:', err);
     return [];

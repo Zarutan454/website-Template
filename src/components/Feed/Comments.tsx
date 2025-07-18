@@ -7,10 +7,23 @@ import { Send, MessageSquare } from 'lucide-react';
 import { Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 
+// Interface für Kommentare
+interface Comment {
+  id: string | number;
+  content: string;
+  created_at: string;
+  author?: {
+    id: string | number;
+    username?: string;
+    display_name?: string;
+    avatar_url?: string;
+  };
+}
+
 interface CommentsProps {
-  comments: any[];
+  comments: Comment[];
   postId: string;
-  onComment: (postId: string, content: string) => Promise<any>;
+  onComment: (postId: string, content: string) => Promise<unknown>;
   currentUserId?: string;
   isLoading?: boolean;
 }
@@ -34,6 +47,7 @@ const Comments: React.FC<CommentsProps> = ({
       await onComment(postId, newComment);
       setNewComment('');
     } catch (error) {
+      console.error('Fehler beim Erstellen des Kommentars:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -71,7 +85,7 @@ const Comments: React.FC<CommentsProps> = ({
               <div className="flex-1 space-y-1">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium">
-                    {comment.author?.display_name || comment.author?.username || 'Unbekannter Benutzer'}
+                    {comment.author?.display_name || comment.author?.username || 'Unbekannter Nutzer'}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {timeAgo(comment.created_at)}

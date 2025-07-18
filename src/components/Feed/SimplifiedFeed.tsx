@@ -6,12 +6,6 @@ import { FeedType } from '@/hooks/feed/useFeedData';
 import { Post } from '@/types/posts';
 import { useTheme } from '@/components/ThemeProvider';
 import { useProfile } from '@/hooks/useProfile';
-import FeedFilterOptimized from './FeedFilterOptimized';
-import { Card, CardContent } from "@/components/ui/card";
-import { AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
-import { UiFilterType } from '@/hooks/feed/useFilterControl';
-import { useFilterControl } from '@/hooks/feed/useFilterControl';
 import SimplifiedFeedHeader from './components/SimplifiedFeedHeader';
 import NewPostsNotification from './components/NewPostsNotification';
 
@@ -62,19 +56,12 @@ const SimplifiedFeed: React.FC<SimplifiedFeedProps> = ({
 }) => {
   const { theme } = useTheme();
   const navigate = useNavigate();
-  const { user: profile } = useAuth()();
+  const { user: profile } = useProfile();
   const isDarkMode = theme === 'dark';
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date>(new Date());
   const [newPostsCount, setNewPostsCount] = useState<number>(0);
-  
-  const { 
-    showFilterMenu, 
-    selectedFilter, 
-    toggleFilters, 
-    handleFilterSelect 
-  } = useFilterControl();
   
   // Handler für die Wiederholungsversuche bei Fehlern
   const handleRetry = useCallback(() => {
@@ -156,54 +143,11 @@ const SimplifiedFeed: React.FC<SimplifiedFeedProps> = ({
     <div className={`space-y-4 ${className}`}>
       {showHeader && (
         <div className="space-y-2 mb-4">
-          <h1 className="text-2xl font-bold tracking-tight">{getFeedTitle()}</h1>
-          <p className="text-muted-foreground">{getFeedDescription()}</p>
+          <h1 className="text-2xl font-bold tracking-tight">Feed</h1>
         </div>
       )}
       
-      {showFilters && (
-        <>
-          <SimplifiedFeedHeader
-            title="Feed"
-            isDarkMode={isDarkMode}
-            isRefreshing={isRefreshing}
-            isSubscribed={isSubscribed}
-            postCount={posts.length}
-            onRefresh={handleRefresh}
-            onToggleSubscribe={handleToggleSubscribe}
-          />
-          
-          <AnimatePresence>
-            <NewPostsNotification 
-              show={hasNewPosts || newPostsCount > 0} 
-              onRefresh={handleRefresh}
-              count={newPostsCount}
-            />
-          </AnimatePresence>
-          
-          <Card className={`w-full mb-4 ${isDarkMode ? 'bg-dark-100 border-gray-800' : 'bg-white'}`}>
-            <CardContent className="px-4 py-3">
-              <div className="text-sm font-medium mb-2 flex items-center justify-between">
-                <span>Filtern nach</span>
-                <button 
-                  onClick={toggleFilters}
-                  className="text-sm text-primary hover:underline"
-                >
-                  {showFilterMenu ? 'Filter ausblenden' : 'Filter anzeigen'}
-                </button>
-              </div>
-              
-              <FeedFilterOptimized
-                showFilters={showFilterMenu}
-                selectedFilter={selectedFilter as UiFilterType}
-                handleFilterSelect={handleFilterSelect as (filter: UiFilterType | null) => void}
-                feedType={feedType}
-                lastUpdated={lastRefreshTime}
-              />
-            </CardContent>
-          </Card>
-        </>
-      )}
+      {/* Alle Filter-UI und zugehörige Buttons entfernt */}
       
       <FeedStateRenderer
         isLoading={isLoading}

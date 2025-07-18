@@ -50,7 +50,12 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, shareUrl, titl
         <DialogHeader>
           <DialogTitle>Teilen</DialogTitle>
           <DialogClose asChild>
-            <button className="absolute right-2 top-2 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={onClose}>
+            <button 
+              className="absolute right-2 top-2 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800" 
+              onClick={onClose}
+              aria-label="Dialog schließen"
+              title="Dialog schließen"
+            >
               <X className="w-5 h-5" />
             </button>
           </DialogClose>

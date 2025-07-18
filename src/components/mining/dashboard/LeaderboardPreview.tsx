@@ -22,7 +22,10 @@ const LeaderboardPreview: React.FC = () => {
       try {
         setIsLoading(true);
         
-        // TODO: Diese Komponente muss auf Django-API migriert werden. Supabase-Logik wurde entfernt.
+        // TODO: Django-API-Migration: LeaderboardPreview auf Django-API umstellen
+        // Die gesamte Logik für das Laden der Leaderboard-Daten muss auf die Django-API migriert werden.
+        // Aktuell ist keine Funktionalität vorhanden, da Supabase entfernt wurde.
+        
         // const { data, error } = await supabase
         //   .from('mining_stats')
         //   .select('user_id, total_points, users:user_id(display_name, avatar_url)')

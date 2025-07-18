@@ -26,10 +26,38 @@ class UserProfile(models.Model):
         ],
         default='public'
     )
+    post_visibility = models.CharField(
+        max_length=20,
+        choices=[
+            ('public', 'Public'),
+            ('friends', 'Friends Only'),
+            ('private', 'Private'),
+        ],
+        default='public'
+    )
+    allow_followers = models.BooleanField(default=True)
+    allow_messages = models.BooleanField(default=True)
+    show_online_status = models.BooleanField(default=True)
+    show_last_seen = models.BooleanField(default=True)
+    allow_tagging = models.BooleanField(default=True)
     
     # Notification settings
     push_notifications = models.BooleanField(default=True)
     sms_notifications = models.BooleanField(default=False)
+    notify_on_mention = models.BooleanField(default=True)
+    notify_on_follow = models.BooleanField(default=True)
+    notify_on_like = models.BooleanField(default=True)
+    notify_on_comment = models.BooleanField(default=True)
+    
+    # Social media links
+    website = models.URLField(blank=True, null=True)
+    twitter_handle = models.CharField(max_length=50, blank=True, null=True)
+    github_handle = models.CharField(max_length=50, blank=True, null=True)
+    linkedin_handle = models.CharField(max_length=50, blank=True, null=True)
+    instagram_handle = models.CharField(max_length=50, blank=True, null=True)
+    facebook_handle = models.CharField(max_length=50, blank=True, null=True)
+    youtube_handle = models.CharField(max_length=50, blank=True, null=True)
+    tiktok_handle = models.CharField(max_length=50, blank=True, null=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

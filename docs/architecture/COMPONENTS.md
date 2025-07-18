@@ -22,6 +22,7 @@ This document provides a comprehensive overview of the components used in the BS
 The main application component that handles routing and global state.
 
 **Features:**
+
 - React Router setup
 - Global state management
 - Authentication context
@@ -29,6 +30,7 @@ The main application component that handles routing and global state.
 - Performance monitoring
 
 **Usage:**
+
 ```jsx
 import App from './App';
 
@@ -42,6 +44,7 @@ function Main() {
 The main navigation component that appears at the top of the website.
 
 **Features:**
+
 - Responsive design with mobile menu
 - Dynamic navigation links based on authentication state
 - Language switcher integration
@@ -49,11 +52,13 @@ The main navigation component that appears at the top of the website.
 - User dropdown menu
 
 **Props:**
+
 - `isAuthenticated` (boolean): User authentication status
 - `user` (object): User data object
 - `onLogout` (function): Logout handler
 
 **Usage:**
+
 ```jsx
 <Navbar 
   isAuthenticated={isAuthenticated}
@@ -67,6 +72,7 @@ The main navigation component that appears at the top of the website.
 The footer section that appears at the bottom of the website.
 
 **Features:**
+
 - Multi-column layout for different content sections
 - Social media links with hover animations
 - Newsletter signup form
@@ -75,6 +81,7 @@ The footer section that appears at the bottom of the website.
 - Responsive design
 
 **Usage:**
+
 ```jsx
 <Footer />
 ```
@@ -84,6 +91,7 @@ The footer section that appears at the bottom of the website.
 A template component that provides consistent page layout.
 
 **Features:**
+
 - SEO meta tags
 - Page title management
 - Consistent header/footer structure
@@ -91,11 +99,13 @@ A template component that provides consistent page layout.
 - Error boundaries
 
 **Props:**
+
 - `title` (string): Page title
 - `description` (string): Meta description
 - `children` (node): Page content
 
 **Usage:**
+
 ```jsx
 <PageTemplate title="Dashboard" description="User dashboard">
   <DashboardContent />
@@ -109,6 +119,7 @@ A template component that provides consistent page layout.
 User login form component.
 
 **Features:**
+
 - Form validation
 - Password visibility toggle
 - Remember me functionality
@@ -116,10 +127,12 @@ User login form component.
 - Error handling
 
 **Props:**
+
 - `onLogin` (function): Login handler
 - `loading` (boolean): Loading state
 
 **Usage:**
+
 ```jsx
 <LoginForm onLogin={handleLogin} loading={isLoading} />
 ```
@@ -129,6 +142,7 @@ User login form component.
 User registration form component.
 
 **Features:**
+
 - Multi-step form
 - Real-time validation
 - Password strength indicator
@@ -136,10 +150,12 @@ User registration form component.
 - Referral code input
 
 **Props:**
+
 - `onRegister` (function): Registration handler
 - `referralCode` (string): Pre-filled referral code
 
 **Usage:**
+
 ```jsx
 <RegisterForm 
   onRegister={handleRegister} 
@@ -152,6 +168,7 @@ User registration form component.
 Enhanced registration form with additional features.
 
 **Features:**
+
 - Step-by-step registration process
 - Email verification flow
 - Profile setup
@@ -162,6 +179,7 @@ Enhanced registration form with additional features.
 Password reset request component.
 
 **Features:**
+
 - Email input validation
 - Reset link sending
 - Success/error messaging
@@ -171,6 +189,7 @@ Password reset request component.
 Password reset confirmation component.
 
 **Features:**
+
 - Token validation
 - New password input
 - Password confirmation
@@ -181,6 +200,7 @@ Password reset confirmation component.
 Email verification component.
 
 **Features:**
+
 - Token verification
 - Resend verification email
 - Success/error states
@@ -190,17 +210,20 @@ Email verification component.
 Route protection wrapper component.
 
 **Features:**
+
 - Authentication check
 - Redirect to login
 - Loading states
 - Role-based access
 
 **Props:**
+
 - `children` (node): Protected content
 - `requiredRole` (string): Required user role
 - `redirectTo` (string): Redirect path
 
 **Usage:**
+
 ```jsx
 <ProtectedRoute requiredRole="user">
   <DashboardPage />
@@ -214,6 +237,7 @@ Route protection wrapper component.
 Token reservation/purchase form.
 
 **Features:**
+
 - Amount input with validation
 - Price calculation
 - Payment method selection
@@ -221,6 +245,7 @@ Token reservation/purchase form.
 - Terms acceptance
 
 **Props:**
+
 - `onReservation` (function): Reservation handler
 - `currentPhase` (object): Current sale phase data
 
@@ -229,6 +254,7 @@ Token reservation/purchase form.
 Token faucet claim widget.
 
 **Features:**
+
 - Claim button with cooldown
 - Balance display
 - Claim history
@@ -236,6 +262,7 @@ Token faucet claim widget.
 - Wallet connection
 
 **Props:**
+
 - `userBalance` (number): Current user balance
 - `onClaim` (function): Claim handler
 
@@ -244,6 +271,7 @@ Token faucet claim widget.
 ICO phase management and display component.
 
 **Features:**
+
 - Phase timeline visualization
 - Progress indicators
 - Phase-specific information
@@ -254,6 +282,7 @@ ICO phase management and display component.
 Investment calculation tool.
 
 **Features:**
+
 - Amount input
 - ROI calculation
 - Price projections
@@ -264,6 +293,7 @@ Investment calculation tool.
 User's token reservation history.
 
 **Features:**
+
 - Paginated list
 - Status indicators
 - Transaction details
@@ -274,6 +304,7 @@ User's token reservation history.
 Wallet connection interface.
 
 **Features:**
+
 - Multiple wallet support
 - Connection status
 - Account switching
@@ -286,6 +317,7 @@ Wallet connection interface.
 Newsletter subscription form.
 
 **Features:**
+
 - Email validation
 - Interest selection
 - GDPR compliance
@@ -296,6 +328,7 @@ Newsletter subscription form.
 Frequently asked questions component.
 
 **Features:**
+
 - Expandable accordion
 - Search functionality
 - Category filtering
@@ -306,6 +339,7 @@ Frequently asked questions component.
 Team member showcase.
 
 **Features:**
+
 - Member cards with photos
 - Role and bio information
 - Social media links
@@ -316,6 +350,7 @@ Team member showcase.
 Platform benefits display.
 
 **Features:**
+
 - Icon-based benefit cards
 - Animated entrance effects
 - Responsive grid
@@ -326,6 +361,7 @@ Platform benefits display.
 Call-to-action components.
 
 **Features:**
+
 - Attention-grabbing design
 - Multiple action buttons
 - Background effects
@@ -338,6 +374,7 @@ Call-to-action components.
 Main dashboard page component.
 
 **Features:**
+
 - User statistics overview
 - Quick actions
 - Recent activity
@@ -348,6 +385,7 @@ Main dashboard page component.
 Dashboard statistics widget.
 
 **Features:**
+
 - Key metrics display
 - Charts and graphs
 - Real-time updates
@@ -358,6 +396,7 @@ Dashboard statistics widget.
 Dashboard faucet widget.
 
 **Features:**
+
 - Quick claim access
 - Balance display
 - Claim status
@@ -368,6 +407,7 @@ Dashboard faucet widget.
 Social mining widget.
 
 **Features:**
+
 - Mining status
 - Earnings display
 - Activity tracking
@@ -378,6 +418,7 @@ Social mining widget.
 Referral program widget.
 
 **Features:**
+
 - Referral link generation
 - Statistics display
 - Earning tracking
@@ -388,6 +429,7 @@ Referral program widget.
 Token balance and information widget.
 
 **Features:**
+
 - Balance display
 - Price information
 - Transaction history
@@ -398,6 +440,7 @@ Token balance and information widget.
 Transaction history component.
 
 **Features:**
+
 - Paginated transaction list
 - Filtering options
 - Export functionality
@@ -408,6 +451,7 @@ Transaction history component.
 User statistics component.
 
 **Features:**
+
 - Activity metrics
 - Achievement progress
 - Ranking information
@@ -420,12 +464,14 @@ User statistics component.
 Toast notification component.
 
 **Features:**
+
 - Multiple notification types
 - Auto-dismiss
 - Action buttons
 - Animation effects
 
 **Props:**
+
 - `type` (string): Notification type (success, error, warning, info)
 - `message` (string): Notification message
 - `onClose` (function): Close handler
@@ -435,12 +481,14 @@ Toast notification component.
 Reusable card component.
 
 **Features:**
+
 - Multiple variants
 - Hover effects
 - Loading states
 - Responsive design
 
 **Props:**
+
 - `variant` (string): Card style variant
 - `children` (node): Card content
 - `className` (string): Additional CSS classes
@@ -450,12 +498,14 @@ Reusable card component.
 Enhanced button component.
 
 **Features:**
+
 - Multiple sizes and variants
 - Loading states
 - Icon support
 - Disabled states
 
 **Props:**
+
 - `variant` (string): Button style
 - `size` (string): Button size
 - `loading` (boolean): Loading state
@@ -466,6 +516,7 @@ Enhanced button component.
 Modal dialog component.
 
 **Features:**
+
 - Backdrop click to close
 - Keyboard navigation
 - Animation effects
@@ -476,6 +527,7 @@ Modal dialog component.
 Language selection component.
 
 **Features:**
+
 - Dropdown language selector
 - Flag icons
 - Persistent selection
@@ -486,12 +538,14 @@ Language selection component.
 SEO meta tags component.
 
 **Features:**
+
 - Dynamic meta tags
 - Open Graph tags
 - Twitter cards
 - Structured data
 
 **Props:**
+
 - `title` (string): Page title
 - `description` (string): Meta description
 - `image` (string): OG image URL
@@ -503,6 +557,7 @@ SEO meta tags component.
 Animated blockchain particles background.
 
 **Features:**
+
 - WebGL-based animations
 - Responsive design
 - Performance optimization
@@ -513,6 +568,7 @@ Animated blockchain particles background.
 Data flow visualization component.
 
 **Features:**
+
 - Real-time data streams
 - Interactive elements
 - Smooth animations
@@ -523,6 +579,7 @@ Data flow visualization component.
 Glowing particle effects.
 
 **Features:**
+
 - GPU-accelerated animations
 - Color customization
 - Density controls
@@ -533,6 +590,7 @@ Glowing particle effects.
 Enhanced background with effects.
 
 **Features:**
+
 - Multiple background layers
 - Parallax effects
 - Interactive elements
@@ -543,6 +601,7 @@ Enhanced background with effects.
 Blockchain-themed background component.
 
 **Features:**
+
 - Animated blockchain visualization
 - Network connections
 - Node interactions
@@ -555,12 +614,14 @@ Blockchain-themed background component.
 Error boundary for catching React errors.
 
 **Features:**
+
 - Error catching and logging
 - Fallback UI
 - Error reporting
 - Development vs production modes
 
 **Props:**
+
 - `children` (node): Components to wrap
 - `fallback` (component): Fallback component
 
@@ -569,6 +630,7 @@ Error boundary for catching React errors.
 Lazy loading wrapper component.
 
 **Features:**
+
 - Intersection Observer API
 - Loading placeholders
 - Error handling
@@ -579,6 +641,7 @@ Lazy loading wrapper component.
 Performance monitoring component.
 
 **Features:**
+
 - Web Vitals tracking
 - Performance metrics
 - Development tools
@@ -589,6 +652,7 @@ Performance monitoring component.
 Translation validation component.
 
 **Features:**
+
 - Missing translation detection
 - Translation key validation
 - Language coverage reports
@@ -647,6 +711,7 @@ The application uses several context providers:
 ### State Management
 
 Components use a combination of:
+
 - React hooks (useState, useEffect, useContext)
 - Context API for global state
 - Local component state for UI interactions
@@ -776,6 +841,7 @@ src/
 ### Testing
 
 Each component should include:
+
 - Unit tests with Jest and React Testing Library
 - Accessibility tests
 - Visual regression tests (if applicable)
@@ -789,4 +855,4 @@ Each component should include:
 4. Use code splitting
 5. Monitor bundle size
 
-This documentation serves as a comprehensive guide for understanding and working with the BSN website components. For specific implementation details, refer to the individual component files in the codebase. 
+This documentation serves as a comprehensive guide for understanding and working with the BSN website components. For specific implementation details, refer to the individual component files in the codebase.

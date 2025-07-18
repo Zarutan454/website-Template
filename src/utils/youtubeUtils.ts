@@ -21,7 +21,7 @@ export function extractYoutubeVideoId(text: string): string | null {
     /(?:https?:\/\/)?(?:www\.)?m\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})(?:&[\w=.-]*)?/i,
     
     // Kurz-URL
-    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/v\/([a-zA-Z0-9_-]{11})(?:[\?&][\w=.-]*)?/i,
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/v\/([a-zA-Z0-9_-]{11})(?:[?&][\w=.-]*)?/i,
     
     // Video-ID aus Playlist
     /(?:https?:\/\/)?(?:www\.)?youtube\.com\/(?:watch|playlist)\?(?:.*&)?list=[^&]*&(?:.*&)?v=([a-zA-Z0-9_-]{11})(?:&[\w=.-]*)?/i,

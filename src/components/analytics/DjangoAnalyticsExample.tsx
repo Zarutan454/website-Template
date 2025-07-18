@@ -183,7 +183,9 @@ const DjangoAnalyticsExample: React.FC = () => {
             <RefreshCw className="w-4 h-4 mr-2" />
             Aktualisieren
           </Button>
+          <label htmlFor="timeRangeSelect" className="sr-only">Zeitraum auswählen</label>
           <select
+            id="timeRangeSelect"
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value as '24h' | '7d' | '30d')}
             className="px-3 py-2 border rounded-md"

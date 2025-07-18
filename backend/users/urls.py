@@ -23,6 +23,10 @@ urlpatterns = [
     path('profile/<str:username>/', views.UserProfileByUsernameView.as_view(), name='profile-by-username'),
     path('<int:user_id>/profile/', views.UserProfileByIdView.as_view(), name='profile-by-id'),
     
+    # NEW: Profile features endpoints
+    # Remove all routes for /<int:user_id>/photos/, /activity/, /analytics/, /privacy/, /social-links/, /photos/upload/, /photos/<int:photo_id>/, etc.
+    # Only keep registration, login, logout, password, session, and settings endpoints.
+    
     # User Relationships - Follow/Unfollow
     path('<int:user_id>/follow/', views.FollowUserView.as_view(), name='follow-user'),
     path('<int:user_id>/unfollow/', views.UnfollowUserView.as_view(), name='unfollow-user'),

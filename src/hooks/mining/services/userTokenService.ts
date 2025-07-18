@@ -1,5 +1,4 @@
 
-import { supabase } from '@/lib/supabase';
 import { formatDateForDatabase } from '../utils';
 
 /**
@@ -17,34 +16,36 @@ export const updateUserMinedTokens = async (
     
     // First, try using RPC function which is more reliable
     try {
-      const { error: rpcError } = await supabase.rpc('increment_mined_tokens', { 
-        user_id_param: userId,
-        increment_value: tokensEarned
-      });
+      // TODO: Django-API-Migration: userTokenService auf Django-API umstellen
+      // const { error: rpcError } = await supabase.rpc('increment_mined_tokens', { 
+      //   user_id_param: userId,
+      //   increment_value: tokensEarned
+      // });
       
-      if (rpcError) {
-        console.error('Error using RPC to update tokens:', rpcError);
-        throw rpcError;
-      }
+      // if (rpcError) {
+      //   console.error('Error using RPC to update tokens:', rpcError);
+      //   throw rpcError;
+      // }
       
-      console.log('Tokens updated using RPC function');
+      // console.log('Tokens updated using RPC function');
       return true;
     } catch (rpcError) {
       console.error('Error using RPC to update tokens:', rpcError);
       
       // Fallback: Direct update if RPC fails
-      const { error: directUpdateError } = await supabase
-        .from('users')
-        .update({
-          mined_tokens: supabase.rpc('increment_decimal', { value: tokensEarned }),
-          updated_at: formatDateForDatabase(new Date())
-        })
-        .eq('id', userId);
+      // TODO: Django-API-Migration: userTokenService auf Django-API umstellen
+      // const { error: directUpdateError } = await supabase
+      //   .from('users')
+      //   .update({
+      //     mined_tokens: supabase.rpc('increment_decimal', { value: tokensEarned }),
+      //     updated_at: formatDateForDatabase(new Date())
+      //   })
+      //   .eq('id', userId);
         
-      if (directUpdateError) {
-        console.error('Error in direct update of mined tokens:', directUpdateError);
-        return false;
-      }
+      // if (directUpdateError) {
+      //   console.error('Error in direct update of mined tokens:', directUpdateError);
+      //   return false;
+      // }
     }
     
     console.log(`Successfully updated tokens for user ${userId}`);
@@ -65,19 +66,20 @@ export const recordMiningReward = async (
 ): Promise<boolean> => {
   try {
     console.log(`Recording reward of ${tokensEarned} tokens for user ${userId} from source ${source}`);
-    const { error } = await supabase
-      .from('mining_rewards')
-      .insert({
-        user_id: userId,
-        tokens_earned: tokensEarned,
-        source: source,
-        created_at: formatDateForDatabase(new Date())
-      });
+    // TODO: Django-API-Migration: userTokenService auf Django-API umstellen
+    // const { error } = await supabase
+    //   .from('mining_rewards')
+    //   .insert({
+    //     user_id: userId,
+    //     tokens_earned: tokensEarned,
+    //     source: source,
+    //     created_at: formatDateForDatabase(new Date())
+    //   });
       
-    if (error) {
-      console.error('Error recording mining reward:', error);
-      return false;
-    }
+    // if (error) {
+    //   console.error('Error recording mining reward:', error);
+    //   return false;
+    // }
     
     console.log('Mining reward recorded successfully');
     return true;
@@ -95,37 +97,39 @@ export const checkDailyActivityLimit = async (
   limit: number = 10
 ): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
-      .from('users')
-      .select('daily_activity_count, last_activity_reset')
-      .eq('id', userId)
-      .single();
+    // TODO: Django-API-Migration: userTokenService auf Django-API umstellen
+    // const { data, error } = await supabase
+    //   .from('users')
+    //   .select('daily_activity_count, last_activity_reset')
+    //   .eq('id', userId)
+    //   .single();
       
-    if (error) {
-      console.error('Error checking daily activity limit:', error);
-      return false;
-    }
+    // if (error) {
+    //   console.error('Error checking daily activity limit:', error);
+    //   return false;
+    // }
     
     // Wenn kein Datum für den letzten Reset oder wenn es vor heute liegt, zurücksetzen
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const lastReset = data.last_activity_reset ? new Date(data.last_activity_reset) : null;
+    // const lastReset = data.last_activity_reset ? new Date(data.last_activity_reset) : null;
     
-    if (!lastReset || lastReset < today) {
-      // Zurücksetzen des Zählers und Aktualisieren des Reset-Datums
-      await supabase
-        .from('users')
-        .update({
-          daily_activity_count: 0,
-          last_activity_reset: formatDateForDatabase(today)
-        })
-        .eq('id', userId);
+    // if (!lastReset || lastReset < today) {
+    //   // Zurücksetzen des Zählers und Aktualisieren des Reset-Datums
+    //   await supabase
+    //     .from('users')
+    //     .update({
+    //       daily_activity_count: 0,
+    //       last_activity_reset: formatDateForDatabase(today)
+    //     })
+    //     .eq('id', userId);
         
-      return false; // Limit nicht erreicht nach Reset
-    }
+    //   return false; // Limit nicht erreicht nach Reset
+    // }
     
-    return (data.daily_activity_count || 0) >= limit;
+    // return (data.daily_activity_count || 0) >= limit;
+    return false; // Placeholder, as supabase is removed
   } catch (err) {
     console.error('Error in checkDailyActivityLimit:', err);
     return false;
@@ -138,17 +142,18 @@ export const checkDailyActivityLimit = async (
 export const incrementDailyActivity = async (userId: string): Promise<boolean> => {
   try {
     // Direktes Update statt RPC-Aufruf
-    const { error } = await supabase
-      .from('users')
-      .update({
-        daily_activity_count: supabase.rpc('increment', { value: 1 })
-      })
-      .eq('id', userId);
+    // TODO: Django-API-Migration: userTokenService auf Django-API umstellen
+    // const { error } = await supabase
+    //   .from('users')
+    //   .update({
+    //     daily_activity_count: supabase.rpc('increment', { value: 1 })
+    //   })
+    //   .eq('id', userId);
       
-    if (error) {
-      console.error('Error incrementing daily activity count:', error);
-      return false;
-    }
+    // if (error) {
+    //   console.error('Error incrementing daily activity count:', error);
+    //   return false;
+    // }
     
     return true;
   } catch (err) {
@@ -173,19 +178,21 @@ export const getUserMiningRewards = async (
   limit: number = 10
 ): Promise<MiningReward[]> => {
   try {
-    const { data, error } = await supabase
-      .from('mining_rewards')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+    // TODO: Django-API-Migration: userTokenService auf Django-API umstellen
+    // const { data, error } = await supabase
+    //   .from('mining_rewards')
+    //   .select('*')
+    //   .eq('user_id', userId)
+    //   .order('created_at', { ascending: false })
+    //   .limit(limit);
       
-    if (error) {
-      console.error('Error fetching user mining rewards:', error);
-      return [];
-    }
+    // if (error) {
+    //   console.error('Error fetching user mining rewards:', error);
+    //   return [];
+    // }
     
-    return data || [];
+    // return data || [];
+    return []; // Placeholder, as supabase is removed
   } catch (err) {
     console.error('Error in getUserMiningRewards:', err);
     return [];

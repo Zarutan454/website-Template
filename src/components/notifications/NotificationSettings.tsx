@@ -46,8 +46,9 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ user
         // if (error) throw error;
         
         // setSettings(data);
-      } catch (err: any) {
-        setError(err);
+      } catch (err: unknown) {
+        const error = err as { message?: string };
+        setError(error);
       } finally {
         setIsLoading(false);
       }
@@ -78,14 +79,14 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ user
       // if (error) throw error;
       
       toast.success('Einstellung aktualisiert');
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Zurücksetzen auf vorherigen Zustand
       setSettings({
         ...settings,
         [setting]: !value
       });
-      
-      toast.error('Einstellung konnte nicht gespeichert werden');
+      const error = err as { message?: string };
+      toast.error(`Einstellung konnte nicht gespeichert werden${error.message ? ': ' + error.message : ''}`);
     } finally {
       setIsSaving(false);
     }
@@ -119,8 +120,9 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ user
       //   .eq('user_id', userId);
         
       toast.success('Einstellungen zurückgesetzt');
-    } catch (err: any) {
-      toast.error('Einstellungen konnten nicht zurückgesetzt werden');
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      toast.error(`Einstellungen konnten nicht zurückgesetzt werden${error.message ? ': ' + error.message : ''}`);
       
       // Aktuellen Zustand neu laden
       // const { data } = await supabase

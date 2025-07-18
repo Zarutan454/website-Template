@@ -67,12 +67,20 @@ export const TokenDeploymentService = {
         status: SmartContractStatus.Unknown,
         error: 'Supabase query logic not implemented'
       };
-    } catch (error: any) {
-      console.error('Error getting deployment status:', error);
-      return {
-        status: SmartContractStatus.Unknown,
-        error: error.message
-      };
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error getting deployment status:', error.message);
+        return {
+          status: SmartContractStatus.Unknown,
+          error: error.message
+        };
+      } else {
+        console.error('Error getting deployment status:', error);
+        return {
+          status: SmartContractStatus.Unknown,
+          error: 'Unknown error'
+        };
+      }
     }
   },
   
@@ -142,14 +150,24 @@ export const TokenDeploymentService = {
         costEth,
         costUsd
       };
-    } catch (error: any) {
-      console.error('Error estimating gas:', error);
-      return {
-        gasEstimate: '2000000',
-        costEth: '0.05',
-        costUsd: '150.00',
-        error: error.message
-      };
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error estimating gas:', error.message);
+        return {
+          gasEstimate: '2000000',
+          costEth: '0.05',
+          costUsd: '150.00',
+          error: error.message
+        };
+      } else {
+        console.error('Error estimating gas:', error);
+        return {
+          gasEstimate: '2000000',
+          costEth: '0.05',
+          costUsd: '150.00',
+          error: 'Unknown error'
+        };
+      }
     }
   },
   

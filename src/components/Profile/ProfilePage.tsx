@@ -1,354 +1,393 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useProfile } from '@/hooks/useProfile';
+import { useAuth } from '@/context/AuthContext';
 import { useUserRelationships } from '@/hooks/useUserRelationships';
 import { useMining } from '@/hooks/useMining';
 import { useProfileMedia } from '@/hooks/useProfileMedia';
-import { useProfileStats } from '@/hooks/useProfileStats';
 import { useUserAchievements } from '@/hooks/useUserAchievements';
+import { interactionRepository } from '@/repositories/InteractionRepository';
+import { userAPI, socialAPI, UserProfile as UserProfileType } from '@/lib/django-api-new';
 import { toast } from 'sonner';
 import { Media } from '@/types/media';
 import ProfileHeader from './ProfileHeader';
-import ProfileAchievements from './ProfileAchievements';
-import ProfileTimeline from './ProfileTimeline';
-import EnhancedMediaGallery from './EnhancedMediaGallery';
-import ProfileCalendar from './ProfileCalendar';
-import FollowersModal from './FollowersModal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Grid3X3, Clock, Trophy, BarChart3, Calendar } from 'lucide-react';
-import ProfileLoader from './ProfileLoader';
-import ProfileError from './ProfileError';
-import { FeedLayout } from '@/components/Feed/FeedLayout';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Users, 
+  Image, 
+  Activity, 
+  BarChart3, 
+  Share2, 
+  Settings,
+  Loader2,
+  UserPlus,
+  UserMinus,
+  MessageSquare,
+  Heart,
+  Trophy,
+  Zap
+} from 'lucide-react';
 
-interface TimelineEvent {
-  id: string;
-  type: 'post' | 'achievement' | 'token' | 'comment' | 'follow';
-  timestamp: string;
-  title: string;
-  description: string;
-  targetId?: string;
-  targetType?: string;
+// Import neue Komponenten
+import ProfilePhotos from './ProfilePhotos';
+import ProfileActivity from './ProfileActivity';
+import ProfileAnalytics from './ProfileAnalytics';
+import ProfileSocialLinks from './ProfileSocialLinks';
+import PhotoAlbumGrid from './Photos/PhotoAlbumGrid';
+import { Post } from '@/types/posts';
+
+interface ProfilePageProps {
+  username?: string;
 }
 
-const EnhancedProfilePage: React.FC = () => {
-  const { username } = useParams<{ username: string }>();
+const ProfilePage: React.FC<ProfilePageProps> = ({ username }) => {
+  const { username: urlUsername } = useParams<{ username: string }>();
   const navigate = useNavigate();
-  const { profile: currentUserProfile, fetchProfileByUsername } = useProfile();
-  const { followUser, unfollowUser, isFollowing, getFollowStats } = useUserRelationships();
-  const { miningStats, syncMiningState } = useMining();
+  const { user: currentUser, isAuthenticated } = useAuth();
   
-  const [profileData, setProfileData] = useState<any>(null);
-  const [isOwnProfile, setIsOwnProfile] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [userIsFollowing, setUserIsFollowing] = useState(false);
-  const [followStats, setFollowStats] = useState({ followers_count: 0, following_count: 0 });
-  const [activeTab, setActiveTab] = useState('media');
-  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
+  const targetUsername = username || urlUsername;
+  
+  const [profile, setProfile] = useState<UserProfileType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('posts');
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [postsLoading, setPostsLoading] = useState(false);
+  const [followers, setFollowers] = useState<UserProfileType[]>([]);
+  const [following, setFollowing] = useState<UserProfileType[]>([]);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [modalType, setModalType] = useState<'followers' | 'following'>('followers');
 
-  const { achievements, isLoading: isAchievementsLoading } = useUserAchievements(profileData?.id);
+  const isOwnProfile = currentUser?.username === targetUsername;
 
-  const { media: postsMedia, isLoading: isPostsLoading } = useProfileMedia(
-    profileData?.id,
-    'posts',
-    isOwnProfile
-  );
-  
-  const { media: savedMedia, isLoading: isSavedLoading } = useProfileMedia(
-    profileData?.id,
-    'saved',
-    isOwnProfile
-  );
-  
-  const { media: likedMedia, isLoading: isLikedLoading } = useProfileMedia(
-    profileData?.id,
-    'liked',
-    isOwnProfile
-  );
-  
-  const { media: collectionsMedia, isLoading: isCollectionsLoading } = useProfileMedia(
-    profileData?.id,
-    'collections',
-    isOwnProfile
-  );
-
-  const convertMedia = (media: any[]): Media[] => {
-    return media.map(item => ({
-      id: item.id,
-      url: item.url || '',
-      type: item.type || 'image',
-      title: item.title,
-      description: item.description,
-      createdAt: item.createdAt || item.created_at,
-      authorId: item.authorId
-    }));
-  };
-
-  useEffect(() => {
-    if (achievements && achievements.length > 0) {
-      const completedAchievements = achievements
-        .filter(achievement => achievement.completed && achievement.completedAt)
-        .map(achievement => ({
-          id: `achievement-${achievement.id}`,
-          type: 'achievement' as const,
-          timestamp: achievement.completedAt?.toString() || new Date().toISOString(),
-          title: `Achievement freigeschaltet: ${achievement.title || achievement.achievement?.title || 'Erfolg'}`,
-          description: `Hat das Achievement "${achievement.title || achievement.achievement?.title || 'Erfolg'}" freigeschaltet`,
-          targetId: achievement.id,
-          targetType: 'achievement'
-        }));
-      
-      const tokenEvents = [
-        {
-          id: '3',
-          type: 'token' as const,
-          timestamp: new Date(Date.now() - 172800000).toISOString(),
-          title: '50 Token gemined',
-          description: 'Hat 50 Token durch Mining verdient',
-          targetId: '789',
-          targetType: 'token'
-        }
-      ];
-      
-      setTimelineEvents([...completedAchievements, ...tokenEvents]);
-    }
-  }, [achievements]);
-
-  useEffect(() => {
-    const loadProfile = async () => {
-      setIsLoading(true);
+  const fetchProfile = useCallback(async () => {
+    if (!targetUsername) return;
+    try {
+      setLoading(true);
       setError(null);
-      
-      try {
-        const targetUsername = username || currentUserProfile?.username;
-        
-        if (!targetUsername) {
-          setIsLoading(false);
-          setError(new Error('Kein Benutzername angegeben'));
-          return;
-        }
-        
-        const profile = await fetchProfileByUsername(targetUsername);
-        
-        if (profile) {
-          setProfileData(profile);
-          setIsOwnProfile(currentUserProfile?.id === profile.id);
-          
-          if (currentUserProfile?.id && profile.id !== currentUserProfile.id) {
-            const following = await isFollowing(profile.id);
-            setUserIsFollowing(following);
-          }
-          
-          const stats = await getFollowStats(profile.id);
-          setFollowStats(stats);
-          
-          if (currentUserProfile?.id === profile.id && syncMiningState) {
-            await syncMiningState();
-          }
-        } else {
-          setError(new Error('Profil nicht gefunden'));
-          toast.error('Profil konnte nicht gefunden werden');
-        }
-      } catch (err: any) {
-        setError(err);
-        toast.error('Fehler beim Laden des Profils');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadProfile();
-  }, [username, currentUserProfile, fetchProfileByUsername, isFollowing, getFollowStats, syncMiningState]);
-  
-  const handleFollowToggle = async () => {
-    if (!profileData?.id) return;
+      const profileData = await userAPI.getProfileByUsername(targetUsername);
+      setProfile(profileData);
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setError('Profil konnte nicht geladen werden');
+      toast.error('Profil konnte nicht geladen werden');
+    } finally {
+      setLoading(false);
+    }
+  }, [targetUsername]);
+
+  const fetchPosts = useCallback(async () => {
+    if (!profile?.id) return;
     
     try {
-      if (userIsFollowing) {
-        const success = await unfollowUser(profileData.id);
-        if (success) {
-          setUserIsFollowing(false);
-          setFollowStats(prev => ({
-            ...prev,
-            followers_count: Math.max(0, prev.followers_count - 1)
-          }));
-          toast.success(`Du folgst ${profileData.username} nicht mehr`);
-        }
-      } else {
-        const success = await followUser(profileData.id);
-        if (success) {
-          setUserIsFollowing(true);
-          setFollowStats(prev => ({
-            ...prev,
-            followers_count: prev.followers_count + 1
-          }));
-          toast.success(`Du folgst jetzt ${profileData.username}`);
-        }
-      }
-    } catch (error) {
-      console.error('Error toggling follow status:', error);
-      toast.error('Fehler beim Ändern des Folgestatus');
+      setPostsLoading(true);
+      // FIXED: Use correct parameters instead of object
+      const postsData = await socialAPI.getPosts(1, 20);
+      // Filter posts by author if needed
+      const userPosts = postsData.results?.filter((post: Post) => post.author?.id === profile.id) || [];
+      setPosts(userPosts);
+    } catch (err) {
+      console.error('Error fetching posts:', err);
+      toast.error('Beiträge konnten nicht geladen werden');
+      setPosts([]); // Set empty array on error
+    } finally {
+      setPostsLoading(false);
+    }
+  }, [profile?.id]);
+
+  const fetchFollowers = useCallback(async () => {
+    if (!profile?.id) return;
+    
+    try {
+      const followersData = await interactionRepository.getFollowers(profile.id);
+      setFollowers(followersData);
+    } catch (err) {
+      console.error('Error fetching followers:', err);
+    }
+  }, [profile?.id]);
+
+  const fetchFollowing = useCallback(async () => {
+    if (!profile?.id) return;
+    
+    try {
+      const followingData = await interactionRepository.getFollowing(profile.id);
+      setFollowing(followingData);
+    } catch (err) {
+      console.error('Error fetching following:', err);
+    }
+  }, [profile?.id]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  useEffect(() => {
+    if (profile) {
+      fetchPosts();
+      fetchFollowers();
+      fetchFollowing();
+    }
+  }, [profile, fetchPosts, fetchFollowers, fetchFollowing]);
+
+  const handleFollow = async () => {
+    if (!isAuthenticated || !profile) return;
+    
+    try {
+      await interactionRepository.followUser(profile.id);
+      toast.success('Benutzer erfolgreich gefolgt');
+      fetchFollowers(); // Refresh data
+    } catch (err) {
+      console.error('Error following user:', err);
+      toast.error('Fehler beim Folgen des Benutzers');
     }
   };
-  
-  const handleMediaClick = (id: string, type: 'post' | 'saved' | 'liked' | 'collection') => {
-    console.log(`Clicked ${type} media with ID: ${id}`);
-    switch (type) {
-      case 'post':
-      case 'saved':
-      case 'liked':
-        navigate(`/post/${id}`);
-        break;
-      case 'collection':
-        navigate(`/photos/album/${id}`);
-        break;
+
+  const handleUnfollow = async () => {
+    if (!isAuthenticated || !profile) return;
+    
+    try {
+      await interactionRepository.unfollowUser(profile.id);
+      toast.success('Benutzer erfolgreich entfolgt');
+      fetchFollowers(); // Refresh data
+    } catch (err) {
+      console.error('Error unfollowing user:', err);
+      toast.error('Fehler beim Entfolgen des Benutzers');
     }
   };
-  
-  if (isLoading) {
+
+  const openFollowersModal = () => {
+    setModalType('followers');
+    setShowFollowersModal(true);
+  };
+
+  const openFollowingModal = () => {
+    setModalType('following');
+    setShowFollowingModal(true);
+  };
+
+  if (loading) {
     return (
-      <FeedLayout hideRightSidebar={true}>
-        <ProfileLoader />
-      </FeedLayout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <span className="ml-2 text-muted-foreground">Lade Profil...</span>
+        </div>
+      </div>
     );
   }
-  
-  if (error || !profileData) {
+
+  if (error || !profile) {
     return (
-      <FeedLayout hideRightSidebar={true}>
-        <ProfileError error={error} onRetry={() => navigate(0)} />
-      </FeedLayout>
+      <div className="container mx-auto px-4 py-8">
+        <Card>
+          <CardContent className="text-center py-8">
+            <p className="text-destructive mb-4">{error || 'Profil nicht gefunden'}</p>
+            <Button onClick={fetchProfile} variant="outline">
+              Erneut versuchen
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
-  
+
   return (
-    <FeedLayout hideRightSidebar={true}>
-      <div className="container max-w-4xl mx-auto px-4 py-6 space-y-6">
-        <ProfileHeader 
-          profile={profileData}
-          isOwnProfile={isOwnProfile}
-          isFollowing={userIsFollowing}
-          followStats={followStats}
-          onFollowToggle={handleFollowToggle}
-          onEditProfile={() => navigate('/settings/profile')}
-          onMessage={() => toast.info('Nachrichtenfunktion kommt bald')}
-          onShare={() => {
-            navigator.clipboard.writeText(window.location.href);
-            toast.success('Profil-URL in die Zwischenablage kopiert');
-          }}
-          onFollowersClick={() => setShowFollowersModal(true)}
-          onFollowingClick={() => setShowFollowingModal(true)}
-        />
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="space-y-6">
-            <ProfileAchievements 
-              achievements={achievements}
-              isLoading={isAchievementsLoading}
-              maxItems={5}
-              showCompleted={true}
-              onViewAllClick={() => setActiveTab('timeline')}
-            />
-            
-            {isOwnProfile && miningStats && (
-              <Card className="border-gray-800/60 bg-gray-900/30 backdrop-blur-sm p-4">
-                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-primary" />
-                  Mining-Statistiken
-                </h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Token:</span>
-                    <span className="font-medium">{miningStats.total_tokens_earned || 0}</span>
+    <div className="container mx-auto px-4 py-8">
+      {/* Profile Header */}
+      <ProfileHeader 
+        profile={profile}
+        isOwnProfile={isOwnProfile}
+        onFollow={handleFollow}
+        onUnfollow={handleUnfollow}
+        followersCount={followers.length}
+        followingCount={following.length}
+        onFollowersClick={openFollowersModal}
+        onFollowingClick={openFollowingModal}
+      />
+
+      {/* Profile Content */}
+      <div className="mt-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="posts" className="flex items-center gap-2">
+              <Image className="h-4 w-4" />
+              Beiträge
+            </TabsTrigger>
+            <TabsTrigger value="photos" className="flex items-center gap-2">
+              <Image className="h-4 w-4" />
+              Fotos
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              Aktivitäten
+            </TabsTrigger>
+            <TabsTrigger value="friends" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Freunde
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="social" className="flex items-center gap-2">
+              <Share2 className="h-4 w-4" />
+              Social
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Posts Tab */}
+          <TabsContent value="posts" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Image className="h-5 w-5" />
+                  Beiträge ({posts.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {postsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-muted-foreground">Lade Beiträge...</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Tägliche Rate:</span>
-                    <span className="font-medium">{(miningStats.mining_rate || 0) * 60}/h</span>
+                ) : posts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Image className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                    <p className="text-muted-foreground">
+                      {isOwnProfile ? 'Du hast noch keine Beiträge erstellt' : 'Keine Beiträge vorhanden'}
+                    </p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Streak:</span>
-                    <span className="font-medium">{miningStats.streak_days || 0} Tage</span>
+                ) : (
+                  <div className="space-y-4">
+                    {posts.map((post) => (
+                      <div key={post.id} className="p-4 border rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Image className="h-5 w-5" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="font-semibold">{profile.username}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(post.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <p className="text-sm">{post.content}</p>
+                            {post.media_url && (
+                              <img 
+                                src={post.media_url} 
+                                alt="Post media" 
+                                className="mt-2 rounded-lg max-w-xs"
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              </Card>
-            )}
-          </div>
-          
-          <div className="md:col-span-2">
-            <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-3 mb-6">
-                <TabsTrigger value="media" className="flex items-center gap-2">
-                  <Grid3X3 size={16} />
-                  <span>Medien</span>
-                </TabsTrigger>
-                <TabsTrigger value="timeline" className="flex items-center gap-2">
-                  <Clock size={16} />
-                  <span>Aktivitäten</span>
-                </TabsTrigger>
-                <TabsTrigger value="calendar" className="flex items-center gap-2">
-                  <Calendar size={16} />
-                  <span>Kalender</span>
-                </TabsTrigger>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Photos Tab */}
+          <TabsContent value="photos" className="mt-6">
+            {/* Facebook-style sub-tabs for photos */}
+            <Tabs defaultValue="your-photos" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="tagged">Fotos von dir</TabsTrigger>
+                <TabsTrigger value="your-photos">Deine Fotos</TabsTrigger>
+                <TabsTrigger value="albums">Alben</TabsTrigger>
               </TabsList>
-              
-              <TabsContent value="media" className="space-y-4">
-                <EnhancedMediaGallery 
-                  posts={convertMedia(postsMedia || [])}
-                  saved={convertMedia(savedMedia || [])}
-                  liked={convertMedia(likedMedia || [])}
-                  collections={convertMedia(collectionsMedia || [])}
-                  isLoading={isPostsLoading || isSavedLoading || isLikedLoading || isCollectionsLoading}
-                  isOwnProfile={isOwnProfile}
-                  onMediaClick={handleMediaClick}
-                />
+              <TabsContent value="tagged">
+                {/* TODO: Implement tagged photos view */}
+                <div className="text-center py-8 text-muted-foreground">Feature in Arbeit: Fotos, in denen du markiert bist.</div>
               </TabsContent>
-              
-              <TabsContent value="timeline" className="space-y-4">
-                <ProfileTimeline 
-                  userId={profileData.id}
-                  events={timelineEvents}
-                  achievements={achievements}
-                  isLoading={isLoading || isAchievementsLoading}
-                  isOwnProfile={isOwnProfile}
-                  onEventClick={(event) => console.log('Event clicked', event)}
-                />
+              <TabsContent value="your-photos">
+                <ProfilePhotos userId={profile.id} isOwnProfile={isOwnProfile} />
               </TabsContent>
-              
-              <TabsContent value="calendar" className="space-y-4">
-                <ProfileCalendar 
-                  userId={profileData.id} 
-                  isOwnProfile={isOwnProfile}
-                />
+              <TabsContent value="albums">
+                <PhotoAlbumGrid isOwnProfile={isOwnProfile} />
               </TabsContent>
             </Tabs>
-          </div>
-        </div>
-        
-        {/* Follower/Following Modals */}
-        {showFollowersModal && (
-          <FollowersModal
-            isOpen={showFollowersModal}
-            onClose={() => setShowFollowersModal(false)}
-            userId={profileData.id}
-            type="followers"
-          />
-        )}
-        
-        {showFollowingModal && (
-          <FollowersModal
-            isOpen={showFollowingModal}
-            onClose={() => setShowFollowingModal(false)}
-            userId={profileData.id}
-            type="following"
-          />
-        )}
+          </TabsContent>
+
+          {/* Activity Tab */}
+          <TabsContent value="activity" className="mt-6">
+            <ProfileActivity userId={profile.id} isOwnProfile={isOwnProfile} />
+          </TabsContent>
+
+          {/* Friends Tab */}
+          <TabsContent value="friends" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Freunde & Follower
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Followers */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold">Follower ({followers.length})</h3>
+                      <Button variant="outline" size="sm" onClick={openFollowersModal}>
+                        Alle anzeigen
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      {followers.slice(0, 5).map((follower) => (
+                        <div key={follower.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Users className="h-4 w-4" />
+                          </div>
+                          <span className="text-sm font-medium">{follower.username}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Following */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold">Following ({following.length})</h3>
+                      <Button variant="outline" size="sm" onClick={openFollowingModal}>
+                        Alle anzeigen
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      {following.slice(0, 5).map((followed) => (
+                        <div key={followed.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Users className="h-4 w-4" />
+                          </div>
+                          <span className="text-sm font-medium">{followed.username}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="mt-6">
+            <ProfileAnalytics userId={profile.id} isOwnProfile={isOwnProfile} />
+          </TabsContent>
+
+          {/* Social Links Tab */}
+          <TabsContent value="social" className="mt-6">
+            <ProfileSocialLinks userId={profile.id} isOwnProfile={isOwnProfile} />
+          </TabsContent>
+        </Tabs>
       </div>
-    </FeedLayout>
+    </div>
   );
 };
 
-export default EnhancedProfilePage;
+export default ProfilePage;

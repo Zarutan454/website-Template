@@ -1,4 +1,4 @@
-import { config } from '@/config/env';
+import { DJANGO_API_URL } from '../config/env';
 
 export function getFullUrl(path?: string | null): string {
   if (!path) {
@@ -9,5 +9,5 @@ export function getFullUrl(path?: string | null): string {
     return path;
   }
   // Kombiniere die Backend-URL mit dem relativen Pfad
-  return `${config.django_api_url}${path}`;
+  return `${DJANGO_API_URL}${path}`;
 } 
