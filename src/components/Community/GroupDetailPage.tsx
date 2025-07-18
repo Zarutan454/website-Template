@@ -246,7 +246,7 @@ const GroupDetailPage: React.FC = () => {
   // Mitgliederliste für Mitglieder-Tab (mit Pagination)
   const {
     data: membersData,
-    isLoading: membersLoading,
+    isLoading: membersTabLoading,
     error: membersError,
   } = useQuery<{ results: GroupMemberData[]; next?: string }>(
     ['group-members', id, membersPage],
@@ -604,7 +604,7 @@ const GroupDetailPage: React.FC = () => {
           onChange={e => setMemberSearch(e.target.value)}
           className="mb-4 max-w-xs"
         />
-        {membersLoading && membersPage === 1 ? (
+        {membersTabLoading && membersPage === 1 ? (
           <div className="flex justify-center items-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
@@ -629,7 +629,7 @@ const GroupDetailPage: React.FC = () => {
               <button
                 className="w-full mt-2 py-2 rounded bg-primary text-white font-semibold hover:bg-primary/90 transition"
                 onClick={() => setMembersPage(p => p + 1)}
-                disabled={membersLoading}
+                disabled={membersTabLoading}
               >
                 Mehr laden
               </button>
