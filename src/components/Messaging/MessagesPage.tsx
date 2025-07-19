@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Separator } from '../ui/separator';
-import { useTheme } from '../ThemeProvider';
+import { useTheme } from '../ThemeProvider.utils';
 import { useProfile } from '../../hooks/useProfile';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
@@ -14,7 +14,7 @@ import UserProfile from './UserProfile';
 import GroupChatList from './GroupChat/GroupChatList';
 import GroupChatView from './GroupChat/GroupChatView';
 import { UploadResult } from '../../utils/storageUtils';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { useMessaging } from '../../hooks/useMessaging';
 import type { Conversation } from '../../types/messaging';
 
@@ -191,3 +191,4 @@ export const MessagesPage: React.FC = () => {
 };
 
 export default MessagesPage;
+

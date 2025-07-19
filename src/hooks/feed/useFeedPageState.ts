@@ -1,16 +1,15 @@
 
-import { useState, useEffect } from 'react';
-import { useProfile } from '@/hooks/useProfile';
-import { useTheme } from '@/components/ThemeProvider';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/context/AuthContext.utils';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { usePosts } from '@/hooks/usePosts';
 import { FeedType } from './useFeedData';
 
 /**
- * Hook zum Verwalten des Zustands der Feed-Seite,
- * einschließlich Post-Erstellung und Tab-Navigationen
+ * Hook zum Verwalten des Feed-Seiten-Zustands mit erweiterten Funktionen
  */
 export const useFeedPageState = (initialFeedType: FeedType = 'recent') => {
-  const { profile, isAuthenticated, isLoading: profileLoading } = useProfile();
+  const { user, isAuthenticated, isLoading: profileLoading } = useAuth();
   const { posts, adaptedPosts, isLoading, error, fetchPosts } = usePosts();
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
@@ -26,14 +25,14 @@ export const useFeedPageState = (initialFeedType: FeedType = 'recent') => {
   
   // Laden der Daten beim ersten Rendern
   useEffect(() => {
-    if (profile && !isLoading) {
+    if (user && !isLoading) {
       fetchPosts(activeTab);
     }
-  }, [profile, activeTab, fetchPosts, isLoading]);
+  }, [user, activeTab, fetchPosts, isLoading]);
   
   const handleTabChange = (tab: FeedType) => {
     setActiveTab(tab);
-    if (profile) {
+    if (user) {
       fetchPosts(tab);
     }
   };
@@ -46,13 +45,13 @@ export const useFeedPageState = (initialFeedType: FeedType = 'recent') => {
   const handlePostCreated = async () => {
     setShowCreateModal(false);
     setPendingPostData(null);
-    if (profile) {
+    if (user) {
       await fetchPosts(activeTab);
     }
   };
   
   const handleRetry = () => {
-    if (profile) {
+    if (user) {
       fetchPosts(activeTab);
     }
   };
@@ -63,7 +62,7 @@ export const useFeedPageState = (initialFeedType: FeedType = 'recent') => {
   
   return {
     // Profil und Authentifizierung
-    profile,
+    user,
     isAuthenticated,
     profileLoading,
     isDarkMode,

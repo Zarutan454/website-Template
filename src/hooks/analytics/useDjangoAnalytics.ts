@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { 
   analyticsAPI } from '@/lib/django-api-new';
 import { toast } from 'sonner';
@@ -457,3 +457,4 @@ export const useDjangoAnalytics = ({
     refreshAllAnalytics
   };
 }; 
+

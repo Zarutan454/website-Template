@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/lib/django-api-new';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 
 interface TrendingTopic {
   id: string;
@@ -156,3 +156,4 @@ export function useSidebarData() {
     loadingLeaderboard
   };
 }
+

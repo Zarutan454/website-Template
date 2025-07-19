@@ -4,7 +4,7 @@ import { Send, Heart } from 'lucide-react';
 import { timeAgo } from '@/utils/dateUtils';
 import { toast } from 'sonner';
 import { useComments } from '@/hooks/post/useComments';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 
 interface PostCardCommentsProps {
   postId: string;
@@ -196,3 +196,4 @@ const PostCardComments: React.FC<PostCardCommentsProps> = ({
 };
 
 export default PostCardComments;
+

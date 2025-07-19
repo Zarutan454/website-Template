@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Zap, X, Hourglass, Gem } from 'lucide-react';
 import { useLiveTokenCounter } from '@/hooks/mining/useLiveTokenCounter';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 
 const MiningWidget: React.FC = () => {
   const { user } = useAuth();
@@ -46,3 +46,4 @@ const MiningWidget: React.FC = () => {
 };
 
 export default MiningWidget;
+

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Share2, Copy, Twitter, Facebook, Linkedin, Link, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 
 interface ShareButtonProps {
   postId: number;

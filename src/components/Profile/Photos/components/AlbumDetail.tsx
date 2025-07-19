@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 import { toast } from 'sonner';
 import { ArrowLeft, Plus, Upload, Trash2, Edit, Save, X, Image as ImageIcon } from 'lucide-react';
 import { getAlbum, getPhotos, uploadPhoto, deletePhoto, updateAlbum, deleteAlbum, Album, Photo } from '@/api/albums';
@@ -278,3 +278,4 @@ const AlbumDetail: React.FC = () => {
 };
 
 export default AlbumDetail;
+

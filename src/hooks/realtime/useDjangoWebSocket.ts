@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { realtimeAPI, type WebSocketMessage, type RealTimeEvent } from '@/lib/django-api-new';
 import { toast } from 'sonner';
 
@@ -413,3 +413,4 @@ export const useDjangoWebSocket = ({
     subscribedUsers: Array.from(subscribedUsersRef.current)
   };
 }; 
+

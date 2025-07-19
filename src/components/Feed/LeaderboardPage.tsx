@@ -5,7 +5,7 @@ import { Award, Search, Users, Zap, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 // import { supabase } from '@/lib/supabase';
 // MIGRATED: Diese Komponente verwendet jetzt Django-API.
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 
 type UserData = {
   name: string;
@@ -348,3 +348,4 @@ const LeaderboardPage: React.FC = () => {
 };
 
 export default LeaderboardPage;
+

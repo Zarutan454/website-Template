@@ -33,6 +33,9 @@ urlpatterns = [
     path('auth/user/', views.UserProfileView.as_view(), name='user-profile'),
     path('auth/alpha-access/', views.request_alpha_access, name='alpha-access-request'),
     
+    # Error Logging Endpoint (Development only)
+    path('error-logs/', views.safe_error_logs, name='safe-error-logs'),
+    
     # Wallet & Token Endpoints
     path('wallet/', views.WalletView.as_view(), name='wallet'),
     path('wallet/transfer/', views.transfer_tokens, name='transfer-tokens'),

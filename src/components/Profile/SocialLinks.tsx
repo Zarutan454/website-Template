@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext.utils';
 import { updateSocialLinks, SocialLinks } from '../../hooks/useProfile';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';

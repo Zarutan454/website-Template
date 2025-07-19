@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import UserSearchBar from '@/components/UserSearch/UserSearchBar';
@@ -146,3 +147,4 @@ const FriendsPage: React.FC = () => {
 };
 
 export default FriendsPage;
+

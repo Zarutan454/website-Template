@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from 'framer-motion';
 import { Image, Send, X, Smile, Youtube, Upload, Link, Gift, Share } from 'lucide-react';
 import EmojiPicker, { Theme as EmojiPickerTheme } from 'emoji-picker-react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 import { toast } from 'sonner';
 import { useMining } from '@/hooks/useMining';
 
@@ -567,3 +567,4 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({
 };
 
 export default CreatePostForm;
+

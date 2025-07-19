@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { useUserSearch, SearchUser } from '@/hooks/useUserSearch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { api } from '../../../utils/api';
 
 interface CreateConversationViewProps {
@@ -221,3 +221,4 @@ const CreateConversationView: React.FC<CreateConversationViewProps> = ({
 };
 
 export default CreateConversationView;
+

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
@@ -162,3 +162,4 @@ const MediaInfoSection = React.memo(({
 MediaInfoSection.displayName = 'MediaInfoSection';
 
 export default MediaInfoSection;
+

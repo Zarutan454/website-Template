@@ -10,7 +10,7 @@ import {
   CoinsIcon, BellRing, Megaphone, Share
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 
 interface NotificationListProps {
   notifications: Notification[];
@@ -203,3 +203,4 @@ export const NotificationList: React.FC<NotificationListProps> = ({
     </div>
   );
 };
+

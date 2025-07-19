@@ -18,8 +18,8 @@ import {
   BarChart,
   ShoppingBag
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { useTheme } from '@/components/ThemeProvider';
+import { useAuth } from '@/context/AuthContext.utils';
+import { useTheme } from '@/components/ThemeProvider.utils';
 
 const LeftSidebar: React.FC = () => {
   const { user: profile } = useAuth();
@@ -110,3 +110,5 @@ const LeftSidebar: React.FC = () => {
 };
 
 export default LeftSidebar;
+
+

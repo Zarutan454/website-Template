@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { storyAPI } from '@/lib/django-api-new';
 import { Camera, Video, Type, Upload, X, Play, Pause, Music, Smile, X as XIcon, BarChart, Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface StoryCreationProps {

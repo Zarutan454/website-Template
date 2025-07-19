@@ -4,7 +4,7 @@ import { Calendar, Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useParams } from 'react-router-dom';
 import { useGroupEvents, useGroup } from '@/hooks/useGroups';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { usePresence } from '@/hooks/usePresence';
 import { useEffect, useState, useMemo } from 'react';
 import axios, { AxiosError } from 'axios';

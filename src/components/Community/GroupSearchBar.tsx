@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 
 interface GroupSearchBarProps {
   searchQuery: string;
@@ -102,3 +102,4 @@ const GroupSearchBar: React.FC<GroupSearchBarProps> = ({
 };
 
 export default GroupSearchBar;
+

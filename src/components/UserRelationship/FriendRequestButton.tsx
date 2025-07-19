@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { UserPlus, UserCheck, UserX, Loader2 } from 'lucide-react';
 import { useUserRelationships } from '@/hooks/useUserRelationships';
 import { useProfile } from '@/hooks/useProfile';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 
 export interface FriendRequestButtonProps {
   targetUserId: string;
@@ -167,3 +167,4 @@ const FriendRequestButton: React.FC<FriendRequestButtonProps> = ({
 };
 
 export default FriendRequestButton;
+

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 import { apiClient } from "@/lib/django-api-new";
 import { useWallet } from "@/hooks/useWallet";
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 
 export interface Transaction {
   id: string;
@@ -156,3 +156,4 @@ export const useTransactionHistory = () => {
     refreshTransactions
   };
 };
+

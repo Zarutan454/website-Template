@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 interface LogoProps {
   variant?: 'default' | 'small' | 'large';
   withText?: boolean;
@@ -139,3 +139,4 @@ const Logo: React.FC<LogoProps> = ({
     </Link>;
 };
 export default Logo;
+

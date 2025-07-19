@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Image } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 import { toast } from 'sonner';
 import { getAlbums, Album } from '@/api/albums';
 import { useNavigate } from 'react-router-dom';
@@ -158,3 +158,4 @@ const PhotoAlbumGrid: React.FC<PhotoAlbumGridProps> = ({ isOwnProfile }) => {
 };
 
 export default PhotoAlbumGrid;
+

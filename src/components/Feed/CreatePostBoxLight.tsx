@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, Gift, Send } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { type CreatePostData } from '@/types/posts';
 import { toast } from 'sonner';
@@ -107,3 +107,4 @@ const CreatePostBoxLight: React.FC<CreatePostBoxLightProps> = ({
 };
 
 export default CreatePostBoxLight;
+

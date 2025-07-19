@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { usePostsFetch } from './post/usePostsFetch';
 import { usePostActions } from './post/usePostActions';
 import { useCommentActions } from './post/useCommentActions';
@@ -103,3 +103,4 @@ export const usePosts = () => {
     sharePost
   };
 };
+

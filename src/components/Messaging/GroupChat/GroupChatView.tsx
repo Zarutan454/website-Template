@@ -19,7 +19,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import EnhancedMessageInput from '../EnhancedMessageInput';
 import MessageBubble from '../MessageBubble';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import type { GroupMember } from '@/hooks/useGroups';
 import type { Message } from '@/hooks/useMessaging';
 import type { UploadResult } from '../../../utils/storageUtils';
@@ -366,3 +366,4 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({ groupId }) => {
 };
 
 export default GroupChatView;
+

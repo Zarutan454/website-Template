@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { FeedStateRenderer } from './common';
 import { useUnifiedFeedState } from '@/hooks/feed/useUnifiedFeedState';
 import { FeedType } from '@/hooks/feed/useFeedData';
@@ -130,3 +130,4 @@ const UnifiedFeedContainer: React.FC<UnifiedFeedContainerProps> = ({
 };
 
 export default UnifiedFeedContainer;
+

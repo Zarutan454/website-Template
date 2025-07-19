@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useMining } from '@/hooks/useMining';
 import { ActivityType, ActivityResult, isActivityResult } from '@/hooks/mining/types';
 import { toast } from 'sonner';
@@ -49,8 +49,8 @@ export const useActivityProcessor = (userId?: string) => {
     }
   }, [miningStats]);
 
-  // Activity limits configuration
-  const activityLimits: Record<string, number> = {
+  // Activity limits configuration - wrapped in useMemo to prevent recreation on every render
+  const activityLimits = useMemo((): Record<string, number> => ({
     post: 10,
     comment: 20,
     like: 30,
@@ -69,7 +69,7 @@ export const useActivityProcessor = (userId?: string) => {
     nft_purchase: 0,
     token_like: 0,
     token_share: 0
-  };
+  }), []);
   
   // Check if an activity is at its daily limit
   const isActivityLimitReached = useCallback((type: ActivityType): boolean => {

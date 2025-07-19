@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import djangoApi, { UserProfile } from '@/lib/django-api-new';
 import { AuthContext, AuthContextType } from './AuthContext.utils';
@@ -158,14 +158,4 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-export { AuthContext } from './AuthContext.utils'; 
+}; 

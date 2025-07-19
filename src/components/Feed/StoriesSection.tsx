@@ -1,7 +1,7 @@
-import React from 'react';
+import * as React from 'react';
 import { Card } from '../../components/ui/card';
 import StoryList from '../Stories/StoryList';
-import { useTheme } from '../../components/ThemeProvider';
+import { useTheme } from '../../components/ThemeProvider.utils';
 
 interface StoriesSectionProps {
   className?: string;

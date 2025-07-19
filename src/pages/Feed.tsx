@@ -4,7 +4,7 @@ import { FeedType } from '@/hooks/feed/useDjangoFeed';
 import { FeedLayout } from '@/components/Feed/FeedLayout';
 import EnhancedFeed from '@/components/Feed/EnhancedFeed';
 import CreatePostBox from '@/components/Feed/CreatePostBox';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { useDjangoFeed } from '@/hooks/feed/useDjangoFeed';
 import FeedHeaderWithActions from '@/components/Feed/FeedHeaderWithActions';
 import StoryList from '@/components/Stories/StoryList';

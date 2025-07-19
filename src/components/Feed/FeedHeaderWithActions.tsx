@@ -17,7 +17,7 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from '@/components/ui/tooltip';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { FeedType } from '@/hooks/feed/useFeedData';
 
 interface FeedHeaderWithActionsProps {
@@ -32,3 +32,4 @@ interface FeedHeaderWithActionsProps {
 // Alle Kategorie-Buttons und Tabs entfernt
 const FeedHeaderWithActions: React.FC<FeedHeaderWithActionsProps> = () => null;
 export default FeedHeaderWithActions;
+

@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight, X, Play, Pause, Flag, Music, BarChart, Sparkles, MoreVertical, Bookmark, BookmarkCheck, Heart, MessageCircle, Share2, Smile, ThumbsUp, Plus } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
@@ -785,3 +785,4 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
 };
 
 export default StoryViewer;
+

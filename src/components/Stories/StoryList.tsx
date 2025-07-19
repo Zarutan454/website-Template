@@ -8,7 +8,7 @@ import { apiClient, storyAPI } from '@/lib/django-api-new';
 import { Plus, Play, Image, Type } from 'lucide-react';
 import StoryCreation from './StoryCreation';
 import StoryViewer from './StoryViewer';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { StoryBar, StoryBarRef } from './StoryBar';
 import ErrorBoundary from '../Feed/ErrorBoundary';
 import type { Story } from './StoryViewer';
@@ -231,3 +231,4 @@ const StoryList: React.FC = () => {
 };
 
 export default StoryList;
+

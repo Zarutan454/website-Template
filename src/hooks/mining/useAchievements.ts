@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { apiClient } from '@/lib/django-api-new';
 import { toast } from 'sonner';
 import { UserAchievement } from './achievements/types';
@@ -37,3 +37,4 @@ export function useAchievements() {
     refetchAchievements: refetch,
   };
 }
+

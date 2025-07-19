@@ -1,7 +1,7 @@
 
-import { useState, useEffect } from 'react';
-import { useProfile } from '@/hooks/useProfile';
-import { useTheme } from '@/components/ThemeProvider';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/context/AuthContext.utils';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { useNavigate } from 'react-router-dom';
 import { usePosts } from '@/hooks/usePosts';
 
@@ -9,7 +9,7 @@ import { usePosts } from '@/hooks/usePosts';
  * Hook zum Verwalten des Feed-Zustands, einschließlich Beiträgen, Filtern und Benutzerkontext
  */
 export const useFeedState = (feedType: string = 'recent') => {
-  const { profile, isAuthenticated, isLoading: profileLoading } = useProfile();
+  const { user, isAuthenticated, isLoading: profileLoading } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const isDarkMode = theme === 'dark';
@@ -34,10 +34,10 @@ export const useFeedState = (feedType: string = 'recent') => {
   
   // Initiales Laden der Daten
   useEffect(() => {
-    if (profile && !isLoading && !error) {
+    if (user && !isLoading && !error) {
       fetchPosts(feedType);
     }
-  }, [profile, feedType, fetchPosts, isLoading, error]);
+  }, [user, feedType, fetchPosts, isLoading, error]);
   
   // Anwenden von Filtern auf Beiträge
   useEffect(() => {
@@ -63,7 +63,7 @@ export const useFeedState = (feedType: string = 'recent') => {
   };
   
   return {
-    profile,
+    profile: user,
     isAuthenticated,
     profileLoading,
     isDarkMode,

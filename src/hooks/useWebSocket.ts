@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.utils';
 import { WS_CONFIG } from '../config/env';
 import { toast } from 'sonner';
 

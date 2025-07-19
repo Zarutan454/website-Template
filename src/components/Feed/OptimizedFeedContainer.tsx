@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { FeedStateRenderer } from './common';
 import { useOptimizedFeed, FeedType } from '@/hooks/feed/useOptimizedFeed';
 import { useEnhancedFeedActions } from '@/hooks/feed/useEnhancedFeedActions';
@@ -141,3 +141,4 @@ const OptimizedFeedContainer: React.FC<OptimizedFeedContainerProps> = ({
 };
 
 export default OptimizedFeedContainer;
+

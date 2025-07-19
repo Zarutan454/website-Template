@@ -9,8 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { useTheme } from '@/components/ThemeProvider';
-import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/components/ThemeProvider.utils';
+import { useAuth } from '@/context/AuthContext.utils';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -366,3 +366,5 @@ const CreateGroupPage: React.FC = () => {
 };
 
 export default CreateGroupPage;
+
+

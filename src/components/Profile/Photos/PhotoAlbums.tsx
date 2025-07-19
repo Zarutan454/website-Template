@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PhotoAlbumGrid } from './PhotoAlbumGrid';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 
 interface PhotoAlbumsProps {
   userId: string;
@@ -23,3 +23,4 @@ export const PhotoAlbums: React.FC<PhotoAlbumsProps> = ({ userId }) => {
     </div>
   );
 };
+

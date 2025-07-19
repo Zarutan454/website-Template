@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { NotificationsPopover } from './notifications/NotificationsPopover';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 import { useMining } from '@/hooks/useMining';
 
 interface MainNavProps {
@@ -192,3 +192,4 @@ const MainNav: React.FC<MainNavProps> = ({ toggleSidebar }) => {
 };
 
 export default MainNav;
+

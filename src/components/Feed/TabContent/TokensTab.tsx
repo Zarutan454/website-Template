@@ -8,7 +8,7 @@ import { Plus, Filter, TrendingUp, ArrowUp, ArrowDown, Loader2 } from 'lucide-re
 import TokenCard from '../TokenCard';
 import { Token, TokenMetrics, TokenSocialLinks, TokenWithJSONB } from '@/types/token';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 
 const TokensTab: React.FC = () => {
   const [tokens, setTokens] = useState<Token[]>([]);
@@ -346,3 +346,4 @@ const TokensTab: React.FC = () => {
 };
 
 export default TokensTab;
+

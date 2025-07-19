@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 
 interface GroupsLoadingSkeletonProps {
   count?: number;
@@ -35,3 +35,4 @@ const GroupsLoadingSkeleton: React.FC<GroupsLoadingSkeletonProps> = ({ count = 6
 };
 
 export default GroupsLoadingSkeleton;
+

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 import { useUserRelationships } from '@/hooks/useUserRelationships';
 import { useMining } from '@/hooks/useMining';
 import { useProfileMedia } from '@/hooks/useProfileMedia';
@@ -391,3 +391,4 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ username }) => {
 };
 
 export default ProfilePage;
+

@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 
 const formSchema = z.object({
   tokenAddress: z.string().min(1, {
@@ -224,3 +224,4 @@ const VestingScheduleForm = () => {
 }
 
 export default VestingScheduleForm;
+

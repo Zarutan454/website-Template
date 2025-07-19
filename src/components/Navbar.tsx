@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useMining } from '@/hooks/useMining';
 import { useUserRelationships } from '@/hooks/useUserRelationships';
@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import Logo from '@/components/Logo';
 import { MessagesBadge } from './Messaging/MessagesBadge';
 import { NotificationsBadge } from './notifications/NotificationsBadge';
@@ -602,3 +602,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

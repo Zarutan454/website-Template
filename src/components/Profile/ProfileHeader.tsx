@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import FriendRequestButton from '@/components/UserRelationship/FriendRequestButton';
-import { useFriendship } from '@/context/FriendshipContext';
+import { useFriendship } from '@/context/FriendshipContext.utils';
 import { userAPI } from '@/lib/django-api-new';
 import { toast } from 'sonner';
 import { useProfileImageUpload } from './useProfileImageUpload';
@@ -451,3 +451,4 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 };
 
 export default ProfileHeader;
+

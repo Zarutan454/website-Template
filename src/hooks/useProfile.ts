@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.utils';
 import { api } from '../lib/django-api-new';
 import { AxiosResponse } from 'axios';
 

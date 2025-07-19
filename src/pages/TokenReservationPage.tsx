@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.utils';
 import { tokenAPI, icoAPI } from '../utils/api';
 
 const TokenReservationPage: React.FC = () => {

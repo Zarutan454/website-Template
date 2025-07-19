@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { useMining } from '@/hooks/mining/useMining';
 import { useLiveTokenCounter } from '@/hooks/mining/useLiveTokenCounter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -121,3 +121,4 @@ const MiningActivityTracker: React.FC = () => {
 };
 
 export default MiningActivityTracker;
+

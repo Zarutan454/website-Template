@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Bell } from 'lucide-react';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 
 interface NewPostsNotificationProps {
   show: boolean;
@@ -215,3 +215,4 @@ const NewPostsNotification: React.FC<NewPostsNotificationProps> = ({
 };
 
 export default NewPostsNotification;
+

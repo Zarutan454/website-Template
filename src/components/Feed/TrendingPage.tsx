@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useProfile } from '@/hooks/useProfile';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { motion } from 'framer-motion';
 import PostCard from './PostCard';
 import FeedLoading from './FeedLoading';
@@ -9,7 +9,7 @@ import FeedError from './FeedError';
 import { toast } from 'sonner';
 import { postRepository } from '@/repositories/PostRepository';
 import { isValid } from 'date-fns';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 
 const TrendingPage: React.FC = () => {
   const [trendingPosts, setTrendingPosts] = useState<any[]>([]);
@@ -267,3 +267,5 @@ const TrendingPage: React.FC = () => {
 };
 
 export default TrendingPage;
+
+

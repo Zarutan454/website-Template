@@ -2,7 +2,7 @@
 import React from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import OptimizedFeedPage from '@/components/Feed/OptimizedFeedPage';
 import { FeedType } from '@/hooks/feed/useFeedData';
 
@@ -98,3 +98,4 @@ const EnhancedFeed: React.FC = () => {
 };
 
 export default EnhancedFeed;
+

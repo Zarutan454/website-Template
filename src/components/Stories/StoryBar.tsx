@@ -5,7 +5,7 @@ import { Plus } from 'lucide-react';
 import { clsx } from 'clsx';
 import { storyAPI } from '@/lib/django-api-new';
 import type { Story } from './StoryViewer';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 
 interface StoryBarProps {
   onOpenStory: (stories: Story[], initialIndex: number) => void;

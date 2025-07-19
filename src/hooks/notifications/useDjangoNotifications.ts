@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { notificationAPI, type Notification } from '@/lib/django-api-new';
 import { toast } from 'sonner';
 
@@ -349,3 +349,4 @@ export const useDjangoNotifications = ({
     unsubscribeFromPush
   };
 }; 
+

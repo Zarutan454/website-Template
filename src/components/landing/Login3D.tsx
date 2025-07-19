@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../LanguageProvider.utils';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { toast } from 'sonner';
 
 const Login3D: React.FC = () => {
@@ -244,3 +244,4 @@ const Login3D: React.FC = () => {
 };
 
 export default Login3D;
+

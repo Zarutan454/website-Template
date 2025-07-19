@@ -1,7 +1,7 @@
 import React from 'react';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 import { Post } from '@/types/posts';
 import UnifiedFeedContainer from './UnifiedFeedContainer';
 // Fix import casing issue by using a relative path
@@ -100,3 +100,5 @@ const FeedContent: React.FC<FeedContentProps> = ({
 };
 
 export default FeedContent;
+
+

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import djangoApi from '@/lib/django-api-new';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { groupEventsAPI, GroupEvent } from '@/lib/django-api-new';
 import { groupMediaAPI } from '@/lib/django-api-new';
 import { groupFilesAPI, GroupFile } from '@/lib/django-api-new';
@@ -456,3 +456,4 @@ export const useGroupEventRSVP = (eventId: string) => {
     isSettingRSVP,
   };
 };
+

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Heart, MessageCircle, Share2, Bell, BellOff } from 'lucide-react';
 import PostInteractionButton from './Post/PostInteractionButton';
 import useLikeNotifications from '@/hooks/post/useLikeNotifications';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 import { toast } from 'sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -189,3 +189,4 @@ const PostCardActions: React.FC<PostCardActionsProps> = ({
 };
 
 export default PostCardActions;
+

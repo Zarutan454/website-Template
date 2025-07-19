@@ -4,7 +4,7 @@ import { FeedLayout } from '@/components/Feed/FeedLayout';
 import { FeedType } from '@/hooks/feed/useFeedData';
 import OptimizedFeedContainer from '@/components/Feed/OptimizedFeed/OptimizedFeedContainer';
 import CreatePostModal from '@/components/Feed/CreatePostModal';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { usePosts } from '@/hooks/usePosts';
 import { toast } from 'sonner';
 import FeedHeaderWithActions from '@/components/Feed/FeedHeaderWithActions';
@@ -135,3 +135,4 @@ const OptimizedFeedPage: React.FC = () => {
 };
 
 export default OptimizedFeedPage;
+

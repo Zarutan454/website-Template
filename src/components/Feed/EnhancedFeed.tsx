@@ -9,7 +9,6 @@ import FacebookCreatePostBox from './FacebookCreatePostBox';
 import StoryList from '@/components/Stories/StoryList';
 
 const EnhancedFeed: React.FC = () => {
-  console.log('MOUNT EnhancedFeed');
   const navigate = useNavigate();
   const feed = useUnifiedFeedState({ feedType: 'recent' });
   const filterControl = useFilterControl();

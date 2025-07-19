@@ -10,7 +10,7 @@ import {
   AlertDialogDescription,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 // import { supabase } from '@/integrations/supabase/client';
 // TODO: Diese Komponente muss auf Django-API migriert werden. Supabase-Logik wurde entfernt.
 import { Loader2 } from 'lucide-react';
@@ -123,3 +123,4 @@ const PostReport: React.FC<PostReportProps> = ({ postId, onComplete }) => {
 };
 
 export default PostReport;
+

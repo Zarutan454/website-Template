@@ -10,7 +10,7 @@ import {
   AlertDialogDescription,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 
@@ -122,3 +122,4 @@ const NFTReport: React.FC<NFTReportProps> = ({ nftId, onComplete }) => {
 };
 
 export default NFTReport;
+

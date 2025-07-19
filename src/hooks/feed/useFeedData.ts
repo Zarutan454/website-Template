@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePosts } from '@/hooks/usePosts';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 
 // Export feed type for reuse
 export type FeedType = 'recent' | 'popular' | 'following' | 'tokens' | 'nfts' | 'foryou';
@@ -134,3 +134,4 @@ export const useFeedData = ({
     profileLoading
   };
 };
+

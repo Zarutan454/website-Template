@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { X, Calendar, Wallet, MapPin, Users, ExternalLink } from 'lucide-react';
@@ -147,3 +147,4 @@ const UserProfile: React.FC<UserProfileProps> = ({
 };
 
 export default UserProfile;
+

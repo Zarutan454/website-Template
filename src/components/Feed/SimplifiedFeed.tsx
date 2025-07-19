@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FeedStateRenderer } from './common';
 import { FeedType } from '@/hooks/feed/useFeedData';
 import { Post } from '@/types/posts';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { useProfile } from '@/hooks/useProfile';
 import SimplifiedFeedHeader from './components/SimplifiedFeedHeader';
 import NewPostsNotification from './components/NewPostsNotification';
@@ -171,3 +171,4 @@ const SimplifiedFeed: React.FC<SimplifiedFeedProps> = ({
 };
 
 export default SimplifiedFeed;
+

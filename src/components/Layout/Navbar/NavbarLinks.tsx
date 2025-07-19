@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { HomeIcon, TrendingUp, Zap, UsersRound, Coins, Gift, ShoppingBag } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 
 interface NavbarLinksProps {
   className?: string;
@@ -76,3 +76,4 @@ const NavbarLinks: React.FC<NavbarLinksProps> = ({
 };
 
 export default NavbarLinks;
+

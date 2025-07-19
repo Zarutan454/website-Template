@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useCallback, useRef, useState, useMemo, useEffect } from 'react';
 import { useVirtualizer, VirtualItem } from '@tanstack/react-virtual';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { useInView } from 'react-intersection-observer';
 import { toast } from 'sonner';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
@@ -350,3 +350,4 @@ const VirtualizedFeedList: React.FC<VirtualizedFeedListProps> = ({
 };
 
 export default VirtualizedFeedList;
+

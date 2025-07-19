@@ -1,6 +1,7 @@
 
-import React, { ReactNode } from 'react';
-import { useTheme } from '@/components/ThemeProvider';
+import * as React from 'react';
+import { ReactNode } from 'react';
+import { useTheme } from '@/components/ThemeProvider.utils';
 
 interface LayoutProps {
   children: ReactNode;

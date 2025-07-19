@@ -3,7 +3,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { usePosts } from '@/hooks/usePosts';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { postRepository } from '@/repositories/PostRepository';
 
 export const usePostList = (feedType: 'foryou' | 'following' | 'recent' | 'popular' | 'nfts' = 'foryou') => {
@@ -178,3 +178,4 @@ export const usePostList = (feedType: 'foryou' | 'following' | 'recent' | 'popul
     handleLoginRedirect
   };
 };
+

@@ -4,8 +4,8 @@ import React, { useEffect, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatRelative } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { useTheme } from '@/components/ThemeProvider';
-import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/components/ThemeProvider.utils';
+import { useAuth } from '@/context/AuthContext.utils';
 
 interface MessageListProps {
   messages: Message[];
@@ -139,3 +139,5 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading, onLoadMo
 };
 
 export default MessageList;
+
+

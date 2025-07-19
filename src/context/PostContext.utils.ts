@@ -1,4 +1,4 @@
-import { createContext, Dispatch } from 'react';
+import { createContext, Dispatch, useContext } from 'react';
 
 export type PostState = Record<string, unknown>;
 
@@ -25,4 +25,12 @@ export const usePostContextValue = () => {
     state: initialState,
     dispatch: () => null
   };
+};
+
+export const usePostContext = () => {
+  const context = useContext(PostContext);
+  if (!context) {
+    throw new Error('usePostContext must be used within a PostProvider');
+  }
+  return context;
 }; 

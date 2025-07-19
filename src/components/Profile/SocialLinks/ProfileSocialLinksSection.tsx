@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { Edit, Plus, X, Globe, Instagram, Twitter, Github, Linkedin, Youtube, Facebook } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 
 const SOCIAL_PLATFORMS = [
   { key: 'website', label: 'Website', icon: Globe },
@@ -197,3 +197,4 @@ export const ProfileSocialLinksSection = ({ profileId, isOwnProfile }: ProfileSo
     </Card>
   );
 };
+

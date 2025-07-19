@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNotifications } from "@/hooks/useNotifications";
 import { NotificationsHeader } from "@/components/notifications/NotificationsHeader";
 import { NotificationTabs } from "@/components/notifications/NotificationTabs";
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { FeedLayout } from '@/components/Feed/FeedLayout';
 import { toast } from 'sonner';
 import { ErrorDisplay } from '@/components/common/ErrorHandler';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw, Bell, Settings2, PlusCircle } from 'lucide-react';
 import { NotificationType } from '@/types/notifications';
 import { EmptyState } from '@/components/ui/empty-state';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { NotificationSettings } from '@/components/notifications/NotificationSettings';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -190,3 +190,5 @@ const Notifications = () => {
 };
 
 export default Notifications;
+
+

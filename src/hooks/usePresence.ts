@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.utils';
 
 export function usePresence() {
   const { getAccessToken, isAuthenticated, user } = useAuth();

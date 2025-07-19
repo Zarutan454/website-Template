@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useMining } from '@/hooks/useMining';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { toast } from 'sonner';
 import {
   MiningProgressBar,
@@ -160,3 +160,4 @@ const MiningWidget: React.FC<MiningWidgetProps> = ({ closePopover }) => {
 };
 
 export default MiningWidget;
+

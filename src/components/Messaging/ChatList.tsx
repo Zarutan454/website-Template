@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Check, Clock } from 'lucide-react';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { Profile } from '@/hooks/useProfile';
 
 interface ChatListProps {
@@ -116,3 +116,4 @@ const ChatList: React.FC<ChatListProps> = ({
 };
 
 export default ChatList;
+

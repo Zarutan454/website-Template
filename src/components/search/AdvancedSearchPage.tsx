@@ -28,7 +28,7 @@ import {
   FileText
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 import { apiClient } from '@/lib/django-api-new';
 
 interface User {

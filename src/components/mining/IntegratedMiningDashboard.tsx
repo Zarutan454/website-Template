@@ -1,8 +1,10 @@
 
-import React from 'react';
+import * as React from 'react';
+import { useAuth } from '@/context/AuthContext.utils';
+import { useMining } from '@/hooks/useMining';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import MiningDashboard from './MiningDashboard';
 import FloatingMiningButton from './FloatingMiningButton';
-import { useTheme } from '@/components/ThemeProvider';
 
 const IntegratedMiningDashboard: React.FC = () => {
   const { theme } = useTheme();

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { socialAPI, type Post, type PaginatedResponse } from '../../lib/django-api-new';
 import { toast } from 'sonner';
 import { commentRepository } from '../../repositories/CommentRepository';
@@ -38,14 +38,16 @@ export const useDjangoFeed = ({ feedType = 'recent', pageSize = 10 }: UseDjangoF
 
       if (response && Array.isArray(response)) {
         // Direkte Array-Antwort
-        setPosts(prev => append ? [...prev, ...response] : response);
-        setHasMore(response.length === pageSize);
+        const typedResponse = response as Post[];
+        setPosts(prev => append ? [...prev, ...typedResponse] : typedResponse);
+        setHasMore(typedResponse.length === pageSize);
         setCurrentPage(page);
-      } else if (response && response.results) {
+      } else if (response && typeof response === 'object' && 'results' in response) {
         // Paginierte Antwort
-        const newPosts = response.results || [];
+        const paginatedResponse = response as PaginatedResponse<Post>;
+        const newPosts = paginatedResponse.results || [];
         setPosts(prev => append ? [...prev, ...newPosts] : newPosts);
-        setHasMore(!!response.next);
+        setHasMore(!!paginatedResponse.next);
         setCurrentPage(page);
       } else {
         throw new Error('Ungültige Antwort vom Server.');
@@ -63,7 +65,8 @@ export const useDjangoFeed = ({ feedType = 'recent', pageSize = 10 }: UseDjangoF
   // Initialer Ladevorgang
   useEffect(() => {
     fetchPosts(1, false);
-  }, [fetchPosts]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, pageSize, feedType]);
 
   const refresh = useCallback(() => {
     fetchPosts(1, false);

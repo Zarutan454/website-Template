@@ -29,4 +29,7 @@ websocket_urlpatterns = [
     
     # Presence WebSocket - Real-time presence updates
     re_path(r'ws/presence/$', PresenceConsumer.as_asgi()),
+    
+    # Safe Error Logger WebSocket - Frontend error logging (Development only)
+    re_path(r'ws/error-logger/$', consumers.SafeErrorLoggerConsumer.as_asgi()),
 ] 

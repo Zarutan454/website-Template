@@ -4,7 +4,7 @@ import PrivacySelector, { PrivacyOption } from './components/PrivacySelector';
 import MediaUploadButton from './components/MediaUploadButton';
 import { toast } from 'sonner';
 import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
 

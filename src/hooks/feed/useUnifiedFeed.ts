@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAuth } from '@/context/AuthContext.utils';
+import { useMining } from '@/hooks/useMining';
+import { usePosts } from '@/hooks/usePosts';
 import { useProfile } from '@/hooks/useProfile';
-import { useAuth } from '@/hooks/useAuth';
-import { useMining } from '@/hooks/mining/useMining';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { useMiningRewards } from '@/hooks/mining/useMiningRewards';
 import { usePostActions } from '@/hooks/post/usePostActions';
 import { useCommentActions } from '@/hooks/post/useCommentActions';
 import { socialAPI } from '@/lib/django-api-new';
-import { useTheme } from '@/components/ThemeProvider';
 import { UiFilterType } from '@/hooks/feed/useFilterControl';
 import { FeedType } from '@/hooks/feed/useFeedData';
 import { toast } from 'sonner';

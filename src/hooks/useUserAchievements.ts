@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../lib/django-api-new';
 import { toast } from 'sonner';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { Achievement, AchievementStats } from '@/hooks/achievements/useAchievements';
 
 interface UserAchievementsResponse {
@@ -84,3 +84,4 @@ export const useUserAchievements = (userId?: string | number) => {
     refreshAchievements: (targetUserId: string | number) => fetchUserAchievements(targetUserId)
   };
 };
+

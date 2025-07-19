@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { useReels, ReelComment } from '../../hooks/useReels';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { useQuery } from '@tanstack/react-query';
 
 interface ReelCommentsProps {
@@ -122,3 +122,4 @@ const ReelComments: React.FC<ReelCommentsProps> = ({ reelId, isOpen, onClose }) 
 };
 
 export default ReelComments;
+

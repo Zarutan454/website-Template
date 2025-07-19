@@ -8,6 +8,7 @@ import AlbumDetail from './components/Profile/Photos/components/AlbumDetail';
 import GroupsOverviewPage from './components/Community/GroupsOverviewPage';
 import CreateGroupPage from './components/Community/CreateGroupPage';
 import GroupManagementPage from './components/Community/GroupManagementPage';
+import ErrorLoggerTest from './pages/ErrorLoggerTest';
 
 const routes = [
   {
@@ -255,6 +256,14 @@ const routes = [
     element: (
       <ProtectedRoute>
         <AlbumDetail />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/error-logger-test',
+    element: (
+      <ProtectedRoute>
+        <ErrorLoggerTest />
       </ProtectedRoute>
     ),
   },

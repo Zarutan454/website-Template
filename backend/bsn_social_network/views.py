@@ -5827,3 +5827,46 @@ def group_online_status(request, group_id):
         return Response({'online': online_map})
     except Group.DoesNotExist:
         return Response({'error': 'Group not found'}, status=404)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def safe_error_logs(request):
+    """Safe API endpoint for receiving error logs from frontend"""
+    try:
+        # Nur in Development aktivieren
+        from django.conf import settings
+        if not settings.DEBUG:
+            return Response({'status': 'disabled'}, status=status.HTTP_200_OK)
+        
+        data = request.data
+        
+        # Validate data
+        if not isinstance(data, dict):
+            return Response({'status': 'invalid_data'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Limit data size
+        message = str(data.get('message', ''))[:1000]
+        level = data.get('level', 'error')
+        if level not in ['debug', 'info', 'warning', 'error', 'critical']:
+            level = 'error'
+        
+        from .models import EventLog
+        EventLog.objects.create(
+            event_type='frontend_error',
+            level=level,
+            user_id=data.get('userId'),
+            message=message,
+            metadata={
+                'url': data.get('url', ''),
+                'component': data.get('component', ''),
+                'context': data.get('context', ''),
+                'sessionId': data.get('sessionId', ''),
+                'additionalData': data.get('additionalData', {})
+            }
+        )
+        
+        return Response({'status': 'success'}, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.warning(f"Error saving error log: {e}")
+        return Response({'status': 'error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

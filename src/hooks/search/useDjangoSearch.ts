@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { searchAPI, type SearchResult, type SearchFilters, type SearchSuggestion } from '@/lib/django-api-new';
 import { toast } from 'sonner';
 
@@ -449,3 +449,4 @@ export const useDjangoSearch = ({
     debouncedSearch
   };
 }; 
+

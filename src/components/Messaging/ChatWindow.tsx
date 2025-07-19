@@ -1,6 +1,6 @@
 
 import React, { forwardRef } from 'react';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -180,3 +180,4 @@ const ChatWindow = forwardRef<HTMLDivElement, ChatWindowProps>(({
 ChatWindow.displayName = 'ChatWindow';
 
 export default ChatWindow;
+

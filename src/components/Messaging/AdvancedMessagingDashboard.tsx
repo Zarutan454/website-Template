@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useMessaging } from '../../hooks/useMessaging';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext.utils';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';

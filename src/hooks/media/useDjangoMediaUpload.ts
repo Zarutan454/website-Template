@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { mediaAPI, type UploadProgress } from '@/lib/django-api-new';
 import { toast } from 'sonner';
 
@@ -320,3 +320,4 @@ export const useDjangoMediaUpload = ({
     validateFile
   };
 }; 
+

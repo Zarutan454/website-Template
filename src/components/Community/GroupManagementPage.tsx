@@ -10,12 +10,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { useGroup, useGroupMemberAdminActions } from '@/hooks/useGroups';
 import { useGroupAnalytics, useGroupReports } from '@/hooks/useGroups';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import type { GroupMember, ContentReport } from '@/hooks/useGroups';
 import { groupSettingsAPI, uploadMedia } from '@/lib/django-api-new';
 import type { GroupSettingsUpdate } from '@/lib/django-api-new';
@@ -893,3 +893,4 @@ function safeChildren(children: React.ReactNode): React.ReactNode {
 }
 
 export default GroupManagementPage; 
+

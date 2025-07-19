@@ -18,7 +18,7 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import { Search, Filter, Grid3X3, SlidersHorizontal } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 import { useMining } from '@/hooks/useMining';
 
 const mockCollections = [
@@ -274,3 +274,4 @@ const NFTCollectionsPage: React.FC = () => {
 };
 
 export default NFTCollectionsPage;
+

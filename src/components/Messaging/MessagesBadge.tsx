@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { useProfile } from '@/hooks/useProfile';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 
 interface MessagesBadgeProps {
   className?: string;
@@ -47,3 +47,4 @@ export const MessagesBadge: React.FC<MessagesBadgeProps> = ({ className }) => {
     </Badge>
   );
 };
+

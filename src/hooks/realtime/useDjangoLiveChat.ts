@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDjangoWebSocket } from './useDjangoWebSocket';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { toast } from 'sonner';
 
 export interface ChatMessage {
@@ -281,3 +281,4 @@ export const useDjangoLiveChat = ({ conversationId, autoJoin = true }: UseDjango
     removeParticipant
   };
 }; 
+

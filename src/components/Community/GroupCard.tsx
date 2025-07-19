@@ -5,9 +5,9 @@ import { UserPlus, MessageSquare, Calendar, Check, UserMinus, Loader2, Users, Sh
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { Group, useGroup } from '@/hooks/useGroups';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { toast } from 'sonner';
 
 interface GroupCardProps {
@@ -194,3 +194,5 @@ const GroupCard: React.FC<GroupCardProps> = ({ group }) => {
 };
 
 export default GroupCard;
+
+

@@ -5,7 +5,7 @@ import { useProfile } from './useProfile';
 import { useNotificationActions } from './notifications/useNotificationActions';
 import { toast } from 'sonner';
 import { fetchUserNotifications } from '@/api/notifications/fetchNotifications';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { notificationAPI } from '@/lib/django-api-new';
 
 export const useNotifications = () => {
@@ -105,3 +105,4 @@ export const useNotifications = () => {
 };
 
 export type { Notification };
+

@@ -4,7 +4,7 @@ import { MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { MessagesBadge } from '@/components/Messaging/MessagesBadge';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 
 export const MessagesDropdown = () => {
   const { theme } = useTheme();
@@ -28,3 +28,4 @@ export const MessagesDropdown = () => {
 };
 
 export default MessagesDropdown;
+

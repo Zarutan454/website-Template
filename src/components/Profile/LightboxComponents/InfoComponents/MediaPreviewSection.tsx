@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Media } from '@/types/media';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { motion } from 'framer-motion';
 import { ImageIcon, VideoIcon, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
@@ -131,3 +131,4 @@ const MediaPreviewSection = React.memo(({
 MediaPreviewSection.displayName = 'MediaPreviewSection';
 
 export default MediaPreviewSection;
+

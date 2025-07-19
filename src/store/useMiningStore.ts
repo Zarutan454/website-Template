@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { MiningStats } from '@/types/mining';
+import { MiningStats } from '@/hooks/mining/types';
 import djangoApi from '@/lib/django-api-new';
 
 interface MiningState {
@@ -11,6 +11,7 @@ interface MiningState {
   startMining: () => Promise<boolean>;
   stopMining: () => Promise<boolean>;
   heartbeat: () => Promise<void>;
+  recordActivity: (type: string, points: number, tokens: number) => Promise<boolean>;
 }
 
 const useMiningStore = create<MiningState>((set, get) => ({
@@ -93,6 +94,29 @@ const useMiningStore = create<MiningState>((set, get) => ({
       }));
     } catch (err) {
       console.error("Heartbeat failed:", err);
+    }
+  },
+
+  recordActivity: async (type: string, points: number, tokens: number) => {
+    // Check if user is authenticated before making API call
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      console.log('No authentication token found, skipping activity recording');
+      return false;
+    }
+
+    try {
+      // Record activity via API
+      const result = await djangoApi.miningRecordActivity(type, points, tokens);
+      
+      // Refresh stats after recording activity
+      const stats = await djangoApi.miningGetStats();
+      set({ miningStats: stats });
+      
+      return result;
+    } catch (err) {
+      console.error('Failed to record activity:', err);
+      return false;
     }
   },
 }));

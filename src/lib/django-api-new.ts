@@ -582,6 +582,8 @@ export const miningAPI = {
   getHistory: (params = {}) => apiRequest(`/mining/activities/?${new URLSearchParams(params).toString()}`),
   getAchievements: () => apiRequest('/mining/achievements/'),
   getLeaderboard: () => apiRequest('/mining/leaderboard/'),
+  recordActivity: (type: string, points: number, tokens: number): Promise<boolean> => 
+    apiRequest('/mining/record-activity/', { method: 'POST', body: JSON.stringify({ type, points, tokens }) }),
 };
 
 // Faucet API
@@ -778,6 +780,7 @@ const djangoApi = {
   miningGetHistory: miningAPI.getHistory,
   miningGetAchievements: miningAPI.getAchievements,
   miningGetLeaderboard: miningAPI.getLeaderboard,
+  miningRecordActivity: miningAPI.recordActivity,
 };
 
 // Default-Export für Kompatibilität

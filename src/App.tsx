@@ -11,9 +11,11 @@ import { initializeAchievements } from './hooks/mining/achievements/initAchievem
 import { NotificationProvider } from './components/ui/notification-system';
 import { LanguageProvider } from './components/LanguageProvider';
 import { FriendshipProvider } from './context/FriendshipContext';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/AuthContext.utils';
 import { PostProvider } from './context/PostContext';
 import { WebSocketStatus } from './components/realtime/WebSocketStatus';
+import { DebugUtils } from './utils/debugUtils';
 
 const queryClient = new QueryClient();
 
@@ -72,6 +74,20 @@ function AppContent() {
       });
     }
   }, [isAuthenticated]);
+
+  // Safe Error Logger Integration
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      // Log app startup safely
+      setTimeout(() => {
+        DebugUtils.logInfo('Application started safely', 'App', {
+          version: import.meta.env.VITE_APP_VERSION || '1.0.0',
+          environment: import.meta.env.MODE,
+          pathname: location.pathname
+        });
+      }, 1000);
+    }
+  }, [location.pathname]);
 
   return (
     <ThemeProvider>

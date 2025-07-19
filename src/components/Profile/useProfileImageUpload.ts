@@ -1,6 +1,6 @@
-import { useState, useContext } from 'react';
+import { useState, useCallback, useContext } from 'react';
 import { userAPI } from '@/lib/django-api-new';
-import { AuthContext } from '@/context/AuthContext';
+import { AuthContext } from '@/context/AuthContext.utils';
 
 interface UseProfileImageUploadResult {
   avatarUploading: boolean;

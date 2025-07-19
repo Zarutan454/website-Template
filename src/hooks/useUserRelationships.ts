@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useProfile } from './useProfile';
 import { toast } from 'sonner';
 import { userRelationshipAPI } from '@/lib/django-api-new';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { useFeedWebSocket } from '@/hooks/useWebSocket';
 
 /**
@@ -340,3 +340,4 @@ export const useUserRelationships = () => {
 };
 
 export default useUserRelationships; 
+

@@ -1,4 +1,4 @@
-import { createContext } from 'react';
+import { createContext, useContext } from 'react';
 import { UserProfile } from '@/lib/django-api-new';
 
 export interface AuthContextType {
@@ -30,4 +30,12 @@ export const getInitialAuthState = () => ({
 export const useAuthContextValue = () => {
   // Dummy-Implementierung, eigentliche Logik ist in AuthProvider
   return {} as AuthContextType;
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }; 

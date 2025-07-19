@@ -11,13 +11,13 @@ import { type CreatePostData } from '@/types/posts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useProfile } from '@/hooks/useProfile';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { useMining } from '@/hooks/useMining';
 import Logo from '@/components/Logo';
 import Navbar from '@/components/Navbar';
 import { toast } from 'sonner';
 import { FloatingMiningButton } from '@/components/mining';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { postUpdateEmitter } from '@/hooks/useProfileMedia';
 import StoriesSection from './StoriesSection';
 import CreatePostBoxFacebook from '../Feed/CreatePostBoxFacebook';
@@ -31,7 +31,6 @@ interface FeedLayoutProps {
 
 // Exportiere nur React-Komponenten aus dieser Datei. Alle Hilfsfunktionen/Konstanten werden in FeedLayout.utils.ts ausgelagert.
 const FeedLayout: React.FC<FeedLayoutProps> = ({ children, hideRightSidebar = false, hideStoriesAndCreatePostBox = false }) => {
-  console.log('MOUNT FeedLayout');
   const isMobile = useMediaQuery('(max-width: 1024px)');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [pendingPostData, setPendingPostData] = useState<CreatePostData | null>(null);
@@ -48,7 +47,7 @@ const FeedLayout: React.FC<FeedLayoutProps> = ({ children, hideRightSidebar = fa
     const syncInterval = setInterval(() => {
       if (isAuthenticated) {
         fetchStats();
-        console.log("FeedLayout: Periodic sync completed");
+        // Entferne Console-Log um Loop zu vermeiden
       }
     }, 60000); // Sync every minute
     
@@ -307,3 +306,5 @@ const FeedLayout: React.FC<FeedLayoutProps> = ({ children, hideRightSidebar = fa
 
 export default FeedLayout;
 export { FeedLayout };
+
+

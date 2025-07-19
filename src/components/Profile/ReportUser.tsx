@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext.utils';
 import { reportUser } from '../../hooks/useProfile';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';

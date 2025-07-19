@@ -1736,4 +1736,100 @@ class PresenceConsumer(AsyncWebsocketConsumer):
             return user
         except Exception as e:
             print(f"[PresenceConsumer] ❌ Token-Validierung fehlgeschlagen: {e}")
-            return None 
+            return None
+
+
+class SafeErrorLoggerConsumer(AsyncWebsocketConsumer):
+    """
+    Sichere WebSocket Consumer für Error Logging
+    - Nur in Development aktiv
+    - Silent Fail bei Fehlern
+    - Begrenzte Log-Anzahl
+    """
+    
+    async def connect(self):
+        """Handle WebSocket connection for error logging safely"""
+        try:
+            # Nur in Development aktivieren
+            from django.conf import settings
+            if not settings.DEBUG:
+                await self.close(code=4000)
+                return
+            
+            # Accept connection first
+            await self.accept()
+            
+            # Send confirmation
+            await self.send(text_data=json.dumps({
+                'type': 'connection_established',
+                'message': 'Error Logger connected safely'
+            }))
+            
+            logger.info("Safe Error Logger WebSocket connected")
+            
+        except Exception as e:
+            logger.warning(f"Error Logger connection failed: {e}")
+            try:
+                await self.close(code=4000)
+            except:
+                pass
+
+    async def disconnect(self, close_code):
+        """Safe disconnect"""
+        try:
+            logger.info("Safe Error Logger WebSocket disconnected")
+        except:
+            pass
+
+    async def receive(self, text_data):
+        """Handle incoming error log messages safely"""
+        try:
+            data = json.loads(text_data)
+            
+            # Validate data
+            if not isinstance(data, dict):
+                return
+            
+            # Save error log safely
+            await self.safe_save_error_log(data)
+            
+            # Send acknowledgment
+            await self.send(text_data=json.dumps({
+                'type': 'error_log_received',
+                'timestamp': timezone.now().isoformat()
+            }))
+            
+        except json.JSONDecodeError:
+            # Silent fail for invalid JSON
+            pass
+        except Exception as e:
+            logger.warning(f"Error handling error log: {e}")
+            # Don't send error response to avoid loops
+
+    @database_sync_to_async
+    def safe_save_error_log(self, data):
+        """Save error log with error handling"""
+        try:
+            from .models import EventLog
+            
+            # Validate and sanitize data
+            message = str(data.get('message', ''))[:1000]  # Limit message length
+            level = data.get('level', 'error')
+            if level not in ['debug', 'info', 'warning', 'error', 'critical']:
+                level = 'error'
+            
+            EventLog.objects.create(
+                event_type='frontend_error',
+                level=level,
+                user_id=data.get('userId'),
+                message=message,
+                metadata={
+                    'url': data.get('url', ''),
+                    'component': data.get('component', ''),
+                    'context': data.get('context', ''),
+                    'sessionId': data.get('sessionId', ''),
+                    'additionalData': data.get('additionalData', {})
+                }
+            )
+        except Exception as e:
+            logger.warning(f"Failed to save error log: {e}") 

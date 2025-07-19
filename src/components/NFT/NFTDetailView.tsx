@@ -15,7 +15,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useMining } from '@/hooks/useMining';
 import { toast } from 'sonner';
 import NFTReportDialog from './NFTReportDialog';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 
 interface NFTDetailViewProps {
   nft: NFT;
@@ -357,3 +357,4 @@ const NFTDetailView: React.FC<NFTDetailViewProps> = ({ nft, transactions, onBuy 
 };
 
 export default NFTDetailView;
+

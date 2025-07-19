@@ -1,8 +1,6 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Notification, NotificationType, NotificationContextType } from './notification-system.utils';
-
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+import { Notification, NotificationType, NotificationContextType, NotificationContext } from './notification-system.utils';
 
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -21,12 +19,4 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       {children}
     </NotificationContext.Provider>
   );
-};
-
-export const useNotifications = () => {
-  const context = useContext(NotificationContext);
-  if (!context) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
-  }
-  return context;
 };

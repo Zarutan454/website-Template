@@ -4,7 +4,7 @@ import { FeedStateRenderer, FeedFilterSection } from '../common';
 import { FeedType } from '@/hooks/feed/useFeedData';
 import { useUnifiedFeedState } from '@/hooks/feed/useUnifiedFeedState';
 import { useFilterControl } from '@/hooks/feed/useFilterControl';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { useNavigate } from 'react-router-dom';
 import { Tabs } from "@/components/ui/tabs";
 
@@ -99,3 +99,4 @@ const UnifiedPostList: React.FC<UnifiedPostListProps> = ({
 };
 
 export default UnifiedPostList;
+

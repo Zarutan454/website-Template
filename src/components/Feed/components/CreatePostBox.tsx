@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Image, MessageSquare, Video } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 
 export type CreatePostMode = 'text' | 'image' | 'video';
 
@@ -75,3 +75,4 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
 };
 
 export default CreatePostBox;
+

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 
 interface GroupPageHeaderProps {
   title: string;
@@ -43,3 +43,4 @@ const GroupPageHeader: React.FC<GroupPageHeaderProps> = ({
 };
 
 export default GroupPageHeader;
+

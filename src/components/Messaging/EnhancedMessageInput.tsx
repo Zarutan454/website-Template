@@ -14,7 +14,7 @@ import {
   Send
 } from 'lucide-react';
 import { VoiceMessageRecorder } from './components/VoiceMessageRecorder';
-import { useTheme } from '../ThemeProvider';
+import { useTheme } from '../ThemeProvider.utils';
 import { handleError } from '../common/ErrorHandler.utils';
 import { uploadFile, UploadResult } from '../../utils/storageUtils';
 import { Progress } from '../ui/progress';

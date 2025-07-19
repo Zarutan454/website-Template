@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import { useDjangoFeed, type FeedType } from '@/hooks/feed/useDjangoFeed';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { adaptPost } from '@/utils/postAdapter';
 import { Post as FrontendPost } from '@/types/post';
 import { socialAPI } from '@/lib/django-api-new';
@@ -47,7 +47,7 @@ export const useUnifiedFeedState = ({
   });
   
   const isDarkMode = theme === 'dark';
-  const adaptedPosts: FrontendPost[] = apiPosts.map(adaptPost);
+  const adaptedPosts: FrontendPost[] = Array.isArray(apiPosts) ? apiPosts.map(adaptPost) : [];
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -55,7 +55,8 @@ export const useUnifiedFeedState = ({
       setLastRefresh(new Date());
       setHasNewPosts(false);
     }
-  }, [feedType, isAuthenticated, user, fetchPosts]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedType, isAuthenticated, user?.id]);
 
   useEffect(() => {
     if (enableAutoRefresh && isAuthenticated) {
@@ -69,7 +70,8 @@ export const useUnifiedFeedState = ({
         }
       };
     }
-  }, [enableAutoRefresh, isAuthenticated, refreshInterval]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enableAutoRefresh, isAuthenticated]);
 
   const handleRefresh = useCallback(async () => {
     if (!isAuthenticated) return;

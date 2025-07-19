@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { SendHorizontal, PaperclipIcon, Smile } from 'lucide-react';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 
 interface MessageInputBarProps {
   onSendMessage: (content: string) => void;
@@ -90,3 +90,4 @@ const MessageInputBar: React.FC<MessageInputBarProps> = ({ onSendMessage, isDisa
 };
 
 export default MessageInputBar;
+

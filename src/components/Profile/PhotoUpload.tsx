@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext.utils';
 import { uploadProfilePhoto } from '../../hooks/useProfile';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';

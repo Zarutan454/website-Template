@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Bell, User, LogOut } from 'lucide-react';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useProfile } from '@/hooks/useProfile';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 import NavbarLinks from './NavbarLinks';
 import UserSearchDropdown from './UserSearchDropdown';
 import NotificationDropdown from './NotificationDropdown';
@@ -145,3 +145,5 @@ const Navbar: React.FC = () => {
 };
 
 export default Navbar;
+
+

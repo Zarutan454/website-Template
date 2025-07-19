@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger
 } from '../../components/ui/dropdown-menu';
 import { Reel, useReels } from '../../hooks/useReels';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import ReelComments from './ReelComments';
 import {
   AlertDialog,
@@ -320,3 +320,4 @@ const ReelCard: React.FC<ReelCardProps> = ({
 };
 
 export default ReelCard;
+

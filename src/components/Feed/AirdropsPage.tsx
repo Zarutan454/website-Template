@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, Search, Filter, Users, Clock, Check, Plus, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAirdrops } from '@/hooks/useAirdrops';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 import { toast } from 'sonner';
 
 const AirdropsPage: React.FC = () => {
@@ -289,3 +289,4 @@ const AirdropsPage: React.FC = () => {
 };
 
 export default AirdropsPage;
+

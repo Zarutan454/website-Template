@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.utils';
 import { api } from '../utils/api';
 
 export interface Message {
@@ -81,61 +81,7 @@ export const useMessaging = () => {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const websocketRef = useRef<WebSocket | null>(null);
 
-  // WebSocket connection management
-  const connectWebSocket = useCallback((conversationId: number) => {
-    if (!user) return;
-
-    const wsUrl = `${import.meta.env.VITE_WS_URL || 'ws://localhost:8000'}/ws/messaging/${conversationId}/`;
-    
-    websocketRef.current = new WebSocket(wsUrl);
-
-    websocketRef.current.onopen = () => {
-      console.log('WebSocket connected for messaging');
-    };
-
-    websocketRef.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      
-      switch (data.type) {
-        case 'message':
-          handleNewMessage(data.message);
-          break;
-        case 'typing':
-          handleTypingIndicator(data);
-          break;
-        case 'read':
-          handleReadReceipt(data);
-          break;
-        case 'reaction':
-          handleReactionUpdate(data);
-          break;
-        case 'connection_established':
-          console.log('Messaging WebSocket connected');
-          break;
-        case 'error':
-          setState(prev => ({ ...prev, error: data.message }));
-          break;
-      }
-    };
-
-    websocketRef.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setState(prev => ({ ...prev, error: 'WebSocket connection error' }));
-    };
-
-    websocketRef.current.onclose = () => {
-      console.log('WebSocket disconnected');
-    };
-  }, [user]);
-
-  const disconnectWebSocket = useCallback(() => {
-    if (websocketRef.current) {
-      websocketRef.current.close();
-      websocketRef.current = null;
-    }
-  }, []);
-
-  // Message handling
+  // Message handling - moved before connectWebSocket
   const handleNewMessage = useCallback((message: Message) => {
     setState(prev => ({
       ...prev,
@@ -183,6 +129,60 @@ export const useMessaging = () => {
           : msg
       ),
     }));
+  }, []);
+
+  // WebSocket connection management
+  const connectWebSocket = useCallback((conversationId: number) => {
+    if (!user) return;
+
+    const wsUrl = `${import.meta.env.VITE_WS_URL || 'ws://localhost:8000'}/ws/messaging/${conversationId}/`;
+    
+    websocketRef.current = new WebSocket(wsUrl);
+
+    websocketRef.current.onopen = () => {
+      console.log('WebSocket connected for messaging');
+    };
+
+    websocketRef.current.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      switch (data.type) {
+        case 'message':
+          handleNewMessage(data.message);
+          break;
+        case 'typing':
+          handleTypingIndicator(data);
+          break;
+        case 'read':
+          handleReadReceipt(data);
+          break;
+        case 'reaction':
+          handleReactionUpdate(data);
+          break;
+        case 'connection_established':
+          console.log('Messaging WebSocket connected');
+          break;
+        case 'error':
+          setState(prev => ({ ...prev, error: data.message }));
+          break;
+      }
+    };
+
+    websocketRef.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setState(prev => ({ ...prev, error: 'WebSocket connection error' }));
+    };
+
+    websocketRef.current.onclose = () => {
+      console.log('WebSocket disconnected');
+    };
+  }, [user, handleNewMessage, handleTypingIndicator, handleReadReceipt, handleReactionUpdate]);
+
+  const disconnectWebSocket = useCallback(() => {
+    if (websocketRef.current) {
+      websocketRef.current.close();
+      websocketRef.current = null;
+    }
   }, []);
 
   // API calls

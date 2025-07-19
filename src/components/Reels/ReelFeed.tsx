@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Loader2 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { useReels } from '../../hooks/useReels';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext.utils';
 import ReelCard from './ReelCard';
 import ReelCreator from './ReelCreator';
 
@@ -166,3 +166,4 @@ const ReelFeed: React.FC<ReelFeedProps> = ({ className = '', userId }) => {
 };
 
 export default ReelFeed;
+

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider.utils';
 import { FeedType } from '@/hooks/feed/useFeedData';
 import { useUnifiedFeedState } from '@/hooks/feed/useUnifiedFeedState';
 import { useFilterControl } from '@/hooks/feed/useFilterControl';
@@ -142,3 +142,4 @@ const OptimizedFeed: React.FC<OptimizedFeedProps> = ({
 };
 
 export default OptimizedFeed;
+

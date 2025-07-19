@@ -11,7 +11,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useNFTs } from '@/hooks/useNFTs';
 import { NFT } from '@/types/nft';
 import { NFTAttribute } from '@/types/token'; // Import from token.ts
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 
 const NFTsTab: React.FC = () => {
   const [nfts, setNfts] = useState<NFT[]>([]);
@@ -354,3 +354,4 @@ const NFTsTab: React.FC = () => {
 };
 
 export default NFTsTab;
+

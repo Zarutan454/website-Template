@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext.utils';
 import { useMining } from '@/hooks/useMining';
 
 const NFTDetailPage: React.FC = () => {
@@ -177,3 +177,4 @@ const NFTDetailPage: React.FC = () => {
 };
 
 export default NFTDetailPage;
+

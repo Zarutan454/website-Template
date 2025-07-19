@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { 
@@ -44,7 +44,8 @@ const ProofOfActivity: React.FC = () => {
   });
   const { t, language } = useLanguage();
 
-  const activities: ActivityType[] = [
+  // Wrap activities in useMemo to prevent recreation on every render
+  const activities: ActivityType[] = useMemo(() => [
     { 
       id: 1,
       name: "Social Engagement", 
@@ -89,7 +90,7 @@ const ProofOfActivity: React.FC = () => {
       details: "Regelmäßige Aktivität auf der Plattform",
       color: "from-pink-500 to-pink-600" 
     },
-  ];
+  ], []);
 
   const [totalBSN, setTotalBSN] = useState(0);
   const [todayEarned, setTodayEarned] = useState(0);
