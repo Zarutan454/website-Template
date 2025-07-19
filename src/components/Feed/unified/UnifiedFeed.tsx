@@ -39,9 +39,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
   
-  const { showFilterMenu, selectedFilter, toggleFilters, handleFilterSelect } = 
-    useFilterControl(feedType === 'popular' ? 'Beliebt' : 'Neueste');
-  
   const {
     adaptedPosts,
     isLoading,
@@ -112,60 +109,9 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
           <FeedHeader feedType={feedType} customHeader={headerComponent} />
         )}
         
-        {showStories && isAuthenticated && (
-          <div className="mb-6">
-            <StoriesSection />
-          </div>
-        )}
+        {/* Entferne StoriesSection und CreatePostBox aus dem Render-Teil */}
         
-        {showCreatePostForm && (
-          <CreatePostBox 
-            darkMode={isDarkMode}
-            onOpenCreateModal={handleOpenCreatePost}
-          />
-        )}
-        
-        {showFilters && (
-          <div className="mt-2">
-            <div className="flex justify-between items-center mb-2">
-              <div className="text-sm font-medium text-muted-foreground">
-                {feedType === 'recent' ? 'Chronologische Reihenfolge' : 
-                feedType === 'popular' ? 'Nach Popularität sortiert' : 
-                feedType === 'following' ? 'Beiträge von Personen, denen du folgst' :
-                feedType === 'tokens' ? 'Token-bezogene Inhalte' :
-                feedType === 'nfts' ? 'NFT-bezogene Inhalte' :
-                feedType === 'trending' ? 'Trending Inhalte' :
-                'Alle Inhalte'}
-              </div>
-              <div className="flex gap-2">
-                <button 
-                  onClick={toggleFilters}
-                  className="text-sm text-primary hover:underline"
-                >
-                  {showFilterMenu ? 'Filter ausblenden' : 'Filter anzeigen'}
-                </button>
-                
-                {hasNewPosts && (
-                  <button 
-                    onClick={handleRefresh}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    Neue Beiträge anzeigen
-                  </button>
-                )}
-              </div>
-            </div>
-            
-            <FeedFilterOptimized
-              showFilters={showFilterMenu}
-              selectedFilter={selectedFilter}
-              handleFilterSelect={handleFilterSelect}
-              feedType={feedType}
-              lastUpdated={lastRefresh}
-            />
-          </div>
-        )}
-        
+        {/* Nur noch FeedHeader und FeedStateRenderer bleiben im Render-Tree */}
         <AnimatePresence mode="wait">
           <motion.div
             key={`feed-${feedType}-${selectedFilter}`}

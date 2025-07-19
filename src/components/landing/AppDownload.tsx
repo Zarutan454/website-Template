@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { Apple, Smartphone, Download, AlertCircle } from 'lucide-react';
 import { GradientText } from '@/components/ui/gradient-text';
-import { useLanguage } from '@/components/LanguageProvider';
+import { useLanguage } from '@/components/LanguageProvider.utils';
 
 const AppDownload: React.FC = () => {
   const [ref, inView] = useInView({

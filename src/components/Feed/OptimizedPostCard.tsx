@@ -26,6 +26,7 @@ import {
 import Comments from './Comments';
 import YouTubeEmbed from './YouTubeEmbed';
 import { extractYoutubeVideoId } from '@/utils/youtubeUtils';
+import PrivacyIcon from '../components/PrivacyIcon';
 
 interface PostAuthor {
   id: string;
@@ -33,26 +34,6 @@ interface PostAuthor {
   display_name?: string;
   avatar_url?: string;
   is_verified?: boolean;
-}
-
-interface Comment {
-  id: string;
-  content: string;
-  created_at: string;
-  author_id: string;
-  author?: PostAuthor;
-  user?: PostAuthor;
-  user_liked?: boolean;
-  like_count?: number;
-}
-
-interface UserData {
-  id: string;
-  username?: string;
-  display_name?: string;
-  avatar_url?: string;
-  is_verified?: boolean;
-  role?: string;
 }
 
 interface PostData {
@@ -82,15 +63,16 @@ interface PostData {
     nft_collection: string;
     nft_network: string;
   };
+  privacy?: 'public' | 'private'; // Added privacy field
 }
 
 interface OptimizedPostCardProps {
   post: PostData;
-  currentUser?: UserData | null;
+  currentUser?: any;
   isDarkMode?: boolean;
   showMiningRewards?: boolean;
   onLike: (postId: string) => Promise<boolean>;
-  onComment?: (postId: string, content: string) => Promise<Comment>;
+  onComment?: (postId: string, content: string) => Promise<any>;
   onShare?: (postId: string) => Promise<boolean>;
   onDelete?: (postId: string) => Promise<boolean>;
   onReport?: (postId: string, reason: string) => Promise<boolean>;
@@ -108,7 +90,7 @@ const OptimizedPostCard: React.FC<OptimizedPostCardProps> = ({
   onReport
 }) => {
   const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<any[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [isLiked, setIsLiked] = useState(post.is_liked || false);
   const [likesCount, setLikesCount] = useState(post.likes_count || 0);
@@ -259,17 +241,17 @@ const OptimizedPostCard: React.FC<OptimizedPostCardProps> = ({
             </Link>
             
             <div>
-              <div className="flex items-center">
+              <div className="flex items-center gap-2">
                 <Link to={`/profile/${post.author.id}`} className="font-medium hover:underline">
-                  <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {post.author.display_name || post.author.username || 'Anonym'}
-                  </span>
+                  <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{post.author.display_name || post.author.username || 'Unbekannter Nutzer'}</span>
                 </Link>
                 {post.author.is_verified && (
                   <CheckCircle2 className="ml-1 h-4 w-4 text-blue-500" />
                 )}
+                {/* Privacy-Icon direkt neben Name */}
+                {post.privacy && <PrivacyIcon value={post.privacy} />}
               </div>
-              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} flex items-center gap-2`}>
                 {formattedDate}
               </p>
             </div>

@@ -1,15 +1,11 @@
-import React, { useState } from 'react';
+import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { FeedStateRenderer } from './common';
 import { useUnifiedFeedState } from '@/hooks/feed/useUnifiedFeedState';
 import { FeedType } from '@/hooks/feed/useFeedData';
-import { useFilterControl } from '@/hooks/feed/useFilterControl';
-import CreatePostBox from './components/CreatePostBox';
-import CreatePostModal from './CreatePostModal';
 import FeedHeader from './components/FeedHeader';
-import FeedFilterOptimized from './FeedFilterOptimized';
 import { toast } from 'sonner';
 
 export interface UnifiedFeedProps {
@@ -32,15 +28,16 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   enableAutoRefresh = true
 }) => {
   const navigate = useNavigate();
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const { showFilterMenu, selectedFilter, toggleFilters, handleFilterSelect } = useFilterControl();
+  const [showCreateModal, setShowCreateModal] = React.useState(false);
+  const { showFilterMenu, selectedFilter, toggleFilters, handleFilterSelect } = React.useState({ showFilterMenu: false, selectedFilter: 'all', toggleFilters: () => {}, handleFilterSelect: (filter: string) => {} });
 
-  const { 
+  // Zentrale Feed-Logik: ALLE States und Handler kommen aus useUnifiedFeedState
+  const {
     profile,
     isAuthenticated,
     profileLoading,
-    adaptedPosts, 
-    isLoading, 
+    adaptedPosts,
+    isLoading,
     error,
     isDarkMode,
     lastRefresh,
@@ -73,65 +70,39 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     setShowCreateModal(true);
   };
 
+  if (!isAuthenticated && !profileLoading) {
+    return (
+      <div className="pt-6">
+        <div className="text-red-500">Fehler: Bitte melde dich an, um Beiträge zu sehen</div>
+      </div>
+    );
+  }
+
+  if (profileLoading) {
+    return (
+      <div className="pt-6">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-2 text-muted-foreground">Lade Feed...</p>
+      </div>
+    );
+  }
+
   return (
     <TooltipProvider>
-      <motion.div 
-        className="space-y-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
+      <div className="space-y-4">
+        {/* Feed Header */}
         {showHeader && (
-          <FeedHeader feedType={feedType} customHeader={headerComponent} />
-        )}
-        
-        {showCreatePostForm && (
-          <CreatePostBox 
-            darkMode={isDarkMode}
-            onOpenCreateModal={handleOpenCreatePost}
+          <FeedHeader
+            feedType={feedType}
+            showFilters={showFilters}
+            showCreatePostForm={showCreatePostForm}
+            onOpenCreatePost={handleOpenCreatePost}
+            headerComponent={headerComponent}
           />
         )}
-        
-        {showFilters && (
-          <div className="mt-2">
-            <div className="flex justify-between items-center mb-2">
-              <div className="text-sm font-medium text-muted-foreground">
-                {feedType === 'recent' ? 'Chronologische Reihenfolge' : 
-                feedType === 'popular' ? 'Nach Popularität sortiert' : 
-                feedType === 'following' ? 'Beiträge von Personen, denen du folgst' :
-                feedType === 'tokens' ? 'Token-bezogene Inhalte' :
-                feedType === 'nfts' ? 'NFT-bezogene Inhalte' :
-                feedType === 'foryou' ? 'Für dich personalisiert' :
-                'Alle Inhalte'}
-              </div>
-              <div className="flex gap-2">
-                <button 
-                  onClick={toggleFilters}
-                  className="text-sm text-primary hover:underline"
-                >
-                  {showFilterMenu ? 'Filter ausblenden' : 'Filter anzeigen'}
-                </button>
-                {hasNewPosts && (
-                  <button 
-                    onClick={handleRefresh}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    Neue Beiträge anzeigen
-                  </button>
-                )}
-              </div>
-            </div>
-            
-            <FeedFilterOptimized
-              showFilters={showFilterMenu}
-              selectedFilter={selectedFilter}
-              handleFilterSelect={handleFilterSelect}
-              feedType={feedType}
-              lastUpdated={lastRefresh}
-            />
-          </div>
-        )}
-        
+
+        {/* Filter Section entfernt */}
+
         <AnimatePresence mode="wait">
           <motion.div
             key={`feed-${feedType}-${selectedFilter}`}
@@ -160,13 +131,9 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             />
           </motion.div>
         </AnimatePresence>
-      </motion.div>
+      </div>
 
-      <CreatePostModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onPostCreated={handleCreatePost}
-      />
+      {/* CreatePostModal entfernt */}
     </TooltipProvider>
   );
 };

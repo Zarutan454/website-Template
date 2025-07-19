@@ -81,7 +81,7 @@ export const useActivityProcessor = (userId?: string) => {
     
     // Return true if the count is >= the limit
     return count >= limit;
-  }, [activityCounts]);
+  }, [activityCounts, activityLimits]);
 
   // Update a single activity count
   const updateActivityCount = useCallback((type: ActivityType) => {

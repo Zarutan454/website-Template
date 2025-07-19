@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Home,
@@ -42,7 +42,7 @@ const LeftSidebar: React.FC = () => {
   const createMenuLinks = [
     { to: '/create-token', icon: <Coins size={16} />, label: 'Token erstellen' },
     { to: '/create-nft', icon: <Award size={16} />, label: 'NFT erstellen' },
-    { to: '/groups', icon: <Users size={16} />, label: 'Gruppe erstellen' },
+    { to: '/create-group', icon: <Users size={16} />, label: 'Gruppe erstellen' },
   ];
 
   // Entdecken Menü
@@ -74,11 +74,12 @@ const LeftSidebar: React.FC = () => {
         <NavLink
           key={link.to}
           to={link.to}
+          end // Nur exakter Pfad ist aktiv
           className={({ isActive }) =>
             `flex items-center py-2 px-4 rounded-lg text-sm transition-colors ${
               isActive
-                ? 'bg-primary/10 text-primary'
-                : 'text-foreground hover:bg-muted hover:text-primary'
+                ? 'bg-primary/20 text-primary border border-primary/30'
+                : 'text-white hover:bg-dark-300 hover:text-primary border border-transparent'
             }`
           }
           onClick={(e) => handleLinkClick(link.to, e)}
@@ -92,7 +93,7 @@ const LeftSidebar: React.FC = () => {
   );
 
   return (
-    <div className="py-4 px-2 hide-scrollbar" data-theme={theme}>
+    <div className="py-4 px-2 hide-scrollbar text-white" data-theme={theme}>
       <div className="mb-1 px-4 text-xs font-medium uppercase text-muted-foreground">Menü</div>
       {renderLinks(mainMenuLinks)}
 

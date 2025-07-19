@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { TokenWithJSONB } from "@/types/token";
 
 export interface TokenAnalytics {
@@ -15,113 +14,17 @@ export interface TokenAnalytics {
   volumeHistory: { date: string; volume: number }[];
 }
 
+// TODO: Django-API-Migration: useTokenAnalytics auf Django-API umstellen
+// Die gesamte Logik für Token- und Preisabfragen muss auf die Django-API migriert werden.
+// Aktuell ist keine Funktionalität vorhanden, da Supabase entfernt wurde.
 export const useTokenAnalytics = (tokenId: string) => {
-  const [timeRange, setTimeRange] = useState<string>("24h");
-
-  const { data: analytics, isLoading, error } = useQuery({
-    queryKey: ["tokenAnalytics", tokenId, timeRange],
-    queryFn: async (): Promise<TokenAnalytics | null> => {
-      if (!tokenId) return null;
-
-      try {
-        // Fetch basic token data
-        const { data: token, error: tokenError } = await supabase
-          .from("tokens")
-          .select("*")
-          .eq("id", tokenId)
-          .single();
-
-        if (tokenError) throw tokenError;
-
-        // Wandle token in TokenWithJSONB Typ um
-        const tokenWithMetrics = token as unknown as TokenWithJSONB;
-        
-        // Parsen der JSONB-Daten wenn nötig
-        let metrics = typeof tokenWithMetrics.token_metrics === 'string' 
-          ? JSON.parse(tokenWithMetrics.token_metrics) 
-          : tokenWithMetrics.token_metrics || {};
-
-        // Für den Fall, dass token_metrics null oder nicht vorhanden ist
-        if (!metrics) {
-          metrics = {
-            price_usd: null,
-            volume_24h: null,
-            market_cap: null,
-            holder_count: null,
-            liquidity_usd: null
-          };
-        }
-
-        const { data: historyData, error: historyError } = await supabase
-          .from("token_price_history")
-          .select("*")
-          .eq("token_id", tokenId)
-          .order("timestamp", { ascending: true });
-          
-        if (historyError) {
-        }
-        
-        let filteredHistory = historyData || [];
-        const now = new Date();
-        const cutoffDate = new Date();
-        
-        if (timeRange === "24h") {
-          cutoffDate.setHours(now.getHours() - 24);
-        } else if (timeRange === "7d") {
-          cutoffDate.setDate(now.getDate() - 7);
-        } else if (timeRange === "30d") {
-          cutoffDate.setDate(now.getDate() - 30);
-        } else {
-          cutoffDate.setDate(now.getDate() - 90);
-        }
-        
-        filteredHistory = filteredHistory.filter(item => 
-          new Date(item.timestamp) >= cutoffDate
-        );
-        
-        let priceHistory = [];
-        let volumeHistory = [];
-        
-        if (filteredHistory.length > 0) {
-          priceHistory = filteredHistory.map(item => ({
-            date: item.timestamp,
-            price: item.price_usd
-          }));
-          
-          volumeHistory = filteredHistory.map(item => ({
-            date: item.timestamp,
-            volume: item.volume_24h
-          }));
-        } else {
-          priceHistory = generateHistoricalData(timeRange, metrics.price_usd || 1, 'price');
-          volumeHistory = generateHistoricalData(timeRange, metrics.volume_24h || 1000, 'volume');
-        }
-        
-        const analytics: TokenAnalytics = {
-          token_id: tokenId,
-          price_usd: metrics.price_usd || 0.01,
-          volume_24h: metrics.volume_24h || 0,
-          market_cap: metrics.market_cap || 0,
-          holder_count: metrics.holder_count || 0,
-          liquidity_usd: metrics.liquidity_usd || 0,
-          priceHistory,
-          volumeHistory
-        };
-
-        return analytics;
-      } catch (error) {
-        throw error;
-      }
-    },
-    enabled: !!tokenId,
-  });
-
+  // TODO: Implementiere die Token-Analytics-Logik mit der Django-API
   return {
-    analytics,
-    isLoading,
-    error,
-    timeRange,
-    setTimeRange,
+    data: null,
+    isLoading: false,
+    error: null,
+    timeRange: '24h',
+    setTimeRange: () => {},
   };
 };
 

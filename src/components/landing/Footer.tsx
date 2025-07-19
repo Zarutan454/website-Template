@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Twitter, Instagram, Linkedin, Github, Facebook, Mail, Phone } from 'lucide-react';
 import Logo from '../Logo';
-import { useLanguage } from '@/components/LanguageProvider';
+import { useLanguage } from '@/components/LanguageProvider.utils';
 import { GradientText } from '@/components/ui/gradient-text';
 
 const Footer: React.FC = () => {

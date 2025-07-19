@@ -49,7 +49,6 @@ const PostActions: React.FC<PostActionsProps> = ({
           );
           // Don't show individual toasts anymore, they're batched now
         } catch (error) {
-          console.error("Fehler bei Mining-Aktivität für Like:", error);
         }
       }
       
@@ -81,7 +80,6 @@ const PostActions: React.FC<PostActionsProps> = ({
           // No need to handle the result here as we're not doing anything with it
           // No individual toast, it's handled in batch now
         } catch (error) {
-          console.error("Fehler bei Mining-Aktivität für Share:", error);
         }
       }
       

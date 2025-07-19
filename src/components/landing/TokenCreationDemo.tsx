@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, TooltipProps } from 'recharts';
 import { Coins, CreditCard, Layers, Package, Settings, CheckCircle } from 'lucide-react';
 import ParallaxSection from './ParallaxSection';
 
@@ -81,7 +82,7 @@ const AllocationChart: React.FC<AllocationChartProps> = ({ tokenData }) => {
   
   const totalSupply = parseInt(tokenData.supply);
   
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip: React.FC<Pick<TooltipProps<number, string>, 'active' | 'payload'>> = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const { label, value, symbol, percentage } = payload[0].payload;
       const amount = Math.floor((percentage / 100) * totalSupply).toLocaleString();

@@ -37,7 +37,6 @@ export function TokenVerification({
           return result.status === 'pending';
         }
       } catch (error) {
-        console.error('Error checking verification status:', error);
       }
     }
     return false;

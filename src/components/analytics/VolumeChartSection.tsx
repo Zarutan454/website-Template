@@ -22,7 +22,7 @@ export const VolumeChartSection = ({ token, timeRange = "24h" }: VolumeChartSect
     // Generate data points with random variations around the current volume
     return Array.from({ length: dataPoints }).map((_, index) => {
       // Create date based on timeRange
-      const date = new Date();
+      let date = new Date();
       if (timeRange === "24h") {
         date.setHours(date.getHours() - (dataPoints - index));
       } else if (timeRange === "7d") {

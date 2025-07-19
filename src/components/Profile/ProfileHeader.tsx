@@ -126,7 +126,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     if (!url) return '';
     let fullUrl = url;
     if (url.startsWith('/media/')) {
-      fullUrl = `http://localhost:8000${url}`;
+      fullUrl = `http://localhost:8080${url}`;
     }
     // Cache-Buster nur nach Upload erzwingen
     let cacheBuster = '';
@@ -154,206 +154,299 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   console.log('[Render] avatar_url:', profile.avatar_url, 'cover_url:', profile.cover_url);
 
   return (
-    <div className="relative">
-      {/* Cover Image */}
-      <div className="relative h-48 md:h-64 rounded-xl overflow-hidden bg-gradient-to-br from-primary/20 to-purple-500/20">
-        {profile.cover_url ? (
-          <img 
-            src={getImageUrl(profile.cover_url)} 
-            alt="Cover" 
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              console.error('Error loading cover image:', profile.cover_url);
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-            <Camera className="h-12 w-12 text-gray-600" />
-          </div>
-        )}
-        
-        {/* Cover Upload Button (Own Profile) */}
-        {isOwnProfile && (
-          <div className="absolute top-4 right-4">
-            <input
-              ref={coverInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleCoverChange}
-              className="hidden"
+    <TooltipProvider>
+      <Card className="overflow-hidden">
+        {/* Cover Image */}
+        <div className="h-32 md:h-48 bg-gradient-to-r from-gray-900 to-gray-800 relative">
+          {isLoading ? (
+            <Skeleton className="w-full h-full" />
+          ) : coverUploading ? (
+            <div className="w-full h-full flex items-center justify-center bg-black/20">
+              <div className="text-center text-white">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
+                <span className="text-sm">Lade Banner...</span>
+              </div>
+            </div>
+          ) : profile.cover_url ? (
+            <motion.img 
+              src={getImageUrl(profile.cover_url) || '/placeholder.svg'} 
+              alt={`${displayName}'s cover`} 
+              className="w-full h-full object-cover"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
             />
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => coverInputRef.current?.click()}
-              disabled={coverUploading}
-              className="bg-black/50 hover:bg-black/70 backdrop-blur-sm"
-            >
-              {coverUploading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-              ) : (
-                <Camera className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Profile Info */}
-      <div className="relative px-3 sm:px-6 pb-4 sm:pb-6">
-        {/* Avatar */}
-        <div className="relative -mt-10 sm:-mt-16 mb-2 sm:mb-4">
-          <div className="relative w-20 h-20 sm:w-32 sm:h-32 rounded-full border-4 border-dark-200 bg-gradient-to-br from-primary/20 to-purple-500/20 overflow-hidden group">
-            {profile.avatar_url ? (
-              <img 
-                src={getImageUrl(profile.avatar_url)} 
-                alt={displayName}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  console.error('Error loading avatar image:', profile.avatar_url);
-                  e.currentTarget.style.display = 'none';
-                }}
+          ) : null}
+          {isOwnProfile && (
+            <>
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleCoverChange}
+                title="Banner auswählen"
               />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
-                <span className="text-2xl sm:text-3xl font-bold text-white">
-                  {displayName.charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
-            {/* Avatar Upload Button (Own Profile, nur bei Hover sichtbar, mittig) */}
-            {isOwnProfile && (
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-                <input
-                  ref={avatarInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarChange}
-                  className="hidden"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => avatarInputRef.current?.click()}
-                  disabled={avatarUploading}
-                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/60 hover:bg-black/80 shadow-lg flex items-center justify-center"
-                >
-                  {avatarUploading ? (
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
-                  ) : (
-                    <Camera className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
-                  )}
-                </Button>
-              </div>
-            )}
-          </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="absolute bottom-2 right-2 bg-black/70 hover:bg-black/90 text-white rounded-full p-2 shadow-lg focus:outline-none transition-colors"
+                    onClick={() => coverInputRef.current?.click()}
+                    disabled={coverUploading}
+                    tabIndex={0}
+                    aria-label="Banner ändern"
+                  >
+                    <Camera size={18} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Banner ändern</TooltipContent>
+              </Tooltip>
+            </>
+          )}
         </div>
-
-        {/* Profile Details */}
-        <div className="space-y-2 sm:space-y-4">
-          {/* Name and Role */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
-            <div className="space-y-1 sm:space-y-2">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">
-                  {displayName}
-                </h1>
-                <Badge variant={roleConfig.variant} className="text-xs">
-                  {roleConfig.label}
-                </Badge>
-                {friendshipStatus && (
-                  <Badge variant="outline" className="text-xs">
-                    {friendshipStatus}
-                  </Badge>
+        
+        <CardContent className="px-4 md:px-6 -mt-16 pb-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 md:gap-6">
+            {/* Avatar */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.3 }}
+            >
+              <div className="relative">
+                <Avatar className="h-24 w-24 border-4 border-background relative">
+                  {isLoading ? (
+                    <Skeleton className="w-full h-full rounded-full" />
+                  ) : avatarUploading ? (
+                    <div className="w-full h-full flex items-center justify-center bg-muted rounded-full">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-1"></div>
+                        <span className="text-xs">Lade...</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <AvatarImage 
+                        src={getImageUrl(profile.avatar_url) || '/placeholder.svg'} 
+                        alt={displayName} 
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="bg-muted text-3xl font-medium">
+                        {(profile.display_name?.[0] || profile.username?.[0] || '?').toUpperCase()}
+                      </AvatarFallback>
+                    </>
+                  )}
+                </Avatar>
+                {isOwnProfile && (
+                  <>
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                      title="Profilbild auswählen"
+                    />
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="absolute bottom-2 right-2 bg-black/70 hover:bg-black/90 text-white rounded-full p-2 shadow-lg focus:outline-none transition-colors"
+                          onClick={() => avatarInputRef.current?.click()}
+                          disabled={avatarUploading}
+                          tabIndex={0}
+                          aria-label="Profilbild ändern"
+                        >
+                          <Camera size={18} />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Profilbild ändern</TooltipContent>
+                    </Tooltip>
+                  </>
                 )}
               </div>
-              <p className="text-gray-400 text-sm sm:text-base">@{profile.username}</p>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              {isOwnProfile ? (
-                <Button onClick={onEditProfile} className="bg-primary hover:bg-primary/90">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Profil bearbeiten
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button
-                    variant={isFollowing ? "secondary" : "default"}
-                    onClick={handleFollowClick}
-                    disabled={isFollowingLoading}
-                    className="min-w-[120px]"
-                  >
-                    {isFollowingLoading ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                    ) : isFollowing ? (
-                      <>
-                        <UserMinus className="h-4 w-4 mr-2" />
-                        Entfolgen
-                      </>
+            </motion.div>
+            
+            {/* Profile Info */}
+            <div className="flex-1 space-y-4 w-full text-center sm:text-left">
+              {/* Name and Action Buttons */}
+              <div className="space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-center sm:justify-start gap-2">
+                      <h1 className="text-2xl font-bold tracking-tight">
+                        {isLoading ? <Skeleton className="h-8 w-48" /> : displayName}
+                      </h1>
+                      <Badge variant={roleConfig.variant}>
+                        {roleConfig.label}
+                      </Badge>
+                      {friendshipStatus === 'friends' && (
+                        <Badge variant="secondary" className="ml-1">
+                          <UserCheck className="h-3 w-3 mr-1" />
+                          Freund
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-muted-foreground">
+                      {isLoading ? <Skeleton className="h-4 w-32 mt-1" /> : `@${profile.username}`}
+                    </p>
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex justify-center sm:justify-end gap-2">
+                    {isLoading ? (
+                      <Skeleton className="h-9 w-32 rounded-md" />
+                    ) : isOwnProfile ? (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={onEditProfile}
+                        className="min-w-[150px]"
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Profil bearbeiten
+                      </Button>
                     ) : (
                       <>
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Folgen
+                        <motion.div whileTap={{ scale: 0.95 }}>
+                          <Button 
+                            variant={isFollowing ? "secondary" : "default"} 
+                            size="sm" 
+                            onClick={handleFollowClick}
+                            disabled={isFollowingLoading}
+                            className="min-w-[120px]"
+                          >
+                            {isFollowingLoading ? (
+                              <span className="flex items-center">
+                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                {isFollowing ? 'Entfolgen' : 'Folgen'}
+                              </span>
+                            ) : (
+                              <>
+                                {isFollowing ? (
+                                  <>
+                                    <UserMinus className="mr-2 h-4 w-4" />
+                                    Entfolgen
+                                  </>
+                                ) : (
+                                  <>
+                                    <UserPlus className="mr-2 h-4 w-4" />
+                                    Folgen
+                                  </>
+                                )}
+                              </>
+                            )}
+                          </Button>
+                        </motion.div>
+                        
+                        <FriendRequestButton 
+                          targetUserId={profile.id} 
+                          initialStatus={friendshipStatus}
+                          size="sm"
+                          showLabels={false}
+                        />
                       </>
                     )}
-                  </Button>
-                  <FriendRequestButton userId={profile.id} />
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Bio */}
-          {profile.bio && (
-            <p className="text-gray-300 leading-relaxed max-w-2xl">
-              {profile.bio}
-            </p>
-          )}
-
-          {/* Stats */}
-          <div className="flex flex-wrap gap-6 text-sm">
-            <button 
-              onClick={() => setShowFollowersModal(true)}
-              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-            >
-              <span className="font-semibold text-white">{followStats.followers_count}</span>
-              <span>Follower</span>
-            </button>
-            <button 
-              onClick={() => setShowFollowingModal(true)}
-              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-            >
-              <span className="font-semibold text-white">{followStats.following_count}</span>
-              <span>Folgt</span>
-            </button>
-            {profile.location && (
-              <div className="flex items-center gap-2 text-gray-400">
-                <MapPin className="h-4 w-4" />
-                <span>{profile.location}</span>
               </div>
-            )}
-            {profile.website && (
-              <a 
-                href={getWebsiteUrl(profile.website)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-gray-400 hover:text-primary transition-colors"
-              >
-                <Globe className="h-4 w-4" />
-                <span>{getDisplayWebsite(profile.website)}</span>
-              </a>
-            )}
-            <div className="flex items-center gap-2 text-gray-400">
-              <CalendarDays className="h-4 w-4" />
-              <span>Beigetreten {formatDate(profile.created_at)}</span>
+              
+              {/* Bio */}
+              {isLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              ) : profile.bio ? (
+                <p className="text-sm text-muted-foreground">{profile.bio}</p>
+              ) : null}
+              
+              {/* Meta Info */}
+              <div className="flex flex-wrap justify-center sm:justify-start gap-4 text-sm text-muted-foreground">
+                {isLoading ? (
+                  <>
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-40" />
+                  </>
+                ) : (
+                  <>
+                    {profile.location && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center">
+                            <MapPin className="mr-1 h-4 w-4 flex-shrink-0" />
+                            <span className="truncate max-w-[150px]">{profile.location}</span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Wohnort</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    
+                    {profile.website && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <a 
+                            href={getWebsiteUrl(profile.website)} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center hover:underline"
+                          >
+                            <Globe className="mr-1 h-4 w-4 flex-shrink-0" />
+                            <span className="truncate max-w-[150px]">{getDisplayWebsite(profile.website)}</span>
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Website</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    
+                    {profile.created_at && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center">
+                            <CalendarDays className="mr-1 h-4 w-4 flex-shrink-0" />
+                            <span>
+                              {formatDate(parseDate(profile.created_at) || new Date())}
+                            </span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Mitglied seit</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </>
+                )}
+              </div>
+              
+              {/* Stats */}
+              <div className="flex items-center justify-center sm:justify-start gap-6 text-sm font-medium">
+                <div>
+                  <span className="block font-bold">
+                    {isLoading ? <Skeleton className="h-5 w-10 inline-block" /> : (followStats?.following_count ?? 0)}
+                  </span>
+                  <span className="text-muted-foreground">Folge ich</span>
+                </div>
+                <div>
+                  <span className="block font-bold">
+                    {isLoading ? <Skeleton className="h-5 w-10 inline-block" /> : (followStats?.followers_count ?? 0)}
+                  </span>
+                  <span className="text-muted-foreground">Follower</span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 };
 

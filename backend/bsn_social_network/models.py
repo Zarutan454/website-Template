@@ -5,6 +5,7 @@ from django.db.models import CheckConstraint, Q, UniqueConstraint, F # type: ign
 from django.utils import timezone # type: ignore
 import uuid
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField, JSONField
 
 def generate_transaction_hash():
     return str(uuid.uuid4())
@@ -70,6 +71,16 @@ class User(AbstractUser):
     )
     follower_count = models.IntegerField(default=0)
     social_media_links = models.JSONField(default=dict, blank=True)
+    
+    # Moderation fields
+    is_suspended = models.BooleanField(default=False)
+    suspended_until = models.DateTimeField(null=True, blank=True)
+    suspended_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='suspended_users')
+    suspension_reason = models.TextField(blank=True, null=True)
+    warning_count = models.IntegerField(default=0)
+    last_warning_at = models.DateTimeField(null=True, blank=True)
+    auto_moderated = models.BooleanField(default=False)
+    moderation_score = models.FloatField(default=0.0)
     
     class Meta:
         db_table = 'user'
@@ -178,14 +189,33 @@ class Group(models.Model):
         ('public', 'Public'),
         ('private', 'Private'),
     ]
-    
+    TYPE_CHOICES = [
+        ('general', 'General'),
+        ('buy_sell', 'Buy & Sell'),
+        ('learning', 'Learning'),
+        ('support', 'Support'),
+        ('event', 'Event'),
+        ('custom', 'Custom'),
+    ]
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_groups')
     privacy = models.CharField(max_length=10, choices=PRIVACY_CHOICES, default='public')
+    avatar_url = models.URLField(blank=True, null=True, help_text="URL to group avatar")
+    banner_url = models.URLField(blank=True, null=True, help_text="URL to group banner")
+    tags = models.JSONField(default=list, blank=True, help_text="List of up to 5 tags")
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='general')
+    join_questions = models.JSONField(default=list, blank=True, help_text="List of join questions")
+    guidelines = models.TextField(blank=True, null=True, help_text="Group guidelines")
+    pinned_post = models.ForeignKey('Post', on_delete=models.SET_NULL, null=True, blank=True, related_name='pinned_in_groups')
+    post_approval = models.BooleanField(default=False, help_text="Require admin/mod approval for posts")
+    report_count = models.IntegerField(default=0)
+    ai_summary = models.TextField(blank=True, null=True, help_text="AI-generated group summary")
+    ai_recommendations = models.JSONField(default=list, blank=True, help_text="AI-powered recommendations")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+    token_gated = models.BooleanField(default=False, help_text="Ist die Gruppe token-gated?")
+    required_token_contract = models.CharField(max_length=100, blank=True, null=True, help_text="Contract-Adresse des erforderlichen Tokens (optional)")
     class Meta:
         db_table = 'group'
 
@@ -196,13 +226,13 @@ class GroupMembership(models.Model):
     ROLE_CHOICES = [
         ('member', 'Member'),
         ('admin', 'Admin'),
+        ('moderator', 'Moderator'),
+        ('expert', 'Expert'),
     ]
-    
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='memberships')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_memberships')
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='member')
     joined_at = models.DateTimeField(auto_now_add=True)
-    
     class Meta:
         db_table = 'group_membership'
         constraints = [
@@ -223,10 +253,27 @@ class Post(models.Model):
         ('audio', 'Audio'),
         ('document', 'Document'),
     ])
+    # Privacy-Feld für Posts
+    PRIVACY_CHOICES = [
+        ('public', 'Öffentlich'),
+        ('friends', 'Freunde'),
+        ('private', 'Privat'),
+    ]
+    privacy = models.CharField(max_length=10, choices=PRIVACY_CHOICES, default='public')
     hashtags = models.JSONField(default=list, blank=True)
     shares_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Moderation fields
+    is_reported = models.BooleanField(default=False)
+    report_count = models.IntegerField(default=0)
+    is_hidden = models.BooleanField(default=False)
+    hidden_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='hidden_posts')
+    hidden_at = models.DateTimeField(null=True, blank=True)
+    hidden_reason = models.TextField(blank=True, null=True)
+    auto_moderated = models.BooleanField(default=False)
+    moderation_score = models.FloatField(default=0.0)  # AI/ML moderation score
     
     class Meta:
         db_table = 'post'
@@ -239,6 +286,16 @@ class Comment(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # Moderation fields
+    is_reported = models.BooleanField(default=False)
+    report_count = models.IntegerField(default=0)
+    is_hidden = models.BooleanField(default=False)
+    hidden_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='hidden_comments')
+    hidden_at = models.DateTimeField(null=True, blank=True)
+    hidden_reason = models.TextField(blank=True, null=True)
+    auto_moderated = models.BooleanField(default=False)
+    moderation_score = models.FloatField(default=0.0)
     
     class Meta:
         db_table = 'comment'
@@ -277,19 +334,40 @@ class Like(models.Model):
 
 class Story(models.Model):
     '''
-    Temporary user stories
+    Facebook-like user stories (2025 feature set)
     '''
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='stories')
-    media_url = models.URLField()
-    caption = models.TextField(blank=True, null=True)  # Optional caption for text stories
-    story_type = models.CharField(max_length=20, choices=[
+    media_url = models.URLField(blank=True, null=True)
+    type = models.CharField(max_length=20, choices=[
         ('image', 'Image'),
         ('video', 'Video'),
         ('text', 'Text'),
+        ('ai', 'AI'),
+        ('collage', 'Collage'),
+        ('music', 'Music'),
+        ('poll', 'Poll'),
+        ('sticker', 'Sticker'),
     ], default='image')
-    expires_at = models.DateTimeField()
+    caption = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+    expires_at = models.DateTimeField()
+    privacy = models.CharField(max_length=20, choices=[
+        ('public', 'Öffentlich'),
+        ('friends', 'Freunde'),
+        ('custom', 'Benutzerdefiniert'),
+    ], default='friends')
+    tags = models.JSONField(blank=True, default=list)
+    location = models.CharField(max_length=255, blank=True, null=True)
+    is_highlight = models.BooleanField(default=False)
+    ai_data = models.JSONField(blank=True, null=True)
+    poll = models.OneToOneField('StoryPoll', on_delete=models.SET_NULL, blank=True, null=True, related_name='story_poll')
+    music = models.OneToOneField('StoryMusic', on_delete=models.SET_NULL, blank=True, null=True, related_name='story_music')
+    stickers = models.ManyToManyField('StorySticker', blank=True, related_name='story_stickers')
+    # Moderation fields
+    is_reported = models.BooleanField(default=False)
+    report_reason = models.TextField(blank=True, null=True)
+    report_count = models.IntegerField(default=0)
+
     class Meta:
         db_table = 'story'
 
@@ -297,87 +375,79 @@ class Story(models.Model):
         return f"Story by {self.author.username} at {self.created_at.strftime('%Y-%m-%d %H:%M')}"
 
 class StoryView(models.Model):
-    """ Tracks when a user has viewed a story. """
     story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='views')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='story_views')
     viewed_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # Ensures a user can only view a story once
         unique_together = ('story', 'user')
         ordering = ['-viewed_at']
-        db_table = 'story_view'
 
     def __str__(self):
-        return f"{self.user.username} viewed {self.story.author.username}'s story"
+        return f"{self.user.username} viewed Story {self.story.id}"
 
-class StoryLike(models.Model):
-    """ Tracks likes on stories. """
-    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='likes')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='story_likes')
+class StoryReaction(models.Model):
+    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='reactions')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='story_reactions')
+    reaction_type = models.CharField(max_length=20, choices=[
+        ('emoji', 'Emoji'),
+        ('text', 'Text'),
+    ], default='emoji')
+    value = models.CharField(max_length=255)  # Emoji oder Text
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # Ensures a user can only like a story once
-        unique_together = ('story', 'user')
+        unique_together = ('story', 'user', 'reaction_type', 'value')
         ordering = ['-created_at']
-        db_table = 'story_like'
 
-    def __str__(self):
-        return f"{self.user.username} liked {self.story.author.username}'s story"
-
-class StoryComment(models.Model):
-    """ Comments on stories. """
-    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='comments')
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='story_comments')
-    content = models.TextField(max_length=500)  # Limit comment length
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['created_at']
-        db_table = 'story_comment'
-
-    def __str__(self):
-        return f"{self.author.username} commented on {self.story.author.username}'s story"
-
-class StoryShare(models.Model):
-    """ Tracks story shares. """
-    SHARE_TYPES = [
-        ('copy_link', 'Copy Link'),
-        ('direct_message', 'Direct Message'),
-        ('post', 'Share as Post'),
-        ('external', 'External Platform'),
-    ]
-    
-    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='shares')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='story_shares')
-    share_type = models.CharField(max_length=20, choices=SHARE_TYPES, default='copy_link')
-    shared_with = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='story_shared_with')
-    external_platform = models.CharField(max_length=50, blank=True, null=True)
+class StoryReply(models.Model):
+    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='replies')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='story_replies')
+    message = models.TextField()
+    media_url = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at']
-        db_table = 'story_share'
+
+class StoryPoll(models.Model):
+    story = models.OneToOneField(Story, on_delete=models.CASCADE, related_name='poll_story')
+    question = models.CharField(max_length=255)
+    options = models.JSONField(default=list)
+    votes = models.JSONField(default=dict)  # {option: [user_ids]}
 
     def __str__(self):
-        return f"{self.user.username} shared {self.story.author.username}'s story"
+        return f"Poll: {self.question}"
 
-class StoryBookmark(models.Model):
-    """ Bookmarks for stories. """
-    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='bookmarks')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='story_bookmarks')
+class StoryMusic(models.Model):
+    story = models.OneToOneField(Story, on_delete=models.CASCADE, related_name='music_story')
+    title = models.CharField(max_length=255)
+    artist = models.CharField(max_length=255, blank=True, null=True)
+    url = models.URLField()
+    start_time = models.IntegerField(default=0)  # Sekunden
+
+    def __str__(self):
+        return f"Music: {self.title} by {self.artist}"
+
+class StorySticker(models.Model):
+    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='sticker_story')
+    sticker_url = models.URLField()
+    x = models.FloatField(default=0.5)  # Position (0-1)
+    y = models.FloatField(default=0.5)
+    scale = models.FloatField(default=1.0)
+    rotation = models.FloatField(default=0.0)
+
+    def __str__(self):
+        return f"Sticker on Story {self.story.id}"
+
+class StoryHighlight(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='story_highlights')
+    stories = models.ManyToManyField(Story, related_name='highlights')
+    title = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        # Ensures a user can only bookmark a story once
-        unique_together = ('story', 'user')
-        ordering = ['-created_at']
-        db_table = 'story_bookmark'
-
     def __str__(self):
-        return f"{self.user.username} bookmarked {self.story.author.username}'s story"
+        return f"Highlight: {self.title} ({self.user.username})"
 
 class Notification(models.Model):
     '''
@@ -400,29 +470,120 @@ class Notification(models.Model):
     class Meta:
         db_table = 'notification'
 
+class Conversation(models.Model):
+    """Model for conversations between users (1:1 oder Gruppe)"""
+    participants = models.ManyToManyField('User', related_name='conversations')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'conversation'
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"Conversation: {', '.join([u.username for u in self.participants.all()])}"
+
+class ConversationParticipant(models.Model):
+    """Optional: Status-Tracking für Teilnehmer (z.B. beigetreten, verlassen)"""
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='participants_info')
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='conversation_participations')
+    joined_at = models.DateTimeField(auto_now_add=True)
+    left_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'conversation_participant'
+        unique_together = ['conversation', 'user']
+
+class MessageRead(models.Model):
+    """Speichert, wann ein User eine Message gelesen hat (Read Receipts)"""
+    message = models.ForeignKey('Message', on_delete=models.CASCADE, related_name='read_receipts')
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='read_messages')
+    read_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'message_read'
+        unique_together = ['message', 'user']
+
 class Message(models.Model):
     '''
     Messages between users or in groups
     '''
+    MESSAGE_TYPES = [
+        ('text', 'Text'),
+        ('image', 'Image'),
+        ('video', 'Video'),
+        ('audio', 'Audio'),
+        ('file', 'File'),
+        ('voice', 'Voice'),
+        ('location', 'Location'),
+    ]
+    
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
     receiver = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='received_messages', null=True, blank=True)
     group = models.ForeignKey(Group, on_delete=models.SET_NULL, related_name='group_messages', null=True, blank=True)
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages', null=True, blank=True)
     content = models.TextField()
-    media_url = models.URLField(blank=True, null=True)
+    message_type = models.CharField(max_length=20, choices=MESSAGE_TYPES, default='text')
+    
+    # Voice message fields
+    voice_file = models.FileField(upload_to='voice_messages/', null=True, blank=True)
+    voice_duration = models.IntegerField(null=True, blank=True)  # Duration in seconds
+    voice_waveform = models.JSONField(null=True, blank=True)  # Audio waveform data
+    
+    # File fields
+    file = models.FileField(upload_to='message_files/', null=True, blank=True)
+    file_name = models.CharField(max_length=255, blank=True)
+    file_size = models.IntegerField(null=True, blank=True)  # File size in bytes
+    
+    # Location fields
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    location_name = models.CharField(max_length=255, blank=True)
+    
+    is_edited = models.BooleanField(default=False)
+    edited_at = models.DateTimeField(null=True, blank=True)
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     def clean(self):
-        if self.receiver is None and self.group is None:
-            raise ValidationError('A message must have either a receiver or a group')
+        if not self.receiver and not self.group and not self.conversation:
+            raise ValidationError("Message must have a receiver, group, or conversation")
+        if self.receiver and self.group:
+            raise ValidationError("Message cannot have both receiver and group")
     
     class Meta:
         db_table = 'message'
         constraints = [
             CheckConstraint(
-                check=Q(receiver__isnull=False) | Q(group__isnull=False),
-                name='message_has_recipient'
+                check=Q(receiver__isnull=False) | Q(group__isnull=False) | Q(conversation__isnull=False),
+                name='message_has_target'
             )
         ]
+
+class MessageReaction(models.Model):
+    """Model for message reactions"""
+    REACTION_TYPES = [
+        ('like', '👍'),
+        ('love', '❤️'),
+        ('laugh', '😂'),
+        ('wow', '😮'),
+        ('sad', '😢'),
+        ('angry', '😠'),
+    ]
+    
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='reactions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='message_reactions')
+    reaction_type = models.CharField(max_length=20, choices=REACTION_TYPES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'message_reactions'
+        unique_together = ['message', 'user', 'reaction_type']
+    
+    def __str__(self):
+        return f"{self.user.username} {self.reaction_type} on {self.message}"
 
 class Achievement(models.Model):
     '''
@@ -567,9 +728,6 @@ class NFT(models.Model):
     is_locked = models.BooleanField(default=False)
     transaction_hash = models.CharField(max_length=64, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    # Statistiken
-    views = models.IntegerField(default=0)
-    likes = models.IntegerField(default=0)
     
     class Meta:
         db_table = 'nft'
@@ -1082,24 +1240,345 @@ class Boost(models.Model):
     expires_at = models.DateTimeField()
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    
     class Meta:
         db_table = 'boost'
         ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.boost_type} ({self.multiplier}x)"
+    
+    def save(self, *args, **kwargs):
+        # Auto-expire boosts
+        if self.expires_at and self.expires_at <= timezone.now():
+            self.is_active = False
+        super().save(*args, **kwargs)
+
+class VideoCall(models.Model):
+    """Model for tracking video call sessions"""
+    CALL_STATUS_CHOICES = [
+        ('initiating', 'Initiating'),
+        ('active', 'Active'),
+        ('ended', 'Ended'),
+        ('missed', 'Missed'),
+    ]
+    
+    initiator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='initiated_calls')
+    participants = models.ManyToManyField(User, related_name='participated_calls')
+    room_id = models.CharField(max_length=100, unique=True)
+    status = models.CharField(max_length=20, choices=CALL_STATUS_CHOICES, default='initiating')
+    started_at = models.DateTimeField(auto_now_add=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    duration = models.IntegerField(null=True, blank=True)  # Duration in seconds
+    
+    class Meta:
+        db_table = 'video_calls'
+
+class VideoCallParticipant(models.Model):
+    """Model for tracking individual participant status in video calls"""
+    PARTICIPANT_STATUS_CHOICES = [
+        ('invited', 'Invited'),
+        ('joined', 'Joined'),
+        ('left', 'Left'),
+        ('declined', 'Declined'),
+    ]
+    
+    call = models.ForeignKey(VideoCall, on_delete=models.CASCADE, related_name='call_participants')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='call_participations')
+    status = models.CharField(max_length=20, choices=PARTICIPANT_STATUS_CHOICES, default='invited')
+    joined_at = models.DateTimeField(null=True, blank=True)
+    left_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'video_call_participants'
+        unique_together = ['call', 'user']
+
+class Hashtag(models.Model):
+    """Model for hashtags used in posts"""
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+    posts_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-posts_count', '-created_at']
+    
+    def __str__(self):
+        return f"#{self.name}"
+    
+    def update_posts_count(self):
+        """Update the posts count for this hashtag"""
+        self.posts_count = self.posts.count()
+        self.save(update_fields=['posts_count'])
+
+class PostHashtag(models.Model):
+    """Many-to-many relationship between posts and hashtags"""
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='post_hashtag_links')
+    hashtag = models.ForeignKey(Hashtag, on_delete=models.CASCADE, related_name='hashtag_posts')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['post', 'hashtag']
+        ordering = ['created_at']
+    
+    def __str__(self):
+        return f"{self.post.id} - {self.hashtag.name}"
+
+class ContentReport(models.Model):
+    """
+    Central content reporting system
+    """
+    REPORT_TYPES = [
+        ('spam', 'Spam'),
+        ('inappropriate', 'Inappropriate Content'),
+        ('harassment', 'Harassment'),
+        ('violence', 'Violence'),
+        ('copyright', 'Copyright Violation'),
+        ('fake_news', 'Fake News'),
+        ('other', 'Other'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending Review'),
+        ('under_review', 'Under Review'),
+        ('resolved', 'Resolved'),
+        ('dismissed', 'Dismissed'),
+        ('escalated', 'Escalated'),
+    ]
+    
+    # Report details
+    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reports_filed')
+    content_type = models.CharField(max_length=20)  # 'post', 'comment', 'story', 'user'
+    content_id = models.IntegerField()
+    report_type = models.CharField(max_length=20, choices=REPORT_TYPES)
+    reason = models.TextField()
+    evidence = models.JSONField(default=dict, blank=True)  # Screenshots, links, etc.
+    
+    # Moderation
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    assigned_moderator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_reports')
+    moderator_notes = models.TextField(blank=True, null=True)
+    resolution_action = models.CharField(max_length=50, blank=True)  # 'warn', 'suspend', 'delete', etc.
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'content_report'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['content_type', 'content_id']),
+            models.Index(fields=['status', 'created_at']),
+        ]
+    
+    def __str__(self):
+        return f"Report {self.id} - {self.content_type}:{self.content_id} by {self.reporter.username}"
+
+class ModeratorRole(models.Model):
+    """
+    Moderator roles and permissions
+    """
+    ROLE_CHOICES = [
+        ('junior_moderator', 'Junior Moderator'),
+        ('senior_moderator', 'Senior Moderator'),
+        ('admin_moderator', 'Admin Moderator'),
+        ('super_admin', 'Super Admin'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='moderator_role')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    permissions = models.JSONField(default=dict)  # Granular permissions
+    is_active = models.BooleanField(default=True)
+    assigned_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='moderator_assignments')
+    assigned_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'moderator_role'
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.role}"
+
+class AutoModerationRule(models.Model):
+    """
+    Automated moderation rules
+    """
+    RULE_TYPES = [
+        ('keyword_filter', 'Keyword Filter'),
+        ('spam_detection', 'Spam Detection'),
+        ('toxicity_score', 'Toxicity Score'),
+        ('repetitive_content', 'Repetitive Content'),
+        ('rate_limiting', 'Rate Limiting'),
+    ]
+    
+    ACTION_CHOICES = [
+        ('flag', 'Flag for Review'),
+        ('hide', 'Auto Hide'),
+        ('warn', 'Send Warning'),
+        ('suspend', 'Suspend User'),
+        ('delete', 'Auto Delete'),
+    ]
+    
+    name = models.CharField(max_length=100)
+    rule_type = models.CharField(max_length=20, choices=RULE_TYPES)
+    content_type = models.CharField(max_length=20)  # 'post', 'comment', 'user'
+    conditions = models.JSONField()  # Rule conditions
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    threshold = models.FloatField(default=0.5)  # Trigger threshold
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'auto_moderation_rule'
+    
+    def __str__(self):
+        return f"{self.name} - {self.rule_type}"
+
+class ModerationAuditLog(models.Model):
+    """
+    Detailed audit log for moderation actions
+    """
+    ACTION_TYPES = [
+        ('report_created', 'Report Created'),
+        ('report_assigned', 'Report Assigned'),
+        ('report_resolved', 'Report Resolved'),
+        ('content_hidden', 'Content Hidden'),
+        ('content_deleted', 'Content Deleted'),
+        ('user_warned', 'User Warned'),
+        ('user_suspended', 'User Suspended'),
+        ('auto_moderation', 'Auto Moderation'),
+    ]
+    
+    moderator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='moderation_actions')
+    action = models.CharField(max_length=20, choices=ACTION_TYPES)
+    content_type = models.CharField(max_length=20)
+    content_id = models.IntegerField()
+    target_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='moderation_audit_logs')
+    details = models.JSONField(default=dict)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'moderation_audit_log'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.action} by {self.moderator.username if self.moderator else 'System'} on {self.content_type}:{self.content_id}"
+
+class UserPrivacy(models.Model):
+    '''
+    User privacy settings for profile visibility
+    '''
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='privacy_settings')
+    show_email = models.BooleanField(default=False)
+    show_friends = models.BooleanField(default=True)
+    show_photos = models.BooleanField(default=True)
+    show_activity = models.BooleanField(default=True)
+    show_analytics = models.BooleanField(default=True)
+    show_social_links = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'user_privacy'
+    
+    def __str__(self):
+        return f"Privacy settings for {self.user.username}"
+
+class PhotoAlbum(models.Model):
+    '''
+    Foto-Album eines Nutzers
+    '''
+    PRIVACY_CHOICES = [
+        ('public', 'Öffentlich'),
+        ('friends', 'Nur Freunde'),
+        ('private', 'Privat'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='photo_albums')
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    privacy = models.CharField(max_length=10, choices=PRIVACY_CHOICES, default='public')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'photo_album'
+        unique_together = ('user', 'name')
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.user.username}'s {self.get_boost_type_display()} Boost"
+        return f"{self.name} ({self.user.username})"
 
-    def save(self, *args, **kwargs):
-        if not self.pk: # Set expiration only on creation
-            # Duration logic can be centralized here based on boost_type
-            duration_minutes = {
-                'post': 10,
-                'comment': 5,
-                'like': 2,
-                'share': 8,
-                'login': 15,
-                'referral': 30,
-            }.get(self.boost_type, 0)
-            self.expires_at = timezone.now() + timezone.timedelta(minutes=duration_minutes)
-        super().save(*args, **kwargs)
+class Photo(models.Model):
+    '''
+    Einzelnes Foto in einem Album
+    '''
+    album = models.ForeignKey(PhotoAlbum, on_delete=models.CASCADE, related_name='photos')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='photos')
+    image = models.ImageField(upload_to='user_photos/')
+    caption = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_deleted = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'photo'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Photo {self.id} in {self.album.name} ({self.user.username})"
+
+class GroupEvent(models.Model):
+    '''
+    Events associated with a group (Facebook-style)
+    '''
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='events')
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField(blank=True, null=True)
+    location = models.CharField(max_length=255, blank=True, null=True)
+    cover_image_url = models.URLField(blank=True, null=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_group_events')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'group_event'
+        ordering = ['-start_time']
+
+    def __str__(self):
+        return f"{self.title} ({self.group.name})"
+
+class GroupEventRSVP(models.Model):
+    '''
+    RSVP-Status für Gruppen-Events
+    '''
+    RSVP_CHOICES = [
+        ('going', 'Going'),
+        ('interested', 'Interested'),
+        ('declined', 'Declined'),
+    ]
+    event = models.ForeignKey('GroupEvent', on_delete=models.CASCADE, related_name='rsvps')
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='event_rsvps')
+    status = models.CharField(max_length=10, choices=RSVP_CHOICES)
+    responded_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'group_event_rsvp'
+        constraints = [
+            models.UniqueConstraint(fields=['event', 'user'], name='unique_event_rsvp')
+        ]
+
+class PostPoll(models.Model):
+    post = models.OneToOneField('Post', on_delete=models.CASCADE, related_name='poll')
+    question = models.CharField(max_length=255)
+    options = models.JSONField(default=list)
+    votes = models.JSONField(default=dict)  # {option: [user_ids]}
+    expires_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Poll: {self.question}"

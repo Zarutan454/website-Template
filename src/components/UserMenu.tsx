@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, User, Settings, LogOut, Wallet, Crown, Shield } from 'lucide-react';
-import { useLanguage } from './LanguageProvider';
+import { useLanguage } from './LanguageProvider.utils';
 import { authAPI } from '@/lib/django-api-new';
 import { toast } from 'sonner';
 

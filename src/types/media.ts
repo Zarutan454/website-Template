@@ -17,9 +17,7 @@ export interface Media {
   like_count?: number;
   comment_count?: number;
   is_liked?: boolean;
-  is_liked_by_user?: boolean;
   is_bookmarked?: boolean;
-  is_bookmarked_by_user?: boolean;
   media_urls?: string[];
   metadata?: {
     cameraMake?: string;

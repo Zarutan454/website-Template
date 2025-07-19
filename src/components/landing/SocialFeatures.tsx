@@ -4,7 +4,7 @@ import { useInView } from 'react-intersection-observer';
 import { MessageSquare, Users, Share2, Zap, Activity, Bell, Heart, Award, Shield, Coins as CoinsIcon } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { GradientText } from '@/components/ui/gradient-text';
-import { useLanguage } from '@/components/LanguageProvider';
+import { useLanguage } from '@/components/LanguageProvider.utils';
 
 const SocialFeatures: React.FC = () => {
   const id = "social-networking";

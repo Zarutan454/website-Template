@@ -35,6 +35,10 @@ const LeaderboardPreview: React.FC = () => {
     }
   };
 
+  // TODO: Django-API-Migration: LeaderboardPreview auf Django-API umstellen
+  // Die gesamte Logik für das Laden der Leaderboard-Daten muss auf die Django-API migriert werden.
+  // Aktuell ist keine Funktionalität vorhanden, da Supabase entfernt wurde.
+
   return (
     <motion.div
       variants={containerVariants}

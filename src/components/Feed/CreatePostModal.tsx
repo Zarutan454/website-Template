@@ -13,13 +13,15 @@ interface CreatePostModalProps {
   onClose: () => void;
   pendingPostData?: CreatePostData | null;
   onPostCreated: (postData: CreatePostData) => Promise<void>;
+  mode?: 'text' | 'image' | 'video';
 }
 
 const CreatePostModal: React.FC<CreatePostModalProps> = ({
   isOpen,
   onClose,
   pendingPostData,
-  onPostCreated
+  onPostCreated,
+  mode = 'text',
 }) => {
   const { profile } = useProfile();
   const [content, setContent] = useState('');
@@ -30,6 +32,8 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
   const [hashtags, setHashtags] = useState<string[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const { user: profileAuth } = useAuth();
 
@@ -52,6 +56,14 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
         }
         setHashtags(pendingPostData.hashtags || []);
       }
+      // Fokussiere je nach Modus
+      setTimeout(() => {
+        if (mode === 'text' && textAreaRef.current) {
+          textAreaRef.current.focus();
+        } else if ((mode === 'image' || mode === 'video') && fileInputRef.current) {
+          fileInputRef.current.click();
+        }
+      }, 100);
     } else {
       // Reset form when modal closes
       setContent('');
@@ -60,7 +72,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
       setMediaType(null);
       setHashtags([]);
     }
-  }, [isOpen, pendingPostData]);
+  }, [isOpen, pendingPostData, mode]);
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return 'U';
@@ -138,7 +150,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
         throw new Error('No access token found');
       }
 
-      const response = await fetch('http://localhost:8000/api/upload/media/', {
+      const response = await fetch('http://localhost:8080/api/upload/media/', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -292,6 +304,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
             </Avatar>
             
             <textarea
+              ref={textAreaRef}
               value={content}
               onChange={handleContentChange}
               placeholder="Was gibt's Neues? Benutze #hashtags um Themen zu markieren"
@@ -332,6 +345,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
             <div className="flex gap-2">
               <label className="cursor-pointer text-gray-400 hover:text-white flex items-center gap-1">
                 <input 
+                  ref={fileInputRef}
                   type="file" 
                   accept="image/*" 
                   onChange={(e) => handleMediaChange(e, 'image')}

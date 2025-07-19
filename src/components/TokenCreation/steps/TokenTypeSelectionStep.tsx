@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useTokenCreation } from '../context/TokenCreationContext';
+import { useTokenCreation } from '../context/TokenCreationContext.utils';
 import { TOKEN_TYPES } from '../data/tokenData';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { InfoIcon } from 'lucide-react';

@@ -46,7 +46,6 @@ const LightboxControls: React.FC<LightboxControlsProps> = ({
       setDownloadProgress(0);
       await onDownload();
     } catch (error) {
-      console.error("Fehler beim Download:", error);
     } finally {
       setDownloadProgress(null);
     }
@@ -71,7 +70,6 @@ const LightboxControls: React.FC<LightboxControlsProps> = ({
         alert('Link copied to clipboard!');
       }
     } catch (err) {
-      console.error("Fehler beim Teilen:", err);
     } finally {
       setIsSharing(false);
     }

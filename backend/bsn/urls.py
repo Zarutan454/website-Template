@@ -37,8 +37,13 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    # Grappelli Admin UI
+    path('grappelli/', include('grappelli.urls')),
     # Admin
     path('admin/', admin.site.urls),
+    
+    # Authentication (allauth)
+    path('accounts/', include('allauth.urls')),
     
     # API Documentation
     path('api/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
@@ -46,9 +51,6 @@ urlpatterns = [
     
     # API Endpoints - Main BSN API
     path('api/', include('bsn_social_network.urls')),  # Direct API access
-    
-    # User API Endpoints
-    path('api/auth/', include('users.urls')),  # User authentication endpoints
     
     # Legacy API paths (for backward compatibility)
     path('api/v1/landing/', include('landing.urls')),

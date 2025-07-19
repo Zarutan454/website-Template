@@ -1,7 +1,7 @@
 
 import React from 'react';
 import NetworkSelection from './NetworkSelection';
-import { useTokenCreation } from '../context/TokenCreationContext';
+import { useTokenCreation } from '../context/TokenCreationContext.utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { NetworkOption } from '../types';

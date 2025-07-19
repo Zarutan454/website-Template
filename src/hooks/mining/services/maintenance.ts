@@ -1,7 +1,7 @@
 
-import { supabase } from '@/lib/supabase';
 import { formatDateForDatabase } from '../utils';
 
+// TODO: Django-API-Migration: maintenance auf Django-API umstellen
 // Check and stop inactive miners
 export const checkAndStopInactiveMiners = async (inactivityMinutes: number = 60): Promise<number> => {
   try {

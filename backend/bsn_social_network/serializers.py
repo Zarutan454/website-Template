@@ -5,9 +5,9 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from django.core.validators import URLValidator
-from urllib.parse import urlparse
 from .models import *
+from .models import PhotoAlbum, Photo
+from .models import PostPoll
 
 # ========== Authentication & User Management ==========
 
@@ -85,282 +85,6 @@ class UserLoginSerializer(serializers.Serializer):
         logger.warning('Login failed: Email/Username oder Passwort fehlt')
         raise serializers.ValidationError({'detail': 'Bitte Email/Username und Passwort angeben'})
 
-class UserProfileAboutSerializer(serializers.ModelSerializer):
-    """
-    Dedicated serializer for user profile about section with enhanced validation
-    """
-    bio = serializers.CharField(max_length=500, required=False, allow_blank=True)
-    occupation = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    company = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    interests = serializers.ListField(
-        child=serializers.CharField(max_length=50),
-        max_length=10,
-        required=False,
-        allow_empty=True
-    )
-    skills = serializers.ListField(
-        child=serializers.CharField(max_length=50),
-        max_length=15,
-        required=False,
-        allow_empty=True
-    )
-    social_media_links = serializers.JSONField(required=False, allow_null=True)
-    
-    # Allowed social media platforms
-    ALLOWED_PLATFORMS = [
-        'website', 'twitter', 'github', 'linkedin', 'facebook', 'instagram'
-    ]
-    
-    class Meta:
-        model = User
-        fields = ('bio', 'occupation', 'company', 'interests', 'skills', 'social_media_links')
-    
-    def validate_bio(self, value):
-        """Validate bio field"""
-        if value and len(value.strip()) > 500:
-            raise serializers.ValidationError("Bio darf maximal 500 Zeichen lang sein.")
-        return value.strip() if value else ""
-    
-    def validate_occupation(self, value):
-        """Validate occupation field"""
-        if value and len(value.strip()) > 100:
-            raise serializers.ValidationError("Beruf darf maximal 100 Zeichen lang sein.")
-        return value.strip() if value else ""
-    
-    def validate_company(self, value):
-        """Validate company field"""
-        if value and len(value.strip()) > 100:
-            raise serializers.ValidationError("Firma darf maximal 100 Zeichen lang sein.")
-        return value.strip() if value else ""
-    
-    def validate_interests(self, value):
-        """Validate interests list"""
-        if not value:
-            return []
-        
-        if len(value) > 10:
-            raise serializers.ValidationError("Maximal 10 Interessen erlaubt.")
-        
-        # Clean and validate each interest
-        cleaned_interests = []
-        for interest in value:
-            if not isinstance(interest, str):
-                raise serializers.ValidationError("Interessen müssen Textfelder sein.")
-            
-            cleaned = interest.strip()
-            if cleaned:
-                if len(cleaned) > 50:
-                    raise serializers.ValidationError("Jedes Interesse darf maximal 50 Zeichen lang sein.")
-                cleaned_interests.append(cleaned)
-        
-        return cleaned_interests
-    
-    def validate_skills(self, value):
-        """Validate skills list"""
-        if not value:
-            return []
-        
-        if len(value) > 15:
-            raise serializers.ValidationError("Maximal 15 Skills erlaubt.")
-        
-        # Clean and validate each skill
-        cleaned_skills = []
-        for skill in value:
-            if not isinstance(skill, str):
-                raise serializers.ValidationError("Skills müssen Textfelder sein.")
-            
-            cleaned = skill.strip()
-            if cleaned:
-                if len(cleaned) > 50:
-                    raise serializers.ValidationError("Jeder Skill darf maximal 50 Zeichen lang sein.")
-                cleaned_skills.append(cleaned)
-        
-        return cleaned_skills
-    
-    def validate_social_media_links(self, value):
-        """Validate social media links"""
-        if not value:
-            return {}
-        
-        if not isinstance(value, dict):
-            raise serializers.ValidationError("Social Media Links müssen ein Objekt sein.")
-        
-        validated_links = {}
-        url_validator = URLValidator()
-        
-        for platform, url in value.items():
-            # Check if platform is allowed
-            if platform not in self.ALLOWED_PLATFORMS:
-                raise serializers.ValidationError(
-                    f"Plattform '{platform}' ist nicht erlaubt. "
-                    f"Erlaubte Plattformen: {', '.join(self.ALLOWED_PLATFORMS)}"
-                )
-            
-            # Skip empty URLs
-            if not url or not url.strip():
-                continue
-            
-            url = url.strip()
-            
-            # Validate URL format
-            try:
-                url_validator(url)
-            except ValidationError:
-                raise serializers.ValidationError(
-                    f"Ungültige URL für {platform}: {url}. "
-                    f"URL muss mit http:// oder https:// beginnen."
-                )
-            
-            # Additional platform-specific validation
-            parsed_url = urlparse(url)
-            domain = parsed_url.netloc.lower()
-            
-            # Platform-specific domain validation (optional, can be extended)
-            platform_domains = {
-                'twitter': ['twitter.com', 'x.com'],
-                'github': ['github.com'],
-                'linkedin': ['linkedin.com'],
-                'facebook': ['facebook.com', 'fb.com'],
-                'instagram': ['instagram.com'],
-            }
-            
-            if platform in platform_domains:
-                valid_domains = platform_domains[platform]
-                if not any(domain.endswith(d) for d in valid_domains):
-                    logger.warning(
-                        f"Domain mismatch for {platform}: {domain} "
-                        f"(expected: {valid_domains})"
-                    )
-                    # Don't raise error, just log warning for flexibility
-            
-            validated_links[platform] = url
-        
-        return validated_links
-    
-    def update(self, instance, validated_data):
-        """Update user profile about fields"""
-        # Handle UserProfile fields
-        profile, created = UserProfile.objects.get_or_create(user=instance)
-        
-        # Update UserProfile fields
-        if 'bio' in validated_data:
-            profile.bio = validated_data['bio']
-        if 'occupation' in validated_data:
-            profile.occupation = validated_data['occupation']
-        if 'company' in validated_data:
-            profile.company = validated_data['company']
-        if 'interests' in validated_data:
-            profile.interests = validated_data['interests']
-        if 'skills' in validated_data:
-            profile.skills = validated_data['skills']
-        
-        profile.save()
-        
-        # Update User fields
-        if 'social_media_links' in validated_data:
-            instance.social_media_links = validated_data['social_media_links']
-        
-        instance.save()
-        return instance
-
-class UserSocialLinksSerializer(serializers.ModelSerializer):
-    """
-    Dedicated serializer for user social media links with enhanced validation
-    """
-    social_media_links = serializers.JSONField(required=False, allow_null=True)
-    
-    # Allowed social media platforms
-    ALLOWED_PLATFORMS = [
-        'website', 'twitter', 'github', 'linkedin', 'facebook', 'instagram'
-    ]
-    
-    class Meta:
-        model = User
-        fields = ('social_media_links',)
-    
-    def validate_social_media_links(self, value):
-        """Validate social media links with enhanced checks"""
-        if not value:
-            return {}
-        
-        if not isinstance(value, dict):
-            raise serializers.ValidationError("Social Media Links müssen ein Objekt sein.")
-        
-        validated_links = {}
-        url_validator = URLValidator()
-        
-        for platform, url in value.items():
-            # Check if platform is allowed
-            if platform not in self.ALLOWED_PLATFORMS:
-                raise serializers.ValidationError(
-                    f"Plattform '{platform}' ist nicht erlaubt. "
-                    f"Erlaubte Plattformen: {', '.join(self.ALLOWED_PLATFORMS)}"
-                )
-            
-            # Skip empty URLs
-            if not url or not url.strip():
-                continue
-            
-            url = url.strip()
-            
-            # Validate URL format
-            try:
-                url_validator(url)
-            except ValidationError:
-                raise serializers.ValidationError(
-                    f"Ungültige URL für {platform}: {url}. "
-                    f"URL muss mit http:// oder https:// beginnen."
-                )
-            
-            # Additional platform-specific validation
-            parsed_url = urlparse(url)
-            domain = parsed_url.netloc.lower()
-            
-            # Platform-specific domain validation with stricter checks
-            platform_domains = {
-                'twitter': ['twitter.com', 'x.com'],
-                'github': ['github.com'],
-                'linkedin': ['linkedin.com'],
-                'facebook': ['facebook.com', 'fb.com'],
-                'instagram': ['instagram.com'],
-            }
-            
-            if platform in platform_domains:
-                valid_domains = platform_domains[platform]
-                if not any(domain.endswith(d) for d in valid_domains):
-                    raise serializers.ValidationError(
-                        f"Ungültige Domain für {platform}: {domain}. "
-                        f"Erlaubte Domains: {', '.join(valid_domains)}"
-                    )
-            
-            # Check for suspicious patterns
-            if len(url) > 500:
-                raise serializers.ValidationError(
-                    f"URL für {platform} ist zu lang (max. 500 Zeichen)."
-                )
-            
-            validated_links[platform] = url
-        
-        return validated_links
-    
-    def update(self, instance, validated_data):
-        """Update user social media links"""
-        if 'social_media_links' in validated_data:
-            instance.social_media_links = validated_data['social_media_links']
-            instance.save()
-        return instance
-    
-    def to_representation(self, instance):
-        """Custom representation with additional metadata"""
-        data = super().to_representation(instance)
-        
-        # Add metadata about social links
-        social_links = data.get('social_media_links', {})
-        data['social_links_count'] = len([url for url in social_links.values() if url])
-        data['available_platforms'] = self.ALLOWED_PLATFORMS
-        
-        return data
-
 class UserProfileSerializer(serializers.ModelSerializer):
     alpha_access_status = serializers.SerializerMethodField()
     wallet_balance = serializers.SerializerMethodField()
@@ -368,14 +92,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     display_name = serializers.SerializerMethodField()
     is_verified = serializers.SerializerMethodField()
     profile_complete = serializers.SerializerMethodField()
-    # Neue Felder aus UserProfile
-    occupation = serializers.SerializerMethodField()
-    company = serializers.SerializerMethodField()
-    interests = serializers.SerializerMethodField()
-    skills = serializers.SerializerMethodField()
-    bio = serializers.SerializerMethodField()
-    social_media_links = serializers.SerializerMethodField()
-
+    
     class Meta:
         model = User
         fields = (
@@ -383,12 +100,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'wallet_address', 'is_alpha_user', 'alpha_access_status',
             'influencer_category', 'follower_count', 'social_media_links',
             'wallet_balance', 'mining_stats', 'created_at',
-            'avatar_url', 'cover_url', 'is_verified', 'profile_complete',
-            # UserProfile-Felder:
-            'occupation', 'company', 'interests', 'skills', 'bio'
+            'avatar_url', 'cover_url', 'is_verified', 'profile_complete'
         )
-        read_only_fields = ('id', 'is_alpha_user', 'created_at', 'avatar_url', 'cover_url')
-
+        read_only_fields = ('id', 'is_alpha_user', 'created_at')
+    
     def get_display_name(self, obj):
         """Get display name from first_name + last_name or fallback to username"""
         if obj.first_name and obj.last_name:
@@ -434,38 +149,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         except:
             return None
 
-    def get_occupation(self, obj):
-        try:
-            return obj.profile.occupation or ''
-        except Exception:
-            return ''
-    def get_company(self, obj):
-        try:
-            return obj.profile.company or ''
-        except Exception:
-            return ''
-    def get_interests(self, obj):
-        try:
-            return obj.profile.interests or []
-        except Exception:
-            return []
-    def get_skills(self, obj):
-        try:
-            return obj.profile.skills or []
-        except Exception:
-            return []
-    def get_bio(self, obj):
-        try:
-            return obj.profile.bio or ''
-        except Exception:
-            return ''
-
-    def get_social_media_links(self, obj):
-        try:
-            return obj.social_media_links or {}
-        except Exception:
-            return {}
-
 class AlphaAccessRequestSerializer(serializers.Serializer):
     reason = serializers.ChoiceField(choices=[
         ('referral', 'Referral Validation'),
@@ -478,6 +161,16 @@ class AlphaAccessRequestSerializer(serializers.Serializer):
 
 # ========== Social Network ==========
 
+class StoryPollSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StoryPoll
+        fields = ['id', 'question', 'options', 'votes']
+
+class PostPollSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostPoll
+        fields = ['id', 'question', 'options', 'votes', 'expires_at']
+
 class PostSerializer(serializers.ModelSerializer):
     author = UserProfileSerializer(read_only=True)
     likes_count = serializers.IntegerField(read_only=True)
@@ -485,13 +178,16 @@ class PostSerializer(serializers.ModelSerializer):
     shares_count = serializers.SerializerMethodField()
     is_liked_by_user = serializers.SerializerMethodField()
     is_bookmarked_by_user = serializers.SerializerMethodField()
+    privacy = serializers.ChoiceField(choices=Post.PRIVACY_CHOICES, default='public')
+    author_role = serializers.SerializerMethodField()
+    poll = PostPollSerializer(read_only=True)
     
     class Meta:
         model = Post
         fields = (
-            'id', 'author', 'group', 'content', 'media_url', 'media_type', 'hashtags',
+            'id', 'author', 'group', 'content', 'media_url', 'media_type', 'privacy', 'hashtags',
             'likes_count', 'comments_count', 'shares_count', 'is_liked_by_user', 
-            'is_bookmarked_by_user', 'created_at', 'updated_at'
+            'is_bookmarked_by_user', 'author_role', 'created_at', 'updated_at', 'poll'
         )
         read_only_fields = ('id', 'author', 'shares_count', 'created_at', 'updated_at')
     
@@ -515,6 +211,17 @@ class PostSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.bookmarked_by.filter(user=request.user).exists()
         return False
+    
+    def get_author_role(self, obj):
+        """Get the role of the post author in the group"""
+        if not obj.group:
+            return None
+        
+        try:
+            membership = GroupMembership.objects.get(group=obj.group, user=obj.author)
+            return membership.role
+        except GroupMembership.DoesNotExist:
+            return None
 
 class CommentSerializer(serializers.ModelSerializer):
     author = UserProfileSerializer(read_only=True)
@@ -543,14 +250,69 @@ class GroupSerializer(serializers.ModelSerializer):
     member_count = serializers.IntegerField(read_only=True)
     posts_count = serializers.IntegerField(read_only=True)
     is_member = serializers.BooleanField(read_only=True)
+    is_admin = serializers.SerializerMethodField()
+    role = serializers.SerializerMethodField()
+    pinned_post = PostSerializer(read_only=True)
+    token_gated = serializers.BooleanField(default=False)
+    required_token_contract = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+    def get_is_admin(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        membership = obj.memberships.filter(user=request.user).first()
+        return membership and membership.role == 'admin'
+
+    def get_role(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+        membership = obj.memberships.filter(user=request.user).first()
+        return membership.role if membership else None
+
+    def to_internal_value(self, data):
+        import logging
+        logger = logging.getLogger('django')
+        logger.error('GroupSerializer.to_internal_value: raw data = %s', dict(data))
+        logger.error('GroupSerializer.to_internal_value: token_gated in data = %s', data.get('token_gated', 'NOT FOUND'))
+        result = super().to_internal_value(data)
+        logger.error('GroupSerializer.to_internal_value: validated result = %s', result)
+        return result
+
+    def validate_token_gated(self, value):
+        import logging
+        logger = logging.getLogger('django')
+        logger.error('GroupSerializer.validate_token_gated: input value = %s (type: %s)', value, type(value))
+        
+        # Akzeptiere 'true'/'false' (String) und echte Booleans
+        if isinstance(value, bool):
+            logger.error('GroupSerializer.validate_token_gated: returning bool = %s', value)
+            return value
+        if isinstance(value, str):
+            if value.lower() == 'true':
+                logger.error('GroupSerializer.validate_token_gated: converting "true" to True')
+                return True
+            elif value.lower() == 'false':
+                logger.error('GroupSerializer.validate_token_gated: converting "false" to False')
+                return False
+        logger.error('GroupSerializer.validate_token_gated: using default False')
+        return False
     
     class Meta:
         model = Group
         fields = (
             'id', 'name', 'description', 'creator', 'privacy',
-            'member_count', 'posts_count', 'is_member', 'created_at'
+            'avatar_url', 'banner_url', 'tags', 'type', 'join_questions',
+            'guidelines', 'pinned_post', 'post_approval', 'report_count',
+            'ai_summary', 'ai_recommendations',
+            'created_at', 'updated_at',
+            'token_gated', 'required_token_contract',
+            'member_count', 'posts_count', 'is_member', 'is_admin', 'role',
         )
-        read_only_fields = ('id', 'creator', 'created_at', 'member_count', 'posts_count', 'is_member')
+        read_only_fields = (
+            'id', 'creator', 'created_at', 'member_count', 'posts_count', 'is_member',
+            'is_admin', 'role', 'pinned_post', 'report_count', 'ai_summary', 'ai_recommendations'
+        )
 
 class FriendshipSerializer(serializers.ModelSerializer):
     requester = UserProfileSerializer(read_only=True)
@@ -776,9 +538,9 @@ class NFTSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'token_id', 'name', 'description', 'owner', 'creator',
             'nft_type', 'media_url', 'metadata', 'rarity', 'is_locked',
-            'transaction_hash', 'created_at', 'views', 'likes'
+            'transaction_hash', 'created_at'
         )
-        read_only_fields = ('id', 'token_id', 'owner', 'creator', 'created_at', 'views', 'likes')
+        read_only_fields = ('id', 'token_id', 'owner', 'creator', 'created_at')
 
 # ========== Notifications ==========
 
@@ -831,35 +593,37 @@ class DemoTransactionSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'created_at')
 
 class StoryViewSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer(read_only=True)
     class Meta:
         model = StoryView
         fields = ['user', 'viewed_at']
 
+class StoryHighlightSerializer(serializers.ModelSerializer):
+    stories = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    class Meta:
+        model = StoryHighlight
+        fields = ['id', 'title', 'stories', 'created_at']
+
 class StorySerializer(serializers.ModelSerializer):
     author = UserProfileSerializer(read_only=True)
     is_viewed = serializers.SerializerMethodField()
-    viewed = serializers.SerializerMethodField()
     views_count = serializers.SerializerMethodField()
-    expires_at = serializers.DateTimeField(read_only=True)
-    
-    # Frontend compatibility: 'type' for both input and output
-    type = serializers.CharField(source='story_type')  # Maps to story_type field in model
+    reactions = serializers.SerializerMethodField()
+    replies = serializers.SerializerMethodField()
+    stickers = serializers.SerializerMethodField()
+    music = serializers.SerializerMethodField()
+    poll = serializers.SerializerMethodField()
+    viewers = serializers.SerializerMethodField()
+    highlights = serializers.SerializerMethodField()
 
     class Meta:
         model = Story
         fields = (
-            'id', 'author', 'media_url', 'caption', 
-            'type',  # For both input and output
-            'expires_at', 'created_at', 'is_viewed', 'viewed', 'views_count'
+            'id', 'author', 'media_url', 'type', 'caption', 'created_at', 'expires_at',
+            'privacy', 'tags', 'location', 'is_highlight', 'ai_data',
+            'music', 'poll', 'stickers', 'reactions', 'replies', 'viewers', 'views_count', 'is_viewed', 'highlights'
         )
-        read_only_fields = ('id', 'author', 'created_at', 'expires_at', 'is_viewed', 'viewed', 'views_count')
-
-    def validate_type(self, value):
-        """Validate the story type"""
-        valid_types = ['image', 'video', 'text']
-        if value not in valid_types:
-            raise serializers.ValidationError(f'Invalid type. Must be one of: {valid_types}')
-        return value
+        read_only_fields = ('id', 'author', 'created_at', 'expires_at', 'is_viewed', 'views_count', 'highlights')
 
     def get_views_count(self, obj):
         return obj.views.count()
@@ -867,11 +631,40 @@ class StorySerializer(serializers.ModelSerializer):
     def get_is_viewed(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return StoryView.objects.filter(story=obj, user=request.user).exists()
+            return obj.views.filter(user=request.user).exists()
         return False
 
-    def get_viewed(self, obj):
-        return self.get_is_viewed(obj)
+    def get_reactions(self, obj):
+        from .serializers import StoryReactionSerializer
+        return StoryReactionSerializer(obj.reactions.all(), many=True, context=self.context).data
+
+    def get_replies(self, obj):
+        from .serializers import StoryReplySerializer
+        return StoryReplySerializer(obj.replies.all(), many=True, context=self.context).data
+
+    def get_stickers(self, obj):
+        from .serializers import StoryStickerSerializer
+        return StoryStickerSerializer(obj.stickers.all(), many=True, context=self.context).data
+
+    def get_music(self, obj):
+        from .serializers import StoryMusicSerializer
+        if hasattr(obj, 'music') and obj.music:
+            return StoryMusicSerializer(obj.music, context=self.context).data
+        return None
+
+    def get_poll(self, obj):
+        from .serializers import StoryPollSerializer
+        if hasattr(obj, 'poll') and obj.poll:
+            return StoryPollSerializer(obj.poll, context=self.context).data
+        return None
+
+    def get_viewers(self, obj):
+        from .serializers import StoryViewSerializer
+        return StoryViewSerializer(obj.views.all(), many=True, context=self.context).data
+
+    def get_highlights(self, obj):
+        from .serializers import StoryHighlightSerializer
+        return StoryHighlightSerializer(obj.highlights.all(), many=True, context=self.context).data
 
 class AchievementSerializer(serializers.ModelSerializer):
     class Meta:
@@ -938,49 +731,8 @@ class StoryGroupSerializer(serializers.Serializer):
 
 # ========== Story Interactions ==========
 
-class StoryLikeSerializer(serializers.ModelSerializer):
-    user = UserProfileSerializer(read_only=True)
-    
-    class Meta:
-        model = StoryLike
-        fields = ('id', 'story', 'user', 'created_at')
-        read_only_fields = ('id', 'user', 'created_at')
-
-class StoryCommentSerializer(serializers.ModelSerializer):
-    author = UserProfileSerializer(read_only=True)
-    like_count = serializers.SerializerMethodField()
-    is_liked_by_user = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = StoryComment
-        fields = ('id', 'story', 'author', 'content', 'like_count', 'is_liked_by_user', 'created_at', 'updated_at')
-        read_only_fields = ('id', 'author', 'created_at', 'updated_at')
-    
-    def get_like_count(self, obj):
-        return obj.likes.count()
-    
-    def get_is_liked_by_user(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return obj.likes.filter(user=request.user).exists()
-        return False
-
-class StoryShareSerializer(serializers.ModelSerializer):
-    user = UserProfileSerializer(read_only=True)
-    shared_with = UserProfileSerializer(read_only=True)
-    
-    class Meta:
-        model = StoryShare
-        fields = ('id', 'story', 'user', 'share_type', 'shared_with', 'external_platform', 'created_at')
-        read_only_fields = ('id', 'user', 'created_at')
-
-class StoryBookmarkSerializer(serializers.ModelSerializer):
-    user = UserProfileSerializer(read_only=True)
-    
-    class Meta:
-        model = StoryBookmark
-        fields = ('id', 'story', 'user', 'created_at')
-        read_only_fields = ('id', 'user', 'created_at')
+# Entferne StoryLikeSerializer, StoryCommentSerializer, StoryShareSerializer, StoryBookmarkSerializer
+# da diese Models nicht existieren
 
 class StoryInteractionSerializer(serializers.ModelSerializer):
     """
@@ -990,37 +742,20 @@ class StoryInteractionSerializer(serializers.ModelSerializer):
     is_viewed = serializers.SerializerMethodField()
     viewed = serializers.SerializerMethodField()
     views_count = serializers.SerializerMethodField()
-    likes_count = serializers.SerializerMethodField()
-    comments_count = serializers.SerializerMethodField()
-    shares_count = serializers.SerializerMethodField()
-    is_liked_by_user = serializers.SerializerMethodField()
-    is_bookmarked_by_user = serializers.SerializerMethodField()
     type = serializers.CharField(source='story_type')  # Frontend compatibility
-    comments = serializers.SerializerMethodField()
     
     class Meta:
         model = Story
         fields = (
             'id', 'author', 'media_url', 'caption', 'type', 'expires_at', 'created_at',
-            'is_viewed', 'viewed', 'views_count', 'likes_count', 'comments_count',
-            'shares_count', 'is_liked_by_user', 'is_bookmarked_by_user', 'comments'
+            'is_viewed', 'viewed', 'views_count'
         )
         read_only_fields = (
-            'id', 'author', 'created_at', 'is_viewed', 'viewed', 'views_count',
-            'likes_count', 'comments_count', 'shares_count', 'is_liked_by_user', 'is_bookmarked_by_user', 'comments'
+            'id', 'author', 'created_at', 'expires_at', 'is_viewed', 'viewed', 'views_count'
         )
     
     def get_views_count(self, obj):
         return obj.views.count()
-    
-    def get_likes_count(self, obj):
-        return obj.likes.count()
-    
-    def get_comments_count(self, obj):
-        return obj.comments.count()
-    
-    def get_shares_count(self, obj):
-        return obj.shares.count()
     
     def get_is_viewed(self, obj):
         request = self.context.get('request')
@@ -1030,22 +765,6 @@ class StoryInteractionSerializer(serializers.ModelSerializer):
     
     def get_viewed(self, obj):
         return self.get_is_viewed(obj)
-    
-    def get_is_liked_by_user(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return obj.likes.filter(user=request.user).exists()
-        return False
-    
-    def get_is_bookmarked_by_user(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return obj.bookmarks.filter(user=request.user).exists()
-        return False
-
-    def get_comments(self, obj):
-        comments = obj.comments.select_related('author').all().order_by('created_at')
-        return StoryCommentSerializer(comments, many=True, context=self.context).data
 
 class FollowRelationshipSerializer(serializers.ModelSerializer):
     """
@@ -1076,3 +795,185 @@ class FollowRequestSerializer(serializers.Serializer):
             return value
         except User.DoesNotExist:
             raise serializers.ValidationError("User not found") 
+
+class HashtagSerializer(serializers.ModelSerializer):
+    """Serializer for hashtags"""
+    posts_count = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = Hashtag
+        fields = ['id', 'name', 'description', 'posts_count', 'created_at']
+        read_only_fields = ['posts_count', 'created_at']
+
+class PostHashtagSerializer(serializers.ModelSerializer):
+    """Serializer for post-hashtag relationships"""
+    hashtag = HashtagSerializer(read_only=True)
+    
+    class Meta:
+        model = PostHashtag
+        fields = ['id', 'hashtag', 'created_at']
+        read_only_fields = ['created_at'] 
+
+# ========== Token Management Serializers ==========
+
+class StakingSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer(read_only=True)
+    
+    class Meta:
+        model = Staking
+        fields = (
+            'id', 'user', 'amount', 'status', 'staking_period', 'apy_rate',
+            'rewards_earned', 'start_date', 'end_date', 'last_reward_claim'
+        )
+        read_only_fields = ('id', 'user', 'start_date', 'last_reward_claim')
+
+class TokenStreamingSerializer(serializers.ModelSerializer):
+    sender = UserProfileSerializer(read_only=True)
+    receiver = UserProfileSerializer(read_only=True)
+    
+    class Meta:
+        model = TokenStreaming
+        fields = (
+            'id', 'sender', 'receiver', 'total_amount', 'amount_per_second',
+            'streamed_amount', 'status', 'start_time', 'end_time', 'last_update_time'
+        )
+        read_only_fields = ('id', 'sender', 'receiver', 'start_time', 'last_update_time')
+
+class SmartContractSerializer(serializers.ModelSerializer):
+    creator = UserProfileSerializer(read_only=True)
+    
+    class Meta:
+        model = SmartContract
+        fields = (
+            'id', 'name', 'contract_type', 'address', 'network', 'abi',
+            'bytecode', 'source_code', 'creator', 'transaction_hash', 'deployed_at'
+        )
+        read_only_fields = ('id', 'creator', 'deployed_at') 
+
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = '__all__' 
+
+class PhotoSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer(read_only=True)
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Photo
+        fields = (
+            'id', 'album', 'user', 'image', 'image_url', 'caption', 'created_at', 'updated_at', 'is_deleted'
+        )
+        read_only_fields = ('id', 'user', 'created_at', 'updated_at', 'is_deleted', 'image_url')
+
+    def get_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.image and hasattr(obj.image, 'url'):
+            url = obj.image.url
+            if request is not None:
+                return request.build_absolute_uri(url)
+            return url
+        return None
+
+class PhotoAlbumSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer(read_only=True)
+    photos = PhotoSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = PhotoAlbum
+        fields = (
+            'id', 'user', 'name', 'description', 'privacy', 'created_at', 'updated_at', 'photos'
+        )
+        read_only_fields = ('id', 'user', 'created_at', 'updated_at', 'photos')
+
+    def validate_name(self, value):
+        # Name muss pro User eindeutig sein
+        user = self.context['request'].user
+        if PhotoAlbum.objects.filter(user=user, name=value).exists():
+            raise serializers.ValidationError('Du hast bereits ein Album mit diesem Namen.')
+        return value 
+
+class StoryStickerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StorySticker
+        fields = ['id', 'sticker_url', 'x', 'y', 'scale', 'rotation']
+
+class StoryMusicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StoryMusic
+        fields = ['id', 'title', 'artist', 'url', 'start_time']
+
+class StoryPollSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StoryPoll
+        fields = ['id', 'question', 'options', 'votes']
+
+class PostPollSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostPoll
+        fields = ['id', 'question', 'options', 'votes', 'expires_at']
+
+class StoryReactionSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer(read_only=True)
+    class Meta:
+        model = StoryReaction
+        fields = ['id', 'user', 'reaction_type', 'value', 'created_at'] 
+
+class StoryReplySerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer(read_only=True)
+    class Meta:
+        model = StoryReply
+        fields = ['id', 'user', 'content', 'created_at'] 
+
+class GroupEventSerializer(serializers.ModelSerializer):
+    created_by = UserProfileSerializer(read_only=True)
+    rsvp_status = serializers.SerializerMethodField()
+
+    def get_rsvp_status(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+        rsvp = obj.rsvps.filter(user=request.user).first()
+        return rsvp.status if rsvp else None
+
+    class Meta:
+        model = GroupEvent
+        fields = (
+            'id', 'group', 'title', 'description', 'start_time', 'end_time',
+            'location', 'cover_image_url', 'created_by', 'created_at', 'updated_at', 'rsvp_status'
+        )
+        read_only_fields = ('id', 'created_by', 'created_at', 'updated_at', 'rsvp_status') 
+
+class GroupEventRSVPSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer(read_only=True)
+    class Meta:
+        model = GroupEventRSVP
+        fields = ('id', 'event', 'user', 'status', 'responded_at')
+        read_only_fields = ('id', 'user', 'responded_at') 
+
+class ContentReportSerializer(serializers.ModelSerializer):
+    reporter = UserProfileSerializer(read_only=True)
+    assigned_moderator = UserProfileSerializer(read_only=True)
+    class Meta:
+        model = ContentReport
+        fields = (
+            'id', 'reporter', 'content_type', 'content_id', 'report_type', 'reason', 'evidence',
+            'status', 'assigned_moderator', 'moderator_notes', 'resolution_action',
+            'created_at', 'updated_at', 'resolved_at'
+        )
+        read_only_fields = ('id', 'reporter', 'assigned_moderator', 'created_at', 'updated_at', 'resolved_at') 
+
+class GroupMembershipSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer(read_only=True)
+    is_online = serializers.SerializerMethodField()
+
+    def get_is_online(self, obj):
+        from django.utils import timezone
+        if not obj.user.last_login:
+            return False
+        # Online, wenn innerhalb der letzten 15 Minuten aktiv
+        return (timezone.now() - obj.user.last_login).total_seconds() < 900  # 15 Minuten
+
+    class Meta:
+        model = GroupMembership
+        fields = ('id', 'user', 'role', 'joined_at', 'is_online') 

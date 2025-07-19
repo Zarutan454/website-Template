@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import * as React from 'react';
+import { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './components/ThemeProvider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -10,17 +11,16 @@ import { initializeAchievements } from './hooks/mining/achievements/initAchievem
 import { NotificationProvider } from './components/ui/notification-system';
 import { LanguageProvider } from './components/LanguageProvider';
 import { FriendshipProvider } from './context/FriendshipContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { PostProvider } from './context/PostContext';
-import { useAuth } from './hooks/useAuth';
-import ErrorBoundary from './components/common/ErrorBoundary';
+import { WebSocketStatus } from './components/realtime/WebSocketStatus';
 
 const queryClient = new QueryClient();
 
-// Global Fetch Interceptor to fix media_url array issues
+// Global fetch interceptor to fix media_url array issues
 const originalFetch = window.fetch;
-window.fetch = function(...args: [RequestInfo | URL, RequestInit | undefined]) {
-  const [url, options] = args;
+
+window.fetch = function(url: string | URL, options?: RequestInit) {
   // Only intercept POST requests to posts endpoint
   if (typeof url === 'string' && url.includes('/api/posts/') && options?.method === 'POST' && options?.body) {
     try {
@@ -29,28 +29,39 @@ window.fetch = function(...args: [RequestInfo | URL, RequestInit | undefined]) {
       
       // Fix media_url if it's an array
       if (body.media_url && Array.isArray(body.media_url)) {
-        console.warn('🚨 GLOBAL FIX: Intercepted media_url array, converting to string:', body.media_url);
+        if (import.meta.env.DEV) {
+          console.warn('🚨 GLOBAL FIX: Intercepted media_url array, converting to string:', body.media_url);
+        }
         body.media_url = body.media_url[0] || null;
-        console.log('✅ GLOBAL FIX: Fixed media_url:', body.media_url);
+        if (import.meta.env.DEV) {
+          console.log('✅ GLOBAL FIX: Fixed media_url:', body.media_url);
+        }
       }
       
       // Update the request body with fixed data
       options.body = JSON.stringify(body);
-      console.log('✅ GLOBAL FIX: Request body sanitized:', body);
+      if (import.meta.env.DEV) {
+        console.log('✅ GLOBAL FIX: Request body sanitized:', body);
+      }
       
     } catch (error) {
-      console.log('⚠️ GLOBAL FIX: Could not parse request body, skipping sanitization');
+      if (import.meta.env.DEV) {
+        console.log('⚠️ GLOBAL FIX: Could not parse request body, skipping sanitization');
+      }
     }
   }
   
   // Call the original fetch
-  return originalFetch.apply(this, args);
+  return originalFetch.apply(this, [url, options]);
 };
 
-console.log('✅ GLOBAL FIX: Fetch interceptor activated - media_url arrays will be automatically fixed!');
+if (import.meta.env.DEV) {
+  console.log('✅ GLOBAL FIX: Fetch interceptor activated - media_url arrays will be automatically fixed!');
+}
 
-// Separate component that uses useAuth
-function AppInitializer() {
+function AppContent() {
+  const location = useLocation();
+  const isLandingPage = location.pathname === '/';
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -62,13 +73,6 @@ function AppInitializer() {
     }
   }, [isAuthenticated]);
 
-  return null; // This component doesn't render anything
-}
-
-function AppContent() {
-  const location = useLocation();
-  const isLandingPage = location.pathname === '/';
-
   return (
     <ThemeProvider>
       <LanguageProvider>
@@ -76,7 +80,6 @@ function AppContent() {
           <NotificationProvider>
             <FriendshipProvider>
               <PostProvider>
-                <AppInitializer />
                 <div className="min-h-screen flex flex-col">
                   <Navbar />
                   <main className={`flex-1 ${isLandingPage ? '' : 'pt-14'}`}>
@@ -89,6 +92,7 @@ function AppContent() {
                 </div>
                 <Toaster />
                 {!isLandingPage && <FloatingMiningButton />}
+                {import.meta.env.DEV && <WebSocketStatus />}
               </PostProvider>
             </FriendshipProvider>
           </NotificationProvider>
@@ -98,18 +102,12 @@ function AppContent() {
   );
 }
 
-const App: React.FC = () => {
+function App() {
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <PostProvider>
-          <FriendshipProvider>
-            <AppContent />
-          </FriendshipProvider>
-        </PostProvider>
-      </AuthProvider>
-    </ErrorBoundary>
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
-};
+}
 
 export default App;

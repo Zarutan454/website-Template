@@ -2,7 +2,7 @@
 import React from 'react';
 import FeedLoading from '../FeedLoading';
 import FeedError from '../FeedError';
-import UnifiedPostCard from '../UnifiedPostCard';
+import PostCard from '../Post/PostCard';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
@@ -71,7 +71,7 @@ export const FeedStateRenderer: React.FC<{
   return (
     <div className="space-y-6">
       {posts.map(post => (
-        <UnifiedPostCard
+        <PostCard
           key={post.id}
           post={post}
           onLike={onLike}
@@ -86,50 +86,6 @@ export const FeedStateRenderer: React.FC<{
           showMiningRewards={showMiningRewards}
         />
       ))}
-    </div>
-  );
-};
-
-/**
- * Komponente für Filter-Abschnitt
- */
-export const FeedFilterSection: React.FC<{
-  showFilters: boolean;
-  selectedFilter: string | null;
-  handleFilterSelect: (filter: string | null) => void;
-}> = ({ showFilters, selectedFilter, handleFilterSelect }) => {
-  if (!showFilters) return null;
-
-  return (
-    <div className="mb-6 flex flex-wrap gap-2">
-      <Badge 
-        variant={selectedFilter === "Neueste" ? "default" : "outline"}
-        className="cursor-pointer"
-        onClick={() => handleFilterSelect("Neueste")}
-      >
-        Neueste
-      </Badge>
-      <Badge 
-        variant={selectedFilter === "Beliebt" ? "default" : "outline"}
-        className="cursor-pointer"
-        onClick={() => handleFilterSelect("Beliebt")}
-      >
-        Beliebt
-      </Badge>
-      <Badge 
-        variant={selectedFilter === "Trending" ? "default" : "outline"}
-        className="cursor-pointer"
-        onClick={() => handleFilterSelect("Trending")}
-      >
-        Trending
-      </Badge>
-      <Badge 
-        variant={selectedFilter === "Meine Follows" ? "default" : "outline"}
-        className="cursor-pointer"
-        onClick={() => handleFilterSelect("Meine Follows")}
-      >
-        Meine Follows
-      </Badge>
     </div>
   );
 };

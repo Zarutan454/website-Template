@@ -15,12 +15,14 @@ import os
 import sys
 from pathlib import Path
 from datetime import timedelta
+import logging
+logger = logging.getLogger(__name__)
 
 # Ensure proper encoding for Windows
-if sys.platform == 'win32':
-    import codecs
-    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
-    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.detach())
+# if sys.platform == 'win32':
+#     import codecs
+#     sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
+#     sys.stderr = codecs.getwriter('utf-8')(sys.stderr.detach())
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -67,6 +69,7 @@ if not DEBUG:
 # Application definition
 
 INSTALLED_APPS = [
+    'grappelli',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -78,14 +81,20 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'django_filters',
+    'django_extensions',  # <--- Add this line
     
     # Allauth - Authentication system
     'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.twitter',
     
     # My apps
     'landing',
     'bsn_social_network',  # New app with legacy models
     'users',
+    'channels',  # Add Django Channels
 ]
 
 MIDDLEWARE = [
@@ -95,11 +104,9 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # Required for allauth
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # Performance Monitoring Middleware
-    'users.middleware.APIPerformanceMiddleware',
-    'users.middleware.UserActivityMiddleware',
 ]
 
 ROOT_URLCONF = 'bsn.urls'
@@ -125,51 +132,6 @@ WSGI_APPLICATION = 'bsn.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
-# Celery Configuration - Windows-Compatible Mining Setup
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'UTC'
-
-# Smart Broker Selection - Redis with Memory Fallback
-def setup_celery_broker():
-    try:
-        import redis
-        redis_client = redis.Redis(host='localhost', port=6379, db=0, socket_timeout=2)
-        redis_client.ping()
-        print("[INFO] Redis broker connected - Production mining mode active")
-        return 'redis://localhost:6379/0', 'redis://localhost:6379/0'
-    except Exception as e:
-        print(f"[WARNING] Redis unavailable ({str(e)[:50]}...) - Using memory broker")
-        print("[INFO] Memory broker active - Development mode with limited performance")
-        return 'memory://localhost//', 'cache+memory://'
-
-CELERY_BROKER_URL, CELERY_RESULT_BACKEND = setup_celery_broker()
-
-CELERY_BEAT_SCHEDULE = {
-    'cleanup-expired-boosts-every-30-minutes': {
-        'task': 'cleanup_expired_boosts',
-        'schedule': 1800.0,  # 30 minutes in seconds
-    },
-    'mining-heartbeat-cleanup-every-10-minutes': {
-        'task': 'cleanup_inactive_mining_sessions',
-        'schedule': 600.0,  # 10 minutes in seconds
-    },
-    'daily-mining-reset': {
-        'task': 'reset_daily_mining_limits',
-        'schedule': 86400.0,  # 24 hours in seconds
-    },
-    # Story-Cleanup Tasks
-    'cleanup-expired-stories-every-30-minutes': {
-        'task': 'cleanup_expired_stories',
-        'schedule': 1800.0,  # 30 minutes in seconds
-    },
-    'story-stats-update-every-hour': {
-        'task': 'get_story_stats',
-        'schedule': 3600.0,  # 1 hour in seconds
-    },
-}
 
 DATABASES = {
     'default': {
@@ -269,91 +231,24 @@ REST_FRAMEWORK = {
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:5175",
-    "http://localhost:5176",
     "http://localhost:8080",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:5174",
-    "http://127.0.0.1:5175",
-    "http://127.0.0.1:5176",
-    "http://127.0.0.1:8080",
+    "http://localhost:8081",
+    "http://localhost:5176",  # Vite Development Server
+    "http://127.0.0.1:5176",  # Vite Development Server (IP)
 ]
 
-# CORS Credentials Configuration
 CORS_ALLOW_CREDENTIALS = True
-
-# CORS Additional Settings
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8080",
+    "http://localhost:8081",
+    "http://localhost:5176",  # Vite Development Server
+    "http://127.0.0.1:5176",  # Vite Development Server (IP)
 ]
-
-# Cache Configuration for Performance Optimization
-# Use Redis in production, local memory in development
-if DEBUG:
-    # Development: Local memory cache
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'unique-snowflake',
-        },
-        'session': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'session-cache',
-        },
-        'api': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'api-cache',
-        }
-    }
-    print("[INFO] Using local memory cache for development")
-else:
-    # Production: Redis cache
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': 'redis://127.0.0.1:6379/1',
-            'OPTIONS': {
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            },
-            'TIMEOUT': 300,  # 5 minutes default
-            'KEY_PREFIX': 'bsn_cache',
-        },
-        'session': {
-            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': 'redis://127.0.0.1:6379/2',
-            'OPTIONS': {
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            },
-            'TIMEOUT': 86400,  # 24 hours
-            'KEY_PREFIX': 'bsn_session',
-        },
-        'api': {
-            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': 'redis://127.0.0.1:6379/3',
-            'OPTIONS': {
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            },
-            'TIMEOUT': 600,  # 10 minutes
-            'KEY_PREFIX': 'bsn_api',
-        }
-    }
-
-# Session Configuration
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'session'
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SECURE = False
 
 # Frontend URL Configuration
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5176')
@@ -370,7 +265,7 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@bsn.network')
 # Development Email Configuration
 if DEBUG:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    print("📧 Email backend set to console for development")
+    logger.info("Email backend set to console for development")
 
 # Social Authentication (OAuth)
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY', '')
@@ -407,47 +302,61 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
-# Logging Configuration
+# --- Logging Setup (Best Practice) ---
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
-        'simple': {
-            'format': '{levelname} {message}',
+            'format': '[{asctime}] {levelname} {name} {message}',
             'style': '{',
         },
     },
     'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'django.log'),
-            'formatter': 'verbose',
-        },
         'console': {
-            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'verbose',
         },
     },
     'root': {
-        'handlers': ['console', 'file'],
-        'level': 'INFO',
+        'handlers': ['console'],
+        'level': 'WARNING',
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': 'INFO',
+            'propagate': False,
+        },
+        'bsn_social_network': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'users': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'landing': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
             'propagate': False,
         },
     },
 }
 
-# Cache configuration is handled above based on DEBUG setting
+# Cache Configuration - Local Memory for Development
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'bsn-mining-cache',
+    }
+}
+
+# Development: Local cache info
+if DEBUG:
+    logger.info("[INFO] Using local memory cache for development")
 
 # Mining-spezifische Konfiguration
 MINING_CONFIG = {
@@ -474,18 +383,54 @@ else:
         'user': '10000/hour'
     }
 
-# Allauth Configuration
+# Allauth Configuration - Best Practices
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 SITE_ID = 1
 
-# Allauth settings
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
+# Allauth Settings - Modern Format (Django 5.0+)
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
 ACCOUNT_UNIQUE_EMAIL = True
+
+# Redirect URLs
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+# Django Channels Configuration
+ASGI_APPLICATION = 'bsn.asgi.application'
+
+# Channel Layers for WebSocket
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379)],  # Redis Standardport
+            'capacity': 1500,
+            'expiry': 10,
+        },
+    }
+}
+
+# Channel Layer Redis-Verbindung prüfen und ggf. Fallback auf InMemory
+try:
+    import redis
+    redis_client = redis.Redis(host='127.0.0.1', port=6379, db=0, socket_timeout=2)
+    redis_client.ping()
+    logger.info("[INFO] Redis Channel Layer configured (Port 6379)")
+except Exception as e:
+    logger.warning(f"[WARNING] Redis unavailable for Channel Layer ({str(e)[:50]}...) - Using InMemory")
+    logger.info("[INFO] InMemory Channel Layer active - Limited scalability")
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        }
+    }
+
+# --- SPOTIFY API KEYS ---
+SPOTIFY_CLIENT_ID = '6167d814b25f4e4f8ad158ffc448b66a'
+SPOTIFY_CLIENT_SECRET = 'aefe8bca0c994433b9e0991a07f49865'

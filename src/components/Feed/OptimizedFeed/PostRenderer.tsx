@@ -1,38 +1,29 @@
 
-import React, { useState, useEffect, memo, useMemo, useRef } from 'react';
+import * as React from 'react';
+import { useState, useEffect, memo, useMemo, useRef } from 'react';
+import { VirtualItem } from '@tanstack/react-virtual';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Post, CreatePostData } from '@/types/posts';
 
 // FeedListItem außerhalb der Komponente laden, um zirkuläre Abhängigkeiten zu vermeiden
-const FeedListItem = React.lazy(() => import('../FeedListItem'));
+const FeedListItem = React.lazy(() => import('@/components/Feed/FeedListItem'));
 
-interface VirtualRow {
+interface Post {
+  id: string;
+  content: string;
+  likesCount: number;
+  commentsCount: number;
+  isLiked: boolean;
+  media_url?: string;
+  image_url?: string;
+  media_type?: string;
+  video_url?: string;
+}
+
+interface VirtualRow extends VirtualItem {
   index: number;
   start: number;
   size: number;
-}
-
-interface Comment {
-  id: string;
-  content: string;
-  author_id: string;
-  created_at: string;
-  author?: {
-    id: string;
-    username?: string;
-    display_name?: string;
-    avatar_url?: string;
-  };
-}
-
-interface UserData {
-  id: string;
-  username?: string;
-  display_name?: string;
-  avatar_url?: string;
-  is_verified?: boolean;
-  role?: string;
 }
 
 interface PostRendererProps {
@@ -42,11 +33,11 @@ interface PostRendererProps {
   shouldPreload: boolean;
   isDarkMode: boolean;
   showMiningRewards: boolean;
-  currentUser: UserData | null;
+  currentUser: unknown;
   onLike: (postId: string) => Promise<boolean>;
   onDelete: (postId: string) => Promise<boolean>;
-  onComment: (postId: string, content: string) => Promise<Comment>;
-  onGetComments: (postId: string) => Promise<Comment[]>;
+  onComment: (postId: string, content: string) => Promise<unknown>;
+  onGetComments: (postId: string) => Promise<unknown[]>;
   onShare: (postId: string) => Promise<boolean>;
   onReport?: (postId: string, reason: string) => Promise<boolean>;
   onMeasureHeight?: (height: number) => void;
@@ -75,7 +66,7 @@ const PostRenderer: React.FC<PostRendererProps> = ({
   onMeasureHeight
 }) => {
   const [loadedContent, setLoadedContent] = useState<boolean>(false);
-  const [loadedComments, setLoadedComments] = useState<Comment[]>([]);
+  const [loadedComments, setLoadedComments] = useState<unknown[]>([]);
   const [isCommentsLoading, setIsCommentsLoading] = useState<boolean>(false);
   const [showComments, setShowComments] = useState<boolean>(false);
   const postRef = useRef<HTMLDivElement>(null);
@@ -139,7 +130,6 @@ const PostRenderer: React.FC<PostRendererProps> = ({
       ref={postRef}
       style={itemStyle}
       data-testid={`post-item-${post.id}`}
-      aria-hidden={!isVisible ? 'true' : 'false'}
     >
       {/* Nur rendern, wenn entweder der Post sichtbar ist oder vorgeladen werden soll */}
       {(loadedContent || isVisible || shouldPreload) && (
@@ -188,9 +178,9 @@ function arePropsEqual(prevProps: PostRendererProps, nextProps: PostRendererProp
   
   // Wenn sich der Post ändert (z.B. durch Likes), re-rendern
   if (prevProps.post.id !== nextProps.post.id || 
-      prevProps.post.likes_count !== nextProps.post.likes_count ||
-      prevProps.post.comments_count !== nextProps.post.comments_count ||
-      prevProps.post.is_liked !== nextProps.post.is_liked) {
+      prevProps.post.likesCount !== nextProps.post.likesCount ||
+      prevProps.post.commentsCount !== nextProps.post.commentsCount ||
+      prevProps.post.isLiked !== nextProps.post.isLiked) {
     return false;
   }
   

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Minus, HelpCircle } from 'lucide-react';
 import { GradientText } from '@/components/ui/gradient-text';
-import { useLanguage } from '@/components/LanguageProvider';
+import { useLanguage } from '@/components/LanguageProvider.utils';
 
 const getFaqItems = (language: string) => [
   {

@@ -1,7 +1,6 @@
 
 import type { Config } from "tailwindcss";
 import plugin from "tailwindcss/plugin";
-import tailwindcssAnimate from "tailwindcss-animate";
 
 const config: Config = {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
@@ -175,7 +174,7 @@ const config: Config = {
     },
   },
   plugins: [
-    tailwindcssAnimate,
+    require("tailwindcss-animate"),
     plugin(function({ addBase, addVariant }) {
       addVariant('data-theme-light', '[data-theme="light"] &');
       addVariant('data-theme-dark', '[data-theme="dark"] &');

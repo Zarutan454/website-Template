@@ -1,6 +1,5 @@
 
 import { useCallback, useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 /**
@@ -16,17 +15,19 @@ export const usePostNotifications = (postId: string, userId?: string) => {
     
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from('post_subscriptions')
-        .select('active')
-        .eq('user_id', userId)
-        .eq('post_id', postId)
-        .maybeSingle();
+      // TODO: Django-API-Migration: checkSubscriptionStatus auf Django-API umstellen
+      // const { data, error } = await supabase
+      //   .from('post_subscriptions')
+      //   .select('active')
+      //   .eq('user_id', userId)
+      //   .eq('post_id', postId)
+      //   .maybeSingle();
       
-      if (error) throw error;
+      // if (error) throw error;
       
-      setIsSubscribed(data?.active || false);
-      return data?.active || false;
+      // setIsSubscribed(data?.active || false);
+      // return data?.active || false;
+      return false; // Placeholder
     } catch (error) {
       return false;
     } finally {
@@ -44,46 +45,48 @@ export const usePostNotifications = (postId: string, userId?: string) => {
     try {
       setIsLoading(true);
       
+      // TODO: Django-API-Migration: toggleSubscription auf Django-API umstellen
       // Prüfen, ob bereits ein Eintrag existiert
-      const { data: existingData, error: checkError } = await supabase
-        .from('post_subscriptions')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('post_id', postId)
-        .maybeSingle();
+      // const { data: existingData, error: checkError } = await supabase
+      //   .from('post_subscriptions')
+      //   .select('*')
+      //   .eq('user_id', userId)
+      //   .eq('post_id', postId)
+      //   .maybeSingle();
       
-      if (checkError) throw checkError;
+      // if (checkError) throw checkError;
       
-      let result;
+      // let result;
       
-      if (existingData) {
-        // Eintrag existiert bereits, Status umschalten
-        const newStatus = !existingData.active;
+      // if (existingData) {
+      //   // Eintrag existiert bereits, Status umschalten
+      //   const newStatus = !existingData.active;
         
-        const { error: updateError } = await supabase
-          .from('post_subscriptions')
-          .update({ active: newStatus })
-          .eq('id', existingData.id);
+      //   const { error: updateError } = await supabase
+      //     .from('post_subscriptions')
+      //     .update({ active: newStatus })
+      //     .eq('id', existingData.id);
         
-        if (updateError) throw updateError;
+      //   if (updateError) throw updateError;
         
-        setIsSubscribed(newStatus);
+      //   setIsSubscribed(newStatus);
         
-        return newStatus;
-      } else {
-        // Neues Abonnement erstellen
-        const { error: insertError } = await supabase
-          .from('post_subscriptions')
-          .insert([
-            { user_id: userId, post_id: postId, active: true }
-          ]);
+      //   return newStatus;
+      // } else {
+      //   // Neues Abonnement erstellen
+      //   const { error: insertError } = await supabase
+      //     .from('post_subscriptions')
+      //     .insert([
+      //       { user_id: userId, post_id: postId, active: true }
+      //     ]);
         
-        if (insertError) throw insertError;
+      //   if (insertError) throw insertError;
         
-        setIsSubscribed(true);
+      //   setIsSubscribed(true);
         
-        return true;
-      }
+      //   return true;
+      // }
+      return false; // Placeholder
     } catch (error) {
       toast.error('Fehler beim Aktualisieren der Benachrichtigungseinstellungen');
       return isSubscribed; // Aktuellen Status zurückgeben

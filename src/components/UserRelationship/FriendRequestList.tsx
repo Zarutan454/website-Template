@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useUserRelationships } from '@/hooks/useUserRelationships';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,18 +16,18 @@ const FriendRequestList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<{[key: string]: boolean}>({});
   
-  useEffect(() => {
-    if (profile?.id) {
-      loadFriendRequests();
-    }
-  }, [profile]);
-  
-  const loadFriendRequests = async () => {
+  const loadFriendRequests = useCallback(async () => {
     setLoading(true);
     const data = await getFriendRequests();
     setRequests(data);
     setLoading(false);
-  };
+  }, [getFriendRequests]);
+  
+  useEffect(() => {
+    if (profile?.id) {
+      loadFriendRequests();
+    }
+  }, [profile, loadFriendRequests]);
   
   const handleAccept = async (userId: string) => {
     setActionLoading(prev => ({ ...prev, [userId]: true }));

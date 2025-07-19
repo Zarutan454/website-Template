@@ -2,17 +2,17 @@ import React from 'react';
 import { useTheme } from '@/components/ThemeProvider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/context/AuthContext';
-import { Post, CreatePostData } from '@/types/posts';
+import { Post } from '@/types/posts';
 import UnifiedFeedContainer from './UnifiedFeedContainer';
 // Fix import casing issue by using a relative path
-import CreatePostBoxLight from './CreatePostBoxLight';
+import CreatePostBoxFacebook from '../Feed/CreatePostBoxFacebook';
 import { FeedType } from '@/hooks/feed/useFeedData';
 import { AnimatePresence } from 'framer-motion';
 
 interface FeedContentProps {
   activeTab: FeedType;
   handleTabChange: (tab: FeedType) => void;
-  handleOpenCreateModal: (initialData?: Partial<CreatePostData>) => void;
+  handleOpenCreateModal: (initialData?: any) => void;
   feedType: FeedType;
 }
 
@@ -32,12 +32,11 @@ const FeedContent: React.FC<FeedContentProps> = ({
       <div className="animate-in grid grid-cols-1 lg:grid-cols-1 gap-6">
         {/* Mittlere Spalte - Hauptfeed */}
         <div className="animate-in">
-          <CreatePostBoxLight 
-            darkMode={isDarkMode} 
-            onCreatePost={handleOpenCreateModal} 
-          />
+          {/* Ersetze die CreatePostBoxLight-Instanz durch CreatePostBoxFacebook */}
+          <CreatePostBoxFacebook onCreatePost={handleOpenCreateModal} darkMode={isDarkMode} />
           
-          <Tabs defaultValue={activeTab} onValueChange={(value) => handleTabChange(value as FeedType)}>
+          {/* Tabs mit nur EINEM TabsContent in AnimatePresence */}
+          <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as FeedType)}>
             <TabsList className="grid grid-cols-5 mb-4">
               <TabsTrigger value="recent" className="data-[state=active]:bg-primary/20">
                 Neueste
@@ -55,47 +54,43 @@ const FeedContent: React.FC<FeedContentProps> = ({
                 NFTs
               </TabsTrigger>
             </TabsList>
-            
             <AnimatePresence mode="wait">
-              <TabsContent value="recent" className="mt-0">
-                <UnifiedFeedContainer 
-                  feedType="recent"
-                  showFilters={true}
-                  showMiningRewards={true}
-                />
-              </TabsContent>
-              
-              <TabsContent value="popular" className="mt-0">
-                <UnifiedFeedContainer 
-                  feedType="popular"
-                  showFilters={true}
-                  showMiningRewards={true}
-                />
-              </TabsContent>
-              
-              <TabsContent value="following" className="mt-0">
-                <UnifiedFeedContainer 
-                  feedType="following"
-                  showFilters={true}
-                  showMiningRewards={true}
-                />
-              </TabsContent>
-              
-              <TabsContent value="tokens" className="mt-0">
-                <UnifiedFeedContainer 
-                  feedType="tokens"
-                  showFilters={true}
-                  showMiningRewards={true}
-                />
-              </TabsContent>
-              
-              <TabsContent value="nfts" className="mt-0">
-                <UnifiedFeedContainer 
-                  feedType="nfts"
-                  showFilters={true}
-                  showMiningRewards={true}
-                />
-              </TabsContent>
+              {(() => {
+                switch (activeTab) {
+                  case 'recent':
+                    return (
+                      <TabsContent key="recent" value="recent" className="mt-0">
+                        <UnifiedFeedContainer feedType="recent" showFilters={true} showMiningRewards={true} />
+                      </TabsContent>
+                    );
+                  case 'popular':
+                    return (
+                      <TabsContent key="popular" value="popular" className="mt-0">
+                        <UnifiedFeedContainer feedType="popular" showFilters={true} showMiningRewards={true} />
+                      </TabsContent>
+                    );
+                  case 'following':
+                    return (
+                      <TabsContent key="following" value="following" className="mt-0">
+                        <UnifiedFeedContainer feedType="following" showFilters={true} showMiningRewards={true} />
+                      </TabsContent>
+                    );
+                  case 'tokens':
+                    return (
+                      <TabsContent key="tokens" value="tokens" className="mt-0">
+                        <UnifiedFeedContainer feedType="tokens" showFilters={true} showMiningRewards={true} />
+                      </TabsContent>
+                    );
+                  case 'nfts':
+                    return (
+                      <TabsContent key="nfts" value="nfts" className="mt-0">
+                        <UnifiedFeedContainer feedType="nfts" showFilters={true} showMiningRewards={true} />
+                      </TabsContent>
+                    );
+                  default:
+                    return null;
+                }
+              })()}
             </AnimatePresence>
           </Tabs>
         </div>

@@ -89,3 +89,5 @@ export const cleanupInactiveSessions = async (inactivityThresholdHours: number =
     return { data: null, error: err, count: 0 };
   }
 };
+
+// TODO: Django-API-Migration: manageSessions auf Django-API umstellen

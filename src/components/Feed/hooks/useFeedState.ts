@@ -41,31 +41,8 @@ export const useFeedState = (feedType: string = 'recent') => {
   
   // Anwenden von Filtern auf Beiträge
   useEffect(() => {
-    if (posts && posts.length > 0) {
-      let filtered = [...posts];
-      
-      if (selectedFilter === 'Neueste') {
-        filtered = filtered.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-      } else if (selectedFilter === 'Beliebt') {
-        filtered = filtered.sort((a, b) => 
-          (b.likes_count || 0) - (a.likes_count || 0)
-        );
-      } else if (selectedFilter === 'Trending') {
-        filtered = filtered.sort((a, b) => 
-          ((b.comments_count || 0) + (b.likes_count || 0) + (b.shares_count || 0)) - 
-          ((a.comments_count || 0) + (a.likes_count || 0) + (a.shares_count || 0))
-        );
-      } else if (selectedFilter === 'Meine Follows' && profile) {
-        filtered = filtered.filter(() => Math.random() > 0.3); // Placeholder für echten following-Filter
-      }
-      
-      setFilteredPosts(filtered);
-    } else {
-      setFilteredPosts([]);
-    }
-  }, [posts, selectedFilter, profile]);
+    setFilteredPosts(posts || []);
+  }, [posts]);
   
   const toggleFilters = () => {
     setShowFilterMenu(!showFilterMenu);

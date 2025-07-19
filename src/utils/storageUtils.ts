@@ -1,6 +1,13 @@
 // TODO: Diese Datei muss auf Django-API migriert werden. Supabase-Logik wurde entfernt.
 // Platzhalter-Implementierung, damit der Build funktioniert.
 
+export interface UploadResult {
+  url: string;
+  name: string;
+  size: number;
+  type: string;
+}
+
 export function uploadFile() {
   throw new Error('uploadFile: Not implemented. Use Django API.');
 }

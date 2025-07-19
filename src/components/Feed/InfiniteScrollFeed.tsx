@@ -1,11 +1,35 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PostCard from './Post/PostCard';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, AlertCircle, Loader2 } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
-import { Post } from '@/types/posts';
+
+// Definiere Typen für Post, User, Comment
+interface User {
+  id: string;
+  username: string;
+  display_name?: string;
+  avatar_url?: string;
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  author: User;
+  created_at: string;
+}
+
+interface Post {
+  id: string;
+  author: User;
+  content: string;
+  created_at: string;
+  comments?: Comment[];
+  [key: string]: unknown;
+}
 
 interface InfiniteScrollFeedProps {
   posts: Post[];
@@ -14,8 +38,8 @@ interface InfiniteScrollFeedProps {
   hasMore: boolean;
   onLike: (postId: string) => Promise<boolean>;
   onDelete?: (postId: string) => Promise<boolean>;
-  onComment: (postId: string, content: string) => Promise<void>;
-  onGetComments: (postId: string) => Promise<Post['comments']>;
+  onComment: (postId: string, content: string) => Promise<Comment>;
+  onGetComments: (postId: string) => Promise<Comment[]>;
   onShare: (postId: string) => Promise<boolean>;
   onReport?: (postId: string, reason: string) => Promise<boolean>;
   onLoadMore: () => Promise<void>;
@@ -23,7 +47,7 @@ interface InfiniteScrollFeedProps {
   onLoginRedirect: () => void;
   isDarkMode: boolean;
   showMiningRewards?: boolean;
-  currentUser?: Post['author'];
+  currentUser?: User;
   currentUserId?: string;
 }
 

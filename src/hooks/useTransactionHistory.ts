@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 import { apiClient } from "@/lib/django-api-new";
 import { useWallet } from "@/hooks/useWallet";
@@ -35,7 +35,7 @@ export const useTransactionHistory = () => {
     setFilter(prev => ({ ...prev, ...newFilter }));
   };
 
-  const refreshTransactions = async () => {
+  const refreshTransactions = useCallback(async () => {
     if (!profile?.id) {
       setTransactions([]);
       setIsLoading(false);
@@ -140,12 +140,12 @@ export const useTransactionHistory = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [profile?.id, address, filter]);
 
   // Initial data fetch
   useEffect(() => {
     refreshTransactions();
-  }, [profile?.id, address, filter]);
+  }, [refreshTransactions]);
 
   return {
     transactions,

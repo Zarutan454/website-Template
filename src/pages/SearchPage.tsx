@@ -55,8 +55,6 @@ const SearchPage: React.FC = () => {
       try {
         const related = await findRelatedUsers(profile.id, 10);
         setSuggestedUsers(related);
-      } catch (error) {
-        console.error('Error loading suggestions:', error);
       } finally {
         setIsLoadingSuggestions(false);
       }
@@ -81,7 +79,7 @@ const SearchPage: React.FC = () => {
     };
     
     checkFollowStatus();
-  }, [users, suggestedUsers, profile, isFollowing, initialQuery]);
+  }, [users, suggestedUsers, profile, initialQuery]);
   
   const handleSearch = () => {
     if (!query.trim()) return;

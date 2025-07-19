@@ -6,7 +6,7 @@ import { useTheme } from '../ThemeProvider';
 import { useProfile } from '../../hooks/useProfile';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { MessageSquare, Users } from 'lucide-react';
+import { MessageSquare, Users, Plus } from 'lucide-react';
 import ConversationsList from './components/ConversationsList';
 import ConversationView from './components/ConversationView';
 import CreateConversationView from './components/CreateConversationView';
@@ -15,41 +15,8 @@ import GroupChatList from './GroupChat/GroupChatList';
 import GroupChatView from './GroupChat/GroupChatView';
 import { UploadResult } from '../../utils/storageUtils';
 import { useAuth } from '@/hooks/useAuth';
-
-// Temporary placeholder types and hooks until messaging is fully migrated to Django
-interface Conversation {
-  id: string;
-  creator_id: string;
-  recipient_id: string;
-  creator_username?: string;
-  creator_display_name?: string;
-  creator_avatar_url?: string;
-  recipient_username?: string;
-  recipient_display_name?: string;
-  recipient_avatar_url?: string;
-  created_at: string;
-}
-
-const useConversations = () => {
-  return {
-    conversations: [] as Conversation[],
-    isLoading: false,
-    createConversation: async () => null
-  };
-};
-
-const useMessages = (conversationId: string | null) => {
-  return {
-    messages: [],
-    isLoading: false,
-    sendMessage: { mutate: () => {} },
-    markAsRead: () => {}
-  };
-};
-
-const isFollowing = async (userId: string) => false;
-const followUser = async (userId: string) => true;
-const unfollowUser = async (userId: string) => true;
+import { useMessaging } from '../../hooks/useMessaging';
+import type { Conversation } from '../../types/messaging';
 
 export const MessagesPage: React.FC = () => {
   const { theme } = useTheme();
@@ -63,31 +30,39 @@ export const MessagesPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'direct' | 'groups'>('direct');
   const chatWindowRef = useRef<HTMLDivElement>(null);
   const { user: profile } = useAuth();
-  // const { isFollowing, followUser, unfollowUser } = useFollowSystem();
   const [isFollowingUser, setIsFollowingUser] = useState(false);
   const isNewConversation = location.pathname === '/messages/new';
   
-  const { 
-    conversations, 
-    isLoading: isLoadingConversations,
-    createConversation
-  } = useConversations();
-
-  const { 
-    messages, 
-    isLoading: isLoadingMessages,
+  // Use the new messaging hooks
+  const {
+    conversations,
+    isLoadingConversations,
+    createConversation,
+    messages,
+    conversation,
+    isLoadingMessages,
     sendMessage,
-    markAsRead
-  } = useMessages(selectedConversation?.id || conversationId || null);
+    isSending,
+    markAsRead,
+    selectedConversationId,
+    selectConversation,
+    // WebSocket features
+    isConnected,
+    typingUsers,
+    sendTyping,
+    sendReadReceipt,
+    sendReaction,
+  } = useMessaging();
 
   useEffect(() => {
     if (conversationId && conversationId !== 'new' && conversations) {
-      const conversation = conversations.find(conv => conv.id === conversationId);
+      const conversation = conversations.find(conv => conv.id.toString() === conversationId);
       if (conversation) {
         setSelectedConversation(conversation);
+        selectConversation(conversation.id);
       }
     }
-  }, [conversations, conversationId]);
+  }, [conversations, conversationId, selectConversation]);
 
   useEffect(() => {
     if (chatWindowRef.current && messages && messages.length > 0) {
@@ -96,46 +71,21 @@ export const MessagesPage: React.FC = () => {
   }, [messages]);
 
   useEffect(() => {
-    if (selectedConversation) {
+    if (selectedConversationId) {
       markAsRead();
     }
-  }, [selectedConversation, markAsRead]);
+  }, [selectedConversationId, markAsRead]);
 
   const handleSelectConversation = (conversation: Conversation) => {
-    console.log('Selecting conversation:', conversation);
     setSelectedConversation(conversation);
     setShowUserProfile(false);
+    selectConversation(conversation.id);
     navigate(`/messages/${conversation.id}`);
   };
 
   const handleSendMessage = (content: string, attachment?: UploadResult) => {
-    if (selectedConversation) {
-      console.log('Sending message in conversation:', selectedConversation.id);
-      sendMessage.mutate({ 
-        content,
-        attachment_url: attachment?.url,
-        message_type: attachment ? getMessageTypeFromAttachment(attachment) : 'text',
-        attachment_name: attachment?.name,
-        attachment_size: attachment?.size,
-        attachment_type: attachment?.type
-      });
-    } else {
-      console.warn('No selected conversation to send message to');
-    }
-  };
-  
-  const getMessageTypeFromAttachment = (attachment: UploadResult): 'text' | 'image' | 'video' | 'audio' | 'file' => {
-    const type = attachment.type.split('/')[0];
-    
-    switch (type) {
-      case 'image':
-        return 'image';
-      case 'video':
-        return 'video';
-      case 'audio':
-        return 'audio';
-      default:
-        return 'file';
+    if (selectedConversationId) {
+      sendMessage(content, attachment);
     }
   };
 
@@ -150,258 +100,94 @@ export const MessagesPage: React.FC = () => {
     navigate('/messages');
   };
 
-  const getPartnerProfile = () => {
-    if (!selectedConversation || !profile) {
-      console.warn('Cannot get partner profile: missing selected conversation or user profile');
-      return null;
-    }
-    
-    const isCreator = selectedConversation.creator_id === profile.id;
-    
-    // Debug the partner information
-    console.log('Current user ID:', profile.id);
-    console.log('Is creator:', isCreator);
-    console.log('Creator ID:', selectedConversation.creator_id);
-    console.log('Recipient ID:', selectedConversation.recipient_id);
-    console.log('Creator data:', {
-      username: selectedConversation.creator_username,
-      display_name: selectedConversation.creator_display_name,
-      avatar_url: selectedConversation.creator_avatar_url
-    });
-    console.log('Recipient data:', {
-      username: selectedConversation.recipient_username,
-      display_name: selectedConversation.recipient_display_name,
-      avatar_url: selectedConversation.recipient_avatar_url
-    });
-    
-    const partnerId = isCreator ? selectedConversation.recipient_id : selectedConversation.creator_id;
-    const partnerUsername = isCreator ? selectedConversation.recipient_username : selectedConversation.creator_username;
-    const partnerDisplayName = isCreator ? selectedConversation.recipient_display_name : selectedConversation.creator_display_name;
-    const partnerAvatarUrl = isCreator ? selectedConversation.recipient_avatar_url : selectedConversation.creator_avatar_url;
-    
-    // Return the partner profile information
-    return {
-      id: partnerId,
-      username: partnerUsername || 'Unknown',
-      display_name: partnerDisplayName || partnerUsername || 'Unknown',
-      avatar_url: partnerAvatarUrl,
-      created_at: selectedConversation.created_at,
-      updated_at: selectedConversation.created_at,
-      bio: null,
-      wallet_address: null,
-      posts_count: 0,
-      followers_count: 0,
-      tokens: 0
-    };
-  };
-
-  const checkFollowStatus = async () => {
-    const partnerProfile = getPartnerProfile();
-    if (!partnerProfile) {
-      console.warn('Cannot check follow status: partner profile is null');
-      return;
-    }
-    
-    try {
-      console.log('Checking follow status for user ID:', partnerProfile.id);
-      const following = await isFollowing(partnerProfile.id);
-      console.log('Follow status result:', following);
-      setIsFollowingUser(following);
-    } catch (error) {
-      console.error('Error checking follow status:', error);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedConversation) {
-      checkFollowStatus();
-    }
-  }, [selectedConversation]);
-
-  const handleToggleFollow = async () => {
-    const partnerProfile = getPartnerProfile();
-    if (!partnerProfile) {
-      console.warn('Cannot toggle follow: partner profile is null');
-      return;
-    }
-    
-    try {
-      if (isFollowingUser) {
-        console.log('Unfollowing user:', partnerProfile.id);
-        const success = await unfollowUser(partnerProfile.id);
-        if (success) {
-          setIsFollowingUser(false);
-          toast.success(`Du folgst ${partnerProfile.display_name || partnerProfile.username} nicht mehr.`);
-        }
-      } else {
-        console.log('Following user:', partnerProfile.id);
-        const success = await followUser(partnerProfile.id);
-        if (success) {
-          setIsFollowingUser(true);
-          toast.success(`Du folgst jetzt ${partnerProfile.display_name || partnerProfile.username}.`);
-        }
-      }
-    } catch (error) {
-      console.error('Error toggling follow status:', error);
-      toast.error('Fehler beim Ändern des Folge-Status');
-    }
-  };
-
-  const filteredConversations = searchQuery && conversations
-    ? conversations.filter(conv => {
-        const isCreator = conv.creator_id === profile?.id;
-        const partnerName = isCreator
-          ? (conv.recipient_display_name || conv.recipient_username || '')
-          : (conv.creator_display_name || conv.creator_username || '');
-        
-        return partnerName.toLowerCase().includes(searchQuery.toLowerCase());
-      })
-    : conversations;
-
-  const isMobile = window.innerWidth < 768;
-  const showConversationList = !isMobile || (!selectedConversation && !isNewConversation);
-  const showMessages = !isMobile || selectedConversation;
-  const showNewConversation = !isMobile || isNewConversation;
-  const partnerProfile = getPartnerProfile();
-
-  console.log('Render state:', {
-    conversationId,
-    selectedConversation: selectedConversation?.id,
-    isMobile,
-    showConversationList,
-    showMessages,
-    showNewConversation,
-    hasPartnerProfile: !!partnerProfile
-  });
-
   const handleSelectGroup = (groupId: string) => {
     setSelectedGroupId(groupId);
     setSelectedConversation(null);
-    setActiveTab('groups');
-    if (isMobile) {
-      navigate(`/messages/groups/${groupId}`);
-    }
+    setShowUserProfile(false);
   };
-  
+
   const handleTabChange = (value: string) => {
     setActiveTab(value as 'direct' | 'groups');
-    if (value === 'direct') {
-      setSelectedGroupId(null);
-    } else {
-      setSelectedConversation(null);
-    }
   };
 
   return (
-    <div className={`bg-background rounded-lg border ${theme === 'dark' ? 'border-gray-800' : 'border-gray-200'} overflow-hidden h-[calc(100vh-180px)]`}>
-      <Tabs 
-        defaultValue="direct" 
-        value={activeTab} 
-        onValueChange={handleTabChange}
-        className="h-full flex flex-col"
-      >
-        <TabsList className="mx-4 mt-2 justify-start">
-          <TabsTrigger value="direct" className="flex items-center gap-1">
-            <MessageSquare className="h-4 w-4" />
-            Direktnachrichten
-          </TabsTrigger>
-          <TabsTrigger value="groups" className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
-            Gruppen
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="direct" className="flex-1 flex overflow-hidden mt-2">
-          <div className="flex h-full w-full">
-            <AnimatePresence initial={false}>
-              {showConversationList && (
-                <ConversationsList 
-                  key="conversations-list"
-                  isLoadingConversations={isLoadingConversations}
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  filteredConversations={filteredConversations || []}
-                  selectedConversation={selectedConversation}
-                  handleSelectConversation={handleSelectConversation}
-                  handleNewConversation={handleNewConversation}
-                  theme={theme}
-                  profile={profile}
-                  isMobile={isMobile}
-                />
-              )}
-            </AnimatePresence>
-
-            <AnimatePresence initial={false}>
-              {showMessages && selectedConversation && (
-                <ConversationView 
-                  key="conversation-view"
-                  isMobile={isMobile}
-                  selectedConversation={selectedConversation}
-                  showUserProfile={showUserProfile}
-                  setShowUserProfile={setShowUserProfile}
-                  handleBackToList={handleBackToList}
-                  partnerProfile={partnerProfile}
-                  isFollowingUser={isFollowingUser}
-                  handleToggleFollow={handleToggleFollow}
-                  messages={messages || []}
-                  profile={profile}
-                  chatWindowRef={chatWindowRef}
-                  handleSendMessage={handleSendMessage}
-                  sendMessage={sendMessage}
-                  theme={theme}
-                />
-              )}
-            </AnimatePresence>
-
-            <AnimatePresence initial={false}>
-              {showNewConversation && isNewConversation && (
-                <CreateConversationView 
-                  key="create-conversation"
-                  handleBackToList={handleBackToList}
-                  isMobile={isMobile}
-                  theme={theme}
-                />
-              )}
-            </AnimatePresence>
-
-            <AnimatePresence>
-              {showUserProfile && partnerProfile && (
-                <UserProfile 
-                  key="user-profile"
-                  user={partnerProfile}
-                  isFollowing={isFollowingUser}
-                  onToggleFollow={handleToggleFollow}
-                  onClose={() => setShowUserProfile(false)}
-                />
-              )}
-            </AnimatePresence>
+    <div className={`min-h-screen w-full ${theme === 'dark' ? 'bg-[#10131a] text-white' : 'bg-gray-50 text-gray-900'}`}
+      style={{ fontFamily: 'Inter, sans-serif' }}>
+      <div className="w-full max-w-[1600px] mx-auto flex h-[calc(100vh-32px)] shadow-xl rounded-2xl overflow-hidden border border-gray-800/10 dark:border-gray-800/40 bg-white dark:bg-[#181c24]">
+        {/* Sidebar/Conversation List */}
+        <div className="flex flex-col w-[340px] min-w-[280px] max-w-[400px] border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#181c24] h-full">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#181c24]">
+            <h1 className="text-xl font-bold tracking-tight">Nachrichten</h1>
+            <button
+              onClick={handleNewConversation}
+              className="bg-primary-600 hover:bg-primary-700 text-white px-3 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow"
+            >
+              <Plus size={16} /> Neu
+            </button>
           </div>
-        </TabsContent>
-        
-        <TabsContent value="groups" className="flex-1 flex overflow-hidden mt-2">
-          <div className="flex h-full w-full">
-            <AnimatePresence initial={false}>
-              {(!isMobile || !selectedGroupId) && (
-                <GroupChatList
-                  key="group-chat-list"
-                  onSelectGroup={handleSelectGroup}
-                  selectedGroupId={selectedGroupId || undefined}
-                  isMobile={isMobile}
-                />
-              )}
-            </AnimatePresence>
-            
-            <AnimatePresence initial={false}>
-              {(!isMobile || selectedGroupId) && selectedGroupId && (
-                <GroupChatView
-                  key="group-chat-view"
-                  groupId={selectedGroupId}
-                />
-              )}
-            </AnimatePresence>
-          </div>
-        </TabsContent>
-      </Tabs>
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
+            <TabsList className="grid grid-cols-2 w-full bg-transparent border-b border-gray-200 dark:border-gray-800">
+              <TabsTrigger value="direct" className="flex items-center gap-2 py-3 text-base">
+                <MessageSquare size={16} /> Direkt
+              </TabsTrigger>
+              <TabsTrigger value="groups" className="flex items-center gap-2 py-3 text-base">
+                <Users size={16} /> Gruppen
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="direct" className="flex-1 overflow-y-auto">
+              <ConversationsList
+                conversations={conversations}
+                isLoading={isLoadingConversations}
+                selectedConversation={selectedConversation}
+                onSelectConversation={handleSelectConversation}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+              />
+            </TabsContent>
+            <TabsContent value="groups" className="flex-1 overflow-y-auto">
+              <GroupChatList
+                onSelectGroup={handleSelectGroup}
+                selectedGroupId={selectedGroupId}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col h-full bg-[#f7f9fb] dark:bg-[#131722]">
+          <AnimatePresence mode="wait">
+            {isNewConversation ? (
+              <CreateConversationView
+                handleBackToList={handleBackToList}
+                isMobile={false}
+                theme={theme}
+              />
+            ) : selectedConversation ? (
+              <ConversationView
+                conversation={selectedConversation}
+                onBack={handleBackToList}
+                chatWindowRef={chatWindowRef}
+                onSendMessage={handleSendMessage}
+                isLoading={isLoadingMessages}
+                messages={messages}
+                typingUsers={typingUsers}
+                sendTyping={sendTyping}
+                sendReadReceipt={sendReadReceipt}
+                sendReaction={sendReaction}
+                isConnected={isConnected}
+                theme={theme}
+              />
+            ) : (
+              <div className="flex flex-1 items-center justify-center flex-col text-center select-none">
+                <div className="text-5xl mb-4 opacity-30">💬</div>
+                <div className="text-lg font-medium opacity-80 mb-2">Wähle eine Konversation oder starte eine neue</div>
+                <div className="text-base text-gray-500 dark:text-gray-400">Hier erscheinen deine Nachrichten</div>
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
     </div>
   );
 };
+
+export default MessagesPage;

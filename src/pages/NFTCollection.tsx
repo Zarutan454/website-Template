@@ -1,9 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useNFTs } from '@/hooks/useNFTs';
-import type { NFTCollection as NFTCollectionType } from '@/types/nft';
-import { NFT } from '@/types/nft';
+import { useNFTs, NFT } from '../hooks/useNFTs';
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +9,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Check, Grid3X3, GridIcon, Search, Plus } from "lucide-react";
 import { toast } from 'sonner';
 
+// Temporary NFTCollection interface for compatibility
+interface NFTCollectionType {
+  id: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+  bannerUrl?: string;
+  verified: boolean;
+  creatorName?: string;
+  totalSupply?: number;
+  floorPrice?: number;
+  network: string;
+}
+
 const NFTCollection = () => {
   const { id } = useParams<{ id: string }>();
-  const { fetchCollectionById, fetchNFTs, isLoading } = useNFTs();
+  const { fetchNFTs, isLoading } = useNFTs();
   const [collection, setCollection] = useState<NFTCollectionType | null>(null);
   const [collectionNFTs, setCollectionNFTs] = useState<NFT[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'large'>('grid');
@@ -24,19 +36,31 @@ const NFTCollection = () => {
       if (!id) return;
       
       try {
-        const collectionData = await fetchCollectionById(id);
-        setCollection(collectionData);
+        // For now, we'll create a mock collection since we don't have collection API yet
+        const mockCollection: NFTCollectionType = {
+          id,
+          name: `Collection ${id}`,
+          description: 'This is a sample collection description.',
+          imageUrl: 'https://via.placeholder.com/400x400?text=Collection',
+          bannerUrl: 'https://via.placeholder.com/1500x500?text=Collection+Banner',
+          verified: true,
+          creatorName: 'Sample Creator',
+          totalSupply: 0,
+          floorPrice: 0.1,
+          network: 'Ethereum'
+        };
+        setCollection(mockCollection);
         
         const nfts = await fetchNFTs();
-        const filteredNFTs = nfts.filter(nft => nft.collectionId === id);
-        setCollectionNFTs(filteredNFTs);
+        // For now, we'll show all NFTs since we don't have collection filtering
+        setCollectionNFTs(nfts);
       } catch (error) {
         toast.error('Error loading collection details');
       }
     };
     
     loadData();
-  }, [id]);
+  }, [id, fetchNFTs]);
   
   const filteredNFTs = collectionNFTs.filter(nft => 
     nft.name.toLowerCase().includes(filterText.toLowerCase())
@@ -149,12 +173,14 @@ const NFTCollection = () => {
                   <button 
                     className={`p-2 ${viewMode === 'grid' ? 'bg-dark-300 text-white' : 'text-gray-400'}`}
                     onClick={() => setViewMode('grid')}
+                    aria-label="Grid view"
                   >
                     <GridIcon className="h-5 w-5" />
                   </button>
                   <button 
                     className={`p-2 ${viewMode === 'large' ? 'bg-dark-300 text-white' : 'text-gray-400'}`}
                     onClick={() => setViewMode('large')}
+                    aria-label="Large grid view"
                   >
                     <Grid3X3 className="h-5 w-5" />
                   </button>
@@ -171,12 +197,12 @@ const NFTCollection = () => {
                 {filteredNFTs.map((nft) => (
                   <Link 
                     key={nft.id} 
-                    to={`/nft/${nft.id}`}
+                    to={`/nfts/${nft.id}`}
                     className="bg-dark-100 rounded-lg border border-gray-800 overflow-hidden hover:border-primary-500/50 transition-all card-hover"
                   >
                     <div className="aspect-square overflow-hidden">
                       <img 
-                        src={nft.imageUrl} 
+                        src={nft.image_url} 
                         alt={nft.name} 
                         className="w-full h-full object-cover"
                       />
@@ -198,13 +224,8 @@ const NFTCollection = () => {
             ) : (
               <div className="bg-dark-100 rounded-lg border border-gray-800 p-8 text-center">
                 <p className="text-gray-400">
-                  {filterText ? 'Keine Items entsprechen deiner Suche' : 'Noch keine Items in dieser Sammlung'}
+                  {filterText ? 'Keine NFTs gefunden' : 'Keine NFTs in dieser Sammlung'}
                 </p>
-                <Link to="/create-nft" className="mt-4 inline-block">
-                  <Button className="gap-1">
-                    <Plus className="h-4 w-4" /> Erstes NFT erstellen
-                  </Button>
-                </Link>
               </div>
             )}
           </div>

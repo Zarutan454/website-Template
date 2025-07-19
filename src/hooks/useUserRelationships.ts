@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useProfile } from './useProfile';
 import { toast } from 'sonner';
 import { userRelationshipAPI } from '@/lib/django-api-new';
 import { useAuth } from '@/hooks/useAuth';
+import { useFeedWebSocket } from '@/hooks/useWebSocket';
 
 /**
  * Interface for relationship users (followers, friends, etc.)
@@ -21,20 +22,43 @@ export interface RelationshipUser {
 export const useUserRelationships = () => {
   const { user: profile } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [followedUserIds, setFollowedUserIds] = useState<Set<number>>(new Set());
+  const feedWebSocket = useFeedWebSocket();
+
+  // Typ für WebSocket Follow-Events
+  interface FollowWebSocketMessage {
+    type: 'user_followed' | 'user_unfollowed';
+    follower_id: number;
+    followed_id: number;
+    [key: string]: unknown;
+  }
+
+  // Synchronisiere Follow-Status bei WebSocket-Events
+  useEffect(() => {
+    // TODO: WebSocket-Synchronisation für Follow-Status global implementieren, sobald Event-API verfügbar ist
+    // Aktuell keine subscribe/unsubscribe API in useFeedWebSocket
+    // Daher: Synchronisation via globalem Context/EventEmitter oder direkt im useFeedWebSocket implementieren
+    // Beispiel (auskommentiert):
+    // if (!feedWebSocket) return;
+    // const handleMessage = (message: FollowWebSocketMessage) => { ... };
+    // feedWebSocket.subscribe(handleMessage);
+    // return () => feedWebSocket.unsubscribe(handleMessage);
+  }, [feedWebSocket, profile?.id]);
 
   /**
    * Check if the current user is following the target user
    */
   const isFollowing = useCallback(async (targetUserId: string | number): Promise<boolean> => {
+    const userId = typeof targetUserId === 'string' ? parseInt(targetUserId, 10) : targetUserId;
+    if (followedUserIds.has(userId)) return true;
     if (!profile?.id) return false;
     try {
-      const userId = typeof targetUserId === 'string' ? parseInt(targetUserId, 10) : targetUserId;
       return await userRelationshipAPI.isFollowing(userId);
     } catch (error) {
       console.error('Error checking if following:', error);
       return false;
     }
-  }, [profile]);
+  }, [profile, followedUserIds]);
 
   /**
    * Follow a user

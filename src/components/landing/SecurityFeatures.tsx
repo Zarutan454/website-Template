@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { Shield, Lock, CheckSquare, Server } from 'lucide-react';
 import { GradientText } from '@/components/ui/gradient-text';
-import { useLanguage } from '@/components/LanguageProvider';
+import { useLanguage } from '@/components/LanguageProvider.utils';
 
 interface SecurityFeatureProps {
   icon: React.ReactNode;

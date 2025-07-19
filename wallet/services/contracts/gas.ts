@@ -4,7 +4,6 @@ import { DeploymentConfig, GasEstimate } from './types';
 import { getWalletClient } from '@wagmi/core';
 import { parseEther } from 'viem';
 import { mainnet, holesky, sepolia } from 'viem/chains';
-import { config } from '../../../src/lib/wagmi';
 import type { PublicClient } from 'viem';
 import { getNetworkClient } from '../../../src/wallet/services/networkService';
 

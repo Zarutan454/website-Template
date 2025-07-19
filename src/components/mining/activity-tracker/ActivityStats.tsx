@@ -2,12 +2,12 @@
 import React from 'react';
 import { Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ActivityType } from '@/hooks/mining/types';
+import { ActivityType, ActivityLimit } from '@/hooks/mining/types';
 
 interface ActivityStatsProps {
   getRemainingCount: (type: string) => number;
   isActivityLimitReached: (type: string) => boolean;
-  MINING_LIMITS: Record<string, any>;
+  MINING_LIMITS: Record<ActivityType, ActivityLimit>;
 }
 
 const ActivityStats: React.FC<ActivityStatsProps> = ({

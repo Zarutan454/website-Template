@@ -73,7 +73,6 @@ const NFTDetailPage: React.FC = () => {
         await recordActivity('achievement_unlocked', 30, 2);
         toast.success("+2 BSN durch NFT-Kauf!");
       } catch (error) {
-        console.error('Error recording mining activity:', error);
       }
       
       // NFT-Daten neu laden
@@ -106,7 +105,6 @@ const NFTDetailPage: React.FC = () => {
             await recordActivity('like', 5, 0.5);
             toast.success("+0.5 BSN durch NFT-Like!");
           } catch (error) {
-            console.error('Error recording mining activity:', error);
           }
         }
         

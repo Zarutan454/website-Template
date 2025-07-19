@@ -198,7 +198,7 @@ export const TransactionHistoryView: React.FC = () => {
             <div className="flex gap-2 w-full sm:w-auto">
               <Select
                 value={filter.type || 'all'}
-                onValueChange={(value: any) => updateFilter({ type: value })}
+                onValueChange={(value: string) => updateFilter({ type: value })}
               >
                 <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Typ" />
@@ -217,7 +217,7 @@ export const TransactionHistoryView: React.FC = () => {
               
               <Select
                 value={filter.timeRange || 'all'}
-                onValueChange={(value: any) => updateFilter({ timeRange: value })}
+                onValueChange={(value: string) => updateFilter({ timeRange: value })}
               >
                 <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Zeitraum" />

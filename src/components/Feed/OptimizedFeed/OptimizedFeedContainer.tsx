@@ -7,7 +7,7 @@ import VirtualizedFeedList from './VirtualizedFeedList';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import FeedFilterOptimized from '../FeedFilterOptimized';
-import CreatePostBoxLight from '../CreatePostBoxLight';
+import CreatePostBoxFacebook from '../../CreatePostBoxFacebook';
 import { UiFilterType } from '@/hooks/feed/useFilterControl';
 import { interactionRepository } from '@/repositories/InteractionRepository';
 import { commentRepository } from '@/repositories/CommentRepository';
@@ -221,38 +221,11 @@ const OptimizedFeedContainer: React.FC<OptimizedFeedContainerProps> = ({
       
       {showCreateBox && (
         <div className="mb-4">
-          <CreatePostBoxLight
-            darkMode={false}
-            onCreatePost={handleCreatePost}
-          />
+          <CreatePostBoxFacebook onCreatePost={handleCreatePost} darkMode={isDarkMode} />
         </div>
       )}
       
-      {showFilters && (
-        <Card className="mb-4">
-          <CardContent className="px-4 py-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Filtern nach</span>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={toggleFilters}
-                className="text-sm"
-              >
-                {showFilterMenu ? 'Filter ausblenden' : 'Filter anzeigen'}
-              </Button>
-            </div>
-            
-            <FeedFilterOptimized
-              showFilters={showFilterMenu}
-              selectedFilter={selectedFilter}
-              handleFilterSelect={handleFilterSelect}
-              feedType={feedType}
-              lastUpdated={new Date()}
-            />
-          </CardContent>
-        </Card>
-      )}
+      {/* Filter Section entfernt */}
       
       {hasNewPosts && (
         <div className="mb-4">

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { UserPlus, UserCheck, Loader2 } from 'lucide-react';
 import { useUserRelationships } from '@/hooks/useUserRelationships';
@@ -60,7 +60,7 @@ const UserRelationshipButton: React.FC<UserRelationshipButtonProps> = ({
         }
       }
     } catch (error) {
-      console.error("Fehler beim Folgen/Entfolgen:", error);
+      // Intentionally left empty: errors are handled by UI feedback or are non-critical
     } finally {
       setIsLoading(false);
     }

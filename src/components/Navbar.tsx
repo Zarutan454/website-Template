@@ -24,9 +24,10 @@ import Logo from '@/components/Logo';
 import { MessagesBadge } from './Messaging/MessagesBadge';
 import { NotificationsBadge } from './notifications/NotificationsBadge';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { useLanguage } from '@/components/LanguageProvider';
+import { useLanguage } from '@/components/LanguageProvider.utils';
 import { getFullUrl } from '@/utils/url';
 import { Search, Bell, MessageSquare, Globe, Menu, X, Settings, User, LogOut } from 'lucide-react';
+import { getAvatarUrl } from '../utils/api';
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -233,7 +234,7 @@ const Navbar = () => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={getFullUrl(user?.avatar_url)} />
+                        <AvatarImage src={getAvatarUrl(user?.avatar_url)} />
                         <AvatarFallback className="bg-primary/10 text-primary">
                           {user?.username?.[0]?.toUpperCase() || "U"}
                         </AvatarFallback>
@@ -457,14 +458,14 @@ const Navbar = () => {
                 <div className="space-y-6">
                   <div className="flex items-center space-x-3 mb-6">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={profile?.avatar_url || ""} />
+                      <AvatarImage src={user?.avatar_url ? getAvatarUrl(user.avatar_url) : ""} />
                       <AvatarFallback className="bg-primary/10 text-primary">
-                        {profile?.username?.[0]?.toUpperCase() || "U"}
+                        {user?.username?.[0]?.toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3 className="font-medium text-white">{profile?.display_name || profile?.username}</h3>
-                      <p className="text-sm text-gray-400">@{profile?.username}</p>
+                      <h3 className="font-medium text-white">{user?.display_name || user?.username}</h3>
+                      <p className="text-sm text-gray-400">@{user?.username}</p>
                     </div>
                   </div>
                   

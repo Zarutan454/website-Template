@@ -1,21 +1,14 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@/components/ThemeProvider';
 import { FeedStateRenderer } from './common';
-import { useFeedData, FeedType } from '@/hooks/feed/useFeedData';
-import { useEnhancedFeedActions } from '@/hooks/feed/useEnhancedFeedActions';
+import { useUnifiedFeedState } from '@/hooks/feed/useUnifiedFeedState';
+import { FeedType } from '@/hooks/feed/useFeedData';
 import { useFilterControl } from '@/hooks/feed/useFilterControl';
-import { Tabs } from "@/components/ui/tabs";
-import VirtualizedFeed from './VirtualizedFeed';
-import EnhancedFeedHeader from './components/EnhancedFeedHeader';
-import { toast } from 'sonner';
-import { AnimatePresence, motion } from 'framer-motion';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import FeedHeader from './components/FeedHeader';
-import CreatePostBox from './CreatePostBox';
+import CreatePostBox from './components/CreatePostBox';
 import CreatePostModal from './CreatePostModal';
-import { CreateCommentData } from '@/types/posts';
-import { CreatePostData } from '@/types/posts';
 
 interface UnifiedFeedContainerProps {
   feedType: FeedType;
@@ -24,7 +17,6 @@ interface UnifiedFeedContainerProps {
   showCreatePostForm?: boolean;
   showHeader?: boolean;
   headerComponent?: React.ReactNode;
-  userId?: string; // Optional: Filter posts by specific user
 }
 
 const UnifiedFeedContainer: React.FC<UnifiedFeedContainerProps> = ({
@@ -33,167 +25,89 @@ const UnifiedFeedContainer: React.FC<UnifiedFeedContainerProps> = ({
   showMiningRewards = false,
   showCreatePostForm = true,
   showHeader = true,
-  headerComponent,
-  userId
+  headerComponent
 }) => {
   const { theme } = useTheme();
   const navigate = useNavigate();
   const isDarkMode = theme === 'dark';
   const [showCreateModal, setShowCreateModal] = useState(false);
-
   const { showFilterMenu, selectedFilter, toggleFilters, handleFilterSelect } = useFilterControl();
 
-  const { 
-    adaptedPosts, 
-    isLoading, 
-    error, 
-    fetchPosts, 
-    profileLoading, 
-    isAuthenticated, 
-    profile,
-    likePost,
-    deletePost,
-    createPost,
-    createComment,
-    getPostComments,
-    sharePost,
-    lastUpdated,
-    hasNewPosts
-  } = useFeedData({ 
-    feedType, 
-    selectedFilter,
-    enableAutoRefresh: true,
-    refreshInterval: 120000
-  });
-
-  // Filter posts by userId if specified
-  const filteredPosts = useMemo(() => {
-    if (!userId) return adaptedPosts;
-    return adaptedPosts.filter(post => post.user?.id?.toString() === userId);
-  }, [adaptedPosts, userId]);
-
-  // Create adapter functions to match expected signatures
-  
-  // Adapter for fetchPosts to match the signature expected by useEnhancedFeedActions
-  const adaptedFetchPosts = useCallback(async (checkForNew?: boolean, reset?: boolean) => {
-    await fetchPosts(feedType as string);
-  }, [fetchPosts, feedType]);
-
-  // Adapter for createComment to match the signature expected by useEnhancedFeedActions
-  const adaptedCreateComment = useCallback(async (postId: string, content: string) => {
-    return createComment({ post_id: postId, content });
-  }, [createComment]);
-
+  // Zentrale Feed-Logik: ALLE States und Handler kommen aus useUnifiedFeedState
   const {
+    profile,
+    isAuthenticated,
+    profileLoading,
+    adaptedPosts,
+    isLoading,
+    error,
+    isDarkMode: feedDarkMode,
+    lastRefresh,
+    hasNewPosts,
+    handleRefresh,
     handleLikePost,
     handleDeletePost,
     handleCreateComment,
     handleGetComments,
     handleSharePost,
     handleReportPost,
-    processingActions
-  } = useEnhancedFeedActions({ 
-    fetchPosts: adaptedFetchPosts,
+    handleCreatePost,
+    fetchPosts
+  } = useUnifiedFeedState({
+    feedType,
     showMiningRewards,
-    likePost,
-    deletePost,
-    createComment: adaptedCreateComment,
-    getPostComments,
-    sharePost
+    enableAutoRefresh: true
   });
 
-  const handleRefresh = useCallback(async () => {
-    toast.info("Feed wird aktualisiert...");
-    await fetchPosts();
-    toast.success("Feed wurde aktualisiert");
-  }, [fetchPosts]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (hasNewPosts && window.scrollY < 100) {
-        handleRefresh();
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [hasNewPosts, handleRefresh]);
-
-  const handleRetry = () => fetchPosts();
-
+  const handleRetry = () => fetchPosts(feedType);
   const handleLoginRedirect = () => navigate('/login');
 
-  const handleCreatePost = async (postData: CreatePostData) => {
-    if (!profile) {
-      toast.error("Du musst angemeldet sein, um Beiträge zu erstellen");
-      return;
-    }
-    
-    try {
-      const result = await createPost({
-        content: postData.content,
-        media_url: postData.media_url
-      });
-      
-      if (result.success) {
-        await fetchPosts();
-        toast.success('Beitrag erfolgreich erstellt!');
-      } else {
-        toast.error('Fehler beim Erstellen des Beitrags');
-      }
-    } catch (error) {
-      console.error('Error creating post:', error);
-      toast.error('Fehler beim Erstellen des Beitrags');
-    }
-  };
-
-  const handleOpenCreatePost = () => {
+  const handleOpenCreatePost = useCallback(() => {
     if (!isAuthenticated) {
-      toast.error("Bitte melde dich an, um einen Beitrag zu erstellen");
       navigate('/login');
       return;
     }
     setShowCreateModal(true);
-  };
+  }, [isAuthenticated, navigate]);
 
-  // TEMPORARY DEBUG: Comment out authentication check
-  console.log(`[UnifiedFeedContainer] DEBUG - isAuthenticated: ${isAuthenticated}, profileLoading: ${profileLoading}, profile: ${profile ? profile.username : 'null'}, adaptedPosts: ${adaptedPosts.length}`);
-  
-  /*
   if (!isAuthenticated && !profileLoading) {
     return (
       <div className="pt-6">
-        <FeedStateRenderer
-          isLoading={false}
-          error={new Error("Bitte melde dich an, um Beiträge zu sehen")}
-          posts={[]}
-          profile={null}
-          isEmpty={true}
-          onLike={handleLikePost}
-          onDelete={handleDeletePost}
-          onComment={handleCreateComment}
-          onGetComments={handleGetComments}
-          onShare={handleSharePost}
-          onReport={handleReportPost}
-          onRetry={handleLoginRedirect}
-          onLoginRedirect={handleLoginRedirect}
-          isDarkMode={isDarkMode}
-          showMiningRewards={false}
-        />
+        <div className="text-red-500">Fehler: Bitte melde dich an, um Beiträge zu sehen</div>
       </div>
     );
   }
-  */
 
   if (profileLoading) {
     return (
       <div className="pt-6">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-2 text-muted-foreground">Lade Feed...</p>
+      </div>
+    );
+  }
+
+  return (
+    <TooltipProvider>
+      <div className="space-y-4">
+        {/* Feed Header */}
+        {showHeader && (
+          <FeedHeader
+            feedType={feedType}
+            showFilters={showFilters}
+            showCreatePostForm={showCreatePostForm}
+            onOpenCreatePost={handleOpenCreatePost}
+            headerComponent={headerComponent}
+          />
+        )}
+
+        {/* Feed Content */}
         <FeedStateRenderer
-          isLoading={true}
-          error={null}
-          posts={[]}
-          profile={null}
-          isEmpty={false}
+          isLoading={isLoading}
+          error={error}
+          posts={adaptedPosts}
+          profile={profile}
+          isEmpty={adaptedPosts.length === 0}
           onLike={handleLikePost}
           onDelete={handleDeletePost}
           onComment={handleCreateComment}
@@ -203,101 +117,9 @@ const UnifiedFeedContainer: React.FC<UnifiedFeedContainerProps> = ({
           onRetry={handleRetry}
           onLoginRedirect={handleLoginRedirect}
           isDarkMode={isDarkMode}
-          showMiningRewards={false}
+          showMiningRewards={showMiningRewards}
         />
       </div>
-    );
-  }
-
-  return (
-    <TooltipProvider>
-      <motion.div 
-        className="space-y-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        {showHeader && (
-          <FeedHeader feedType={feedType} customHeader={headerComponent} />
-        )}
-        
-        {showCreatePostForm && (
-          <CreatePostBox 
-            darkMode={isDarkMode}
-            onCreatePost={handleCreatePost}
-          />
-        )}
-        
-        <Tabs defaultValue="filters" className="w-full">
-          <EnhancedFeedHeader 
-            activeFeed={feedType}
-            onRefresh={handleRefresh}
-            isRefreshing={isLoading}
-            postCount={adaptedPosts.length}
-            hasNewPosts={hasNewPosts}
-          />
-          
-          {showFilters && (
-            <div className="mt-2">
-              <div className="flex justify-between items-center mb-2">
-                <div className="text-sm font-medium text-muted-foreground">
-                  {feedType === 'recent' ? 'Chronologische Reihenfolge' : 
-                  feedType === 'popular' ? 'Nach Popularität sortiert' : 
-                  feedType === 'following' ? 'Beiträge von Personen, denen du folgst' :
-                  feedType === 'tokens' ? 'Token-bezogene Inhalte' :
-                  feedType === 'nfts' ? 'NFT-bezogene Inhalte' :
-                  feedType === 'foryou' ? 'Für dich personalisiert' :
-                  'Alle Inhalte'}
-                </div>
-                <button 
-                  onClick={toggleFilters}
-                  className="text-sm text-primary hover:underline"
-                >
-                  {showFilterMenu ? 'Filter ausblenden' : 'Filter anzeigen'}
-                </button>
-              </div>
-              
-              {/* FeedFilterOptimized
-                showFilters={showFilterMenu}
-                selectedFilter={selectedFilter}
-                handleFilterSelect={handleFilterSelect}
-                feedType={feedType}
-                lastUpdated={lastUpdated}
-              /> */}
-            </div>
-          )}
-        </Tabs>
-        
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`feed-${feedType}-${selectedFilter}`}
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            transition={{ duration: 0.3 }}
-            className="w-full"
-          >
-            <FeedStateRenderer
-              isLoading={isLoading}
-              error={error}
-              posts={filteredPosts}
-              profile={profile}
-              isEmpty={filteredPosts.length === 0}
-              onLike={handleLikePost}
-              onDelete={handleDeletePost}
-              onComment={handleCreateComment}
-              onGetComments={handleGetComments}
-              onShare={handleSharePost}
-              onReport={handleReportPost}
-              onRetry={handleRetry}
-              onLoginRedirect={handleLoginRedirect}
-              isDarkMode={isDarkMode}
-              showMiningRewards={showMiningRewards}
-            />
-          </motion.div>
-        </AnimatePresence>
-      </motion.div>
-
       <CreatePostModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}

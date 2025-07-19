@@ -122,6 +122,8 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                 accept="image/*"
                 onChange={handleAvatarUpload}
                 disabled={isUploading}
+                aria-label="Gruppenbild auswählen"
+                title="Gruppenbild auswählen"
               />
             </div>
             <p className="text-xs text-muted-foreground mt-2">

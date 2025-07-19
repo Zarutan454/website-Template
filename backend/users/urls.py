@@ -22,7 +22,10 @@ urlpatterns = [
     path('profile/detail/', views.UserProfileDetailView.as_view(), name='profile-detail'),
     path('profile/<str:username>/', views.UserProfileByUsernameView.as_view(), name='profile-by-username'),
     path('<int:user_id>/profile/', views.UserProfileByIdView.as_view(), name='profile-by-id'),
-    path('profile/about/', views.UserProfileAboutUpdateView.as_view(), name='profile-about-update'),
+    
+    # NEW: Profile features endpoints
+    # Remove all routes for /<int:user_id>/photos/, /activity/, /analytics/, /privacy/, /social-links/, /photos/upload/, /photos/<int:photo_id>/, etc.
+    # Only keep registration, login, logout, password, session, and settings endpoints.
     
     # User Relationships - Follow/Unfollow
     path('<int:user_id>/follow/', views.FollowUserView.as_view(), name='follow-user'),
@@ -31,7 +34,6 @@ urlpatterns = [
     path('<int:user_id>/follow-stats/', views.FollowStatsView.as_view(), name='follow-stats'),
     path('<int:user_id>/followers/', views.FollowersListView.as_view(), name='followers-list'),
     path('<int:user_id>/following/', views.FollowingListView.as_view(), name='following-list'),
-    path('<int:user_id>/friends/', views.FriendsListView.as_view(), name='friends-list'),
     
     # User Relationships - Block/Unblock
     path('<int:user_id>/block/', views.BlockUserView.as_view(), name='block-user'),
@@ -59,6 +61,4 @@ urlpatterns = [
     
     # Settings
     path('settings/', views.UserSettingsView.as_view(), name='settings'),
-    path('<int:user_id>/activity/', views.UserActivityFeedView.as_view(), name='user-activity-feed'),
-    path('<int:user_id>/media/', views.UserMediaFeedView.as_view(), name='user-media-feed'),
 ] 

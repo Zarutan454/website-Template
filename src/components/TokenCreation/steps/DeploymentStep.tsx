@@ -4,7 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { InfoIcon, Rocket, AlertTriangle, Wallet, Shield, CheckCircle, ArrowRight } from 'lucide-react';
 import { DeploymentStage } from '../types';
 import TokenDeploymentStatus from '../TokenDeploymentStatus';
-import { useTokenCreation } from '../context/TokenCreationContext';
+import { useTokenCreation } from '../context/TokenCreationContext.utils';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { motion } from 'framer-motion';

@@ -50,7 +50,7 @@ export const usePushNotifications = () => {
   // Request notification permission
   const requestPermission = useCallback(async (): Promise<boolean> => {
     if (!isSupported) {
-      toast.error('Push-Benachrichtigungen werden nicht unterstützt');
+      toast.error('Push-Benachrichtigungen werden nicht unterstï¿½tzt');
       return false;
     }
 
@@ -95,7 +95,7 @@ export const usePushNotifications = () => {
       // Create new subscription
       const newSubscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: process.env.VITE_VAPID_PUBLIC_KEY,
+        applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
       });
 
       setSubscription(newSubscription);

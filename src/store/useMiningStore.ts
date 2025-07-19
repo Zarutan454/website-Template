@@ -1,16 +1,16 @@
 import { create } from 'zustand';
+import { MiningStats } from '@/types/mining';
 import djangoApi from '@/lib/django-api-new';
-import { MiningStats } from '@/hooks/mining/types';
 
 interface MiningState {
   miningStats: MiningStats | null;
   isLoading: boolean;
   error: string | null;
+  clearError: () => void;
   fetchStats: () => Promise<void>;
   startMining: () => Promise<boolean>;
   stopMining: () => Promise<boolean>;
   heartbeat: () => Promise<void>;
-  clearError: () => void;
 }
 
 const useMiningStore = create<MiningState>((set, get) => ({
@@ -21,6 +21,13 @@ const useMiningStore = create<MiningState>((set, get) => ({
   clearError: () => set({ error: null }),
 
   fetchStats: async () => {
+    // Check if user is authenticated before making API call
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      console.log('No authentication token found, skipping mining stats fetch');
+      return;
+    }
+
     set({ isLoading: true, error: null });
     try {
       const stats = await djangoApi.miningGetStats();
@@ -32,6 +39,13 @@ const useMiningStore = create<MiningState>((set, get) => ({
   },
 
   startMining: async () => {
+    // Check if user is authenticated before making API call
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      console.log('No authentication token found, skipping mining start');
+      return false;
+    }
+
     set({ isLoading: true, error: null });
     try {
       const stats = await djangoApi.miningStart();
@@ -45,6 +59,13 @@ const useMiningStore = create<MiningState>((set, get) => ({
   },
 
   stopMining: async () => {
+    // Check if user is authenticated before making API call
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      console.log('No authentication token found, skipping mining stop');
+      return false;
+    }
+
     set({ isLoading: true, error: null });
     try {
       const stats = await djangoApi.miningStop();
@@ -58,6 +79,13 @@ const useMiningStore = create<MiningState>((set, get) => ({
   },
   
   heartbeat: async () => {
+    // Check if user is authenticated before making API call
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      console.log('No authentication token found, skipping heartbeat');
+      return;
+    }
+
     try {
       const updatedStats = await djangoApi.miningHeartbeat();
       set(state => ({

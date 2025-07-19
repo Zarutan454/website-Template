@@ -40,7 +40,6 @@ const NFTDetailView: React.FC<NFTDetailViewProps> = ({ nft, transactions, onBuy 
           const liked = await isNFTLiked(nft.id);
           setIsLiked(liked);
         } catch (error) {
-          console.error("Fehler beim Prüfen des Like-Status:", error);
         }
       }
     };

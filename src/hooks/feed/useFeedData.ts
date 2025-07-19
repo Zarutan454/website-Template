@@ -29,7 +29,10 @@ export const useFeedData = ({
   const [hasNewPosts, setHasNewPosts] = useState(false);
   const { user: profile, isAuthenticated, isLoading: profileLoading } = useAuth();
   
-  console.log(`[useFeedData] Hook state - isAuthenticated: ${isAuthenticated}, profile: ${profile ? profile.username : 'null'}, profileLoading: ${profileLoading}`);
+  // Log only in development mode
+  if (import.meta.env.DEV) {
+    console.log(`[useFeedData] Hook state - isAuthenticated: ${isAuthenticated}, profile: ${profile ? profile.username : 'null'}, profileLoading: ${profileLoading}`);
+  }
   
   // Get post data and actions from usePosts
   const { 
@@ -54,7 +57,14 @@ export const useFeedData = ({
       setHasNewPosts(false);
       return true;
     } catch (err: unknown) {
-      setError(err instanceof Error ? err : new Error('Unknown error loading feed'));
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error loading feed';
+      setError(new Error(errorMessage));
+      
+      // Log error only in development
+      if (import.meta.env.DEV) {
+        console.error('Feed fetch error:', err);
+      }
+      
       return false;
     } finally {
       setIsLoading(false);
@@ -63,12 +73,19 @@ export const useFeedData = ({
   
   // Initial load
   useEffect(() => {
-    console.log(`[useFeedData] Effect triggered - isAuthenticated: ${isAuthenticated}, profile: ${profile ? profile.username : 'null'}, feedType: ${feedType}, customUser: ${customUser}`);
+    if (import.meta.env.DEV) {
+      console.log(`[useFeedData] Effect triggered - isAuthenticated: ${isAuthenticated}, profile: ${profile ? profile.username : 'null'}, feedType: ${feedType}, customUser: ${customUser}`);
+    }
+    
     if ((isAuthenticated && profile) || customUser) {
-      console.log(`[useFeedData] Fetching posts for feedType: ${feedType} (customUser: ${customUser})`);
+      if (import.meta.env.DEV) {
+        console.log(`[useFeedData] Fetching posts for feedType: ${feedType} (customUser: ${customUser})`);
+      }
       fetchPosts();
     } else {
-      console.log(`[useFeedData] Not fetching posts - isAuthenticated: ${isAuthenticated}, profile: ${!!profile}, customUser: ${customUser}`);
+      if (import.meta.env.DEV) {
+        console.log(`[useFeedData] Not fetching posts - isAuthenticated: ${isAuthenticated}, profile: ${!!profile}, customUser: ${customUser}`);
+      }
     }
   }, [feedType, selectedFilter, isAuthenticated, profile, fetchPosts, customUser]);
   

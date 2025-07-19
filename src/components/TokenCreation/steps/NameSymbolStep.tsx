@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useTokenCreation } from '../context/TokenCreationContext';
-import { InfoIcon } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
+import { useTokenCreation } from '../context/TokenCreationContext.utils';
 
 const NameSymbolStep: React.FC = () => {
   const { formData, updateFormField, errors } = useTokenCreation();
@@ -58,7 +58,7 @@ const NameSymbolStep: React.FC = () => {
       </Card>
 
       <Alert className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950 dark:border-blue-900 dark:text-blue-300">
-        <InfoIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+        <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
         <AlertDescription>
           Wähle einen einzigartigen und merkfähigen Namen und ein Symbol für deinen Token.
           Diese Informationen werden dauerhaft in der Blockchain gespeichert.

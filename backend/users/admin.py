@@ -12,7 +12,7 @@ class UserProfileAdmin(admin.ModelAdmin):
     UserProfile admin interface
     """
     list_display = [
-        'user', 'occupation', 'company', 'bio', 'profile_visibility',
+        'user', 'occupation', 'company', 'profile_visibility',
         'push_notifications', 'sms_notifications', 'created_at'
     ]
     list_filter = [
@@ -27,7 +27,7 @@ class UserProfileAdmin(admin.ModelAdmin):
             'fields': ('user',)
         }),
         ('Profile Information', {
-            'fields': ('occupation', 'company', 'interests', 'skills', 'bio')
+            'fields': ('occupation', 'company', 'interests', 'skills')
         }),
         ('Privacy Settings', {
             'fields': ('profile_visibility',)

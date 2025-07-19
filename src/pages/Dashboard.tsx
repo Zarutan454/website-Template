@@ -1,5 +1,6 @@
 
-import React, { useEffect, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { usePosts } from '@/hooks/usePosts';
 import { useProfile } from '@/hooks/useProfile';
 import DashboardLayout from '@/components/Dashboard/DashboardLayout';
@@ -9,21 +10,28 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { motion } from 'framer-motion';
 import { Users, ThumbsUp, MessageCircle } from 'lucide-react';
 
+type DashboardStats = {
+  date: string;
+  posts: number;
+  likes: number;
+  comments: number;
+};
+
 const Dashboard: React.FC = () => {
   const { posts, fetchPosts } = usePosts();
-  const { profile } = useProfile();
-  const [lastSevenDaysStats, setLastSevenDaysStats] = useState<any[]>([]);
+  const { profileData } = useProfile();
+  const [lastSevenDaysStats, setLastSevenDaysStats] = useState<DashboardStats[]>([]);
   
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
   
   useEffect(() => {
-    if (posts.length > 0 && profile) {
+    if (posts.length > 0 && profileData) {
       // Filter own posts
-      const myPosts = posts.filter(post => post.author_id === profile.id);
-      const myLikedPosts = posts.filter(post => post.author_id === profile.id && post.likes_count > 0);
-      const myCommentedPosts = posts.filter(post => post.author_id === profile.id && post.comments_count > 0);
+      const myPosts = posts.filter(post => Number(post.author_id) === profileData.id);
+      const myLikedPosts = posts.filter(post => Number(post.author_id) === profileData.id && post.likes_count > 0);
+      const myCommentedPosts = posts.filter(post => Number(post.author_id) === profileData.id && post.comments_count > 0);
       
       // Create last 7 days data
       const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -43,7 +51,7 @@ const Dashboard: React.FC = () => {
       
       setLastSevenDaysStats(stats);
     }
-  }, [posts, profile]);
+  }, [posts, profileData]);
   
   return (
     <DashboardLayout>

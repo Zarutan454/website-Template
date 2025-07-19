@@ -1,48 +1,12 @@
-import React, { createContext, useContext, useState } from 'react';
+import * as React from 'react';
+import { createContext, useState } from 'react';
 import { toast } from 'sonner';
 import { useAccount } from 'wagmi';
 import { ethers } from 'ethers';
 import { TokenFormValues } from '../types/TokenFormTypes';
 import { useSigner } from '@/hooks/useSigner';
 import { deployToken } from '@/wallet/services/contractService';
-
-interface TokenCreationContextType {
-  currentStep: number;
-  formData: {
-    name: string;
-    symbol: string;
-    supply: string;
-    decimals: string;
-    network: string;
-    tokenType: string;
-    features: {
-      mintable: boolean;
-      burnable: boolean;
-      pausable: boolean;
-    };
-    description?: string;
-    maxTransactionLimit?: string;
-    maxWalletLimit?: string;
-    maxSupply?: string;
-    marketingWallet?: string;
-    buyTax?: string;
-    sellTax?: string;
-    lockupTime?: string;
-  };
-  isLoading: boolean;
-  isDeploying: boolean;
-  deploymentError: string | null;
-  deployedContract: string | null;
-  ownerAddress?: string;
-  form?: any;
-  errors?: Record<string, string>;
-  handleNextStep: () => void;
-  handlePreviousStep: () => void;
-  updateFormField: (field: string, value: any) => void;
-  handleFeaturesChange: (feature: string, value: boolean) => void;
-  deployTokenContract: () => Promise<boolean>;
-  resetForm: () => void;
-}
+import { TokenCreationContextType } from './TokenCreationContext.utils';
 
 const TokenCreationContext = createContext<TokenCreationContextType | undefined>(undefined);
 
@@ -55,7 +19,6 @@ export const TokenCreationProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isDeploying, setIsDeploying] = useState(false);
   const [deploymentError, setDeploymentError] = useState<string | null>(null);
   const [deployedContract, setDeployedContract] = useState<string | null>(null);
-  const [tokenId, setTokenId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   const [formData, setFormData] = useState({
@@ -84,7 +47,8 @@ export const TokenCreationProvider: React.FC<{ children: React.ReactNode }> = ({
     setCurrentStep((prev) => Math.max(0, prev - 1));
   };
   
-  const updateFormField = (field: string, value: any) => {
+  const updateFormField = (field: string, value: unknown) => {
+    // Optionally, add type guards for value if needed
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -110,74 +74,28 @@ export const TokenCreationProvider: React.FC<{ children: React.ReactNode }> = ({
     }));
   };
   
-  const saveTokenToDatabase = async (values: TokenFormValues, contractAddress?: string) => {
-    try {
-      const { data } = await supabase.auth.getUser();
-      const user = data?.user;
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-      
-      const tokenData = {
-        name: values.name,
-        symbol: values.symbol,
-        description: values.description || null,
-        decimals: parseInt(values.decimals),
-        total_supply: values.supply,
-        contract_address: contractAddress || null,
-        network: values.network,
-        creator_id: user.id,
-        features: [
-          values.features.mintable ? 'mintable' : null,
-          values.features.burnable ? 'burnable' : null,
-          values.features.pausable ? 'pausable' : null,
-          values.features.shareable ? 'shareable' : null
-        ].filter(Boolean)
-      };
-      
-      const { data: tokenResult, error } = await supabase
-        .from('tokens')
-        .insert(tokenData)
-        .select('id')
-        .single();
-      
-      if (error) throw error;
-      
-      // Fix the TypeScript error by properly type-casting the result
-      if (tokenResult && typeof tokenResult === 'object' && 'id' in tokenResult) {
-        return tokenResult.id as string;
-      }
-      
-      return null;
-    } catch (error) {
-      toast.error('Fehler beim Speichern des Tokens in der Datenbank');
-      return null;
-    }
-  };
-  
   const deployTokenContract = async () => {
     if (!address) {
       toast.error("Please connect your wallet first");
       return false;
     }
-    
     setDeploymentError(null);
     setIsDeploying(true);
-    
     try {
-      // Save token to database first
-      const tokenId = await saveTokenToDatabase(formData as TokenFormValues);
-      setTokenId(tokenId);
-      
       // Get signer from provider
       const signer = await getSigner();
-      
       // Deploy the token contract
-      const tokenTypeStr = typeof formData.tokenType === 'string' 
-        ? formData.tokenType 
-        : (formData.tokenType as any).id || 'standard';
-        
+      let tokenTypeStr: string = 'standard';
+      if (typeof formData.tokenType === 'string') {
+        tokenTypeStr = formData.tokenType;
+      } else if (
+        typeof formData.tokenType === 'object' &&
+        formData.tokenType !== null &&
+        'id' in formData.tokenType &&
+        typeof (formData.tokenType as { id?: string }).id === 'string'
+      ) {
+        tokenTypeStr = (formData.tokenType as { id: string }).id;
+      }
       const deployConfig = {
         name: formData.name,
         symbol: formData.symbol,
@@ -189,35 +107,24 @@ export const TokenCreationProvider: React.FC<{ children: React.ReactNode }> = ({
         canBurn: formData.features.burnable,
         maxTransactionLimit: formData.maxTransactionLimit,
         maxWalletLimit: formData.maxWalletLimit,
-        maxSupply: formData.maxSupply,
-        tokenId
+        maxSupply: formData.maxSupply
       };
-      
-      // Fix: Look at the implementation of deployToken and match the parameters
-      const result = await deployToken(deployConfig);
-      
+      const result = await deployToken(deployConfig) as { success: boolean; contractAddress?: string; error?: string };
       if (!result.success || !result.contractAddress) {
         throw new Error(result.error || "Failed to deploy contract");
       }
-      
-      // Update token with contract address
-      if (tokenId) {
-        await supabase
-          .from('tokens')
-          .update({ contract_address: result.contractAddress })
-          .eq('id', tokenId);
-      }
-      
       setDeployedContract(result.contractAddress);
       toast.success("Token deployed successfully!");
-      
       // Move to the success step
       handleNextStep();
-      
       return true;
-    } catch (error: any) {
-      console.error('Error deploying token:', error);
-      setDeploymentError(error.message || "Failed to deploy token contract");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error deploying token:', error);
+        setDeploymentError(error.message || "Failed to deploy token contract");
+      } else {
+        setDeploymentError("Failed to deploy token contract");
+      }
       return false;
     } finally {
       setIsDeploying(false);
@@ -244,7 +151,6 @@ export const TokenCreationProvider: React.FC<{ children: React.ReactNode }> = ({
     });
     setCurrentStep(0);
     setDeployedContract(null);
-    setTokenId(null);
     setDeploymentError(null);
     setErrors({});
   };
@@ -272,10 +178,5 @@ export const TokenCreationProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-export const useTokenCreation = () => {
-  const context = useContext(TokenCreationContext);
-  if (context === undefined) {
-    throw new Error('useTokenCreation must be used within a TokenCreationProvider');
-  }
-  return context;
-};
+// Export the context for use in the hook
+export { TokenCreationContext };

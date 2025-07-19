@@ -10,10 +10,9 @@ import { toast } from 'sonner';
 import { postRepository } from '@/repositories/PostRepository';
 import { isValid } from 'date-fns';
 import { useAuth } from '@/context/AuthContext';
-import { Post } from '@/types/post';
 
 const TrendingPage: React.FC = () => {
-  const [trendingPosts, setTrendingPosts] = useState<Post[]>([]);
+  const [trendingPosts, setTrendingPosts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { user: profile } = useAuth();
@@ -21,13 +20,16 @@ const TrendingPage: React.FC = () => {
   const isDarkMode = theme === 'dark';
   
   useEffect(() => {
+    // TODO: Django-API-Migration: TrendingPage auf Django-API umstellen
+    // Die gesamte Logik für das Laden der Trending-Daten muss auf die Django-API migriert werden.
+    // Aktuell ist keine Funktionalität vorhanden, da Supabase entfernt wurde.
     fetchTrendingPosts();
   }, []);
   
   /**
    * Überprüft und korrigiert ungültige Datumswerte in Posts
    */
-  const validateAndFixPostDates = (posts: Post[]): Post[] => {
+  const validateAndFixPostDates = (posts: any[]): any[] => {
     return posts.map(post => {
       // Prüfe, ob created_at existiert und ein gültiges Datum ist
       if (post.created_at) {
@@ -51,13 +53,22 @@ const TrendingPage: React.FC = () => {
     try {
       console.log("[TrendingPage] Fetching trending posts...");
       
-      // Use postRepository instead of direct supabase call
-      const posts = await postRepository.getTrendingPosts();
+      // TODO: Django-API-Migration: Supabase-Aufrufe durch Django-API-Aufrufe ersetzen
+      // const { data, error } = await supabase
+      //   .from('posts')
+      //   .select(`
+      //     *,
+      //     user:author_id(id, username, display_name, avatar_url)
+      //   `)
+      //   .order('likes_count', { ascending: false })
+      //   .limit(20);
       
-      console.log(`[TrendingPage] Fetched ${posts?.length || 0} trending posts`);
+      // if (error) throw error;
+      
+      console.log(`[TrendingPage] Fetched ${trendingPosts?.length || 0} trending posts`);
       
       // Prüfe und korrigiere Datumswerte, bevor weitere Verarbeitung stattfindet
-      const validatedPosts = validateAndFixPostDates(posts || []);
+      const validatedPosts = validateAndFixPostDates(trendingPosts || []);
       
       if (profile) {
         const postsWithLikeStatus = await Promise.all(
@@ -112,16 +123,19 @@ const TrendingPage: React.FC = () => {
     
     try {
       console.log(`[TrendingPage] Deleting post ${postId}`);
-      const result = await postRepository.deletePost(postId);
+      // TODO: Django-API-Migration: Supabase-Aufrufe durch Django-API-Aufrufe ersetzen
+      // const result = await postRepository.deletePost(postId);
       
-      if (result) {
-        setTrendingPosts(prev => prev.filter(post => post.id !== postId));
-        toast.success("Beitrag erfolgreich gelöscht");
-      } else {
-        toast.error("Fehler beim Löschen des Beitrags");
-      }
+      // if (result) {
+      //   setTrendingPosts(prev => prev.filter(post => post.id !== postId));
+      //   toast.success("Beitrag erfolgreich gelöscht");
+      // } else {
+      //   toast.error("Fehler beim Löschen des Beitrags");
+      // }
       
-      return result;
+      // return result;
+      toast.error("Diese Funktion ist noch nicht implementiert.");
+      return false;
     } catch (error) {
       console.error('Error deleting post:', error);
       toast.error("Ein Fehler ist aufgetreten. Bitte versuche es später erneut.");

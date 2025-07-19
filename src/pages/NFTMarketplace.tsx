@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNFTs } from '@/hooks/useNFTs';
-import { NFTCollection, NFT } from '@/types/nft';
+import { useNFTs, NFT } from '../hooks/useNFTs';
 import { 
   Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle 
 } from "@/components/ui/card";
@@ -14,6 +13,22 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink } from "@/components/ui/pagination";
 import { toast } from 'sonner';
+
+// Temporary NFTCollection interface for compatibility
+interface NFTCollection {
+  id: string;
+  name: string;
+  description: string;
+  image_url: string;
+  featured: boolean;
+  item_count: number;
+  floor_price?: number;
+  volume_traded?: number;
+  creator: {
+    id: string;
+    name: string;
+  };
+}
 
 // CreateCollectionModal component for OpenSea-like collection creation
 const CreateCollectionModal = ({ onClose }: { onClose: () => void }) => {
@@ -136,7 +151,7 @@ const EmptyState = ({
 );
 
 const NFTMarketplace = () => {
-  const { collections, nfts, isLoading, fetchCollections, fetchNFTs } = useNFTs();
+  const { nfts, isLoading, fetchNFTs, fetchFeaturedNFTs } = useNFTs();
   const [featuredCollections, setFeaturedCollections] = useState<NFTCollection[]>([]);
   const [featuredNFTs, setFeaturedNFTs] = useState<NFT[]>([]);
   const [listedNFTs, setListedNFTs] = useState<NFT[]>([]);
@@ -150,7 +165,7 @@ const NFTMarketplace = () => {
   // Debounced search functionality
   const filteredNFTs = nfts?.filter(nft => 
     nft.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (nft.collectionName && nft.collectionName.toLowerCase().includes(searchQuery.toLowerCase()))
+    nft.description.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
   const paginatedNFTs = filteredNFTs.slice(
@@ -162,30 +177,24 @@ const NFTMarketplace = () => {
 
   const loadData = useCallback(async () => {
     try {
-      const allCollections = await fetchCollections() || [];
       const allNFTs = await fetchNFTs() || [];
+      const featuredNFTsData = await fetchFeaturedNFTs(4) || [];
       
-      // Safely set collections - ensure we have data before filtering
-      if (Array.isArray(allCollections)) {
-        setFeaturedCollections(
-          allCollections.filter(c => c.featured).slice(0, 3)
-        );
-      } else {
-        setFeaturedCollections([]);
-      }
-
       // Safely set featured NFTs and listed NFTs
       if (Array.isArray(allNFTs)) {
-        setFeaturedNFTs(allNFTs.slice(0, 4));
+        setFeaturedNFTs(featuredNFTsData);
         setListedNFTs(allNFTs.filter(n => n.listed));
       } else {
         setFeaturedNFTs([]);
         setListedNFTs([]);
       }
+      
+      // For now, we'll use empty collections until we implement collection API
+      setFeaturedCollections([]);
     } catch (error) {
       toast.error("Failed to load marketplace data");
     }
-  }, [fetchCollections, fetchNFTs]);
+  }, [fetchNFTs, fetchFeaturedNFTs]);
 
   useEffect(() => {
     loadData();
@@ -451,7 +460,7 @@ const NFTCard: React.FC<{ nft: NFT }> = ({ nft }) => {
       <Card className="bg-dark-100 border-gray-800 overflow-hidden transition-all hover:border-primary-500/50 hover:shadow-lg hover:shadow-primary-500/10 h-full flex flex-col">
         <div className="aspect-square overflow-hidden relative">
           <img 
-            src={nft.imageUrl} 
+            src={nft.image_url} 
             alt={nft.name} 
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
@@ -475,7 +484,7 @@ const NFTCard: React.FC<{ nft: NFT }> = ({ nft }) => {
             )}
           </div>
           <CardDescription className="text-gray-400 text-xs">
-            {nft.collectionName}
+            by {nft.creator_name}
           </CardDescription>
         </CardHeader>
         
@@ -488,7 +497,7 @@ const NFTCard: React.FC<{ nft: NFT }> = ({ nft }) => {
           ) : (
             <div>
               <p className="text-xs text-gray-400">Owner</p>
-              <p className="font-semibold text-sm">{nft.ownerName}</p>
+              <p className="font-semibold text-sm">{nft.owner_name}</p>
             </div>
           )}
           <Button size="sm" variant={nft.listed ? "default" : "outline"} className="text-xs">
@@ -506,14 +515,14 @@ const CollectionCard: React.FC<{ collection: NFTCollection }> = ({ collection })
     <Card className="bg-dark-100 border-gray-800 overflow-hidden h-full flex flex-col">
       <div className="h-40 overflow-hidden relative">
         <img 
-          src={collection.bannerUrl || collection.imageUrl} 
+          src={collection.image_url} 
           alt={collection.name} 
           className="w-full h-full object-cover"
           loading="lazy"
         />
         <div className="absolute -bottom-8 left-4 w-16 h-16 rounded-xl overflow-hidden border-4 border-dark-100 bg-dark-200">
           <img 
-            src={collection.imageUrl} 
+            src={collection.image_url} 
             alt={collection.name} 
             className="w-full h-full object-cover"
             loading="lazy"
@@ -526,14 +535,14 @@ const CollectionCard: React.FC<{ collection: NFTCollection }> = ({ collection })
           <CardTitle className="text-white text-lg line-clamp-1">
             {collection.name}
           </CardTitle>
-          {collection.verified && (
+          {collection.featured && (
             <Badge variant="outline" className="ml-2 bg-primary-400/10 text-primary-400 border-primary-400/20">
-              <Check className="h-3 w-3 mr-1" /> Verified
+              <Check className="h-3 w-3 mr-1" /> Featured
             </Badge>
           )}
         </div>
         <CardDescription className="text-gray-400">
-          by {collection.creatorName || 'Unknown Creator'}
+          by {collection.creator.name || 'Unknown Creator'}
         </CardDescription>
       </CardHeader>
       
@@ -544,11 +553,11 @@ const CollectionCard: React.FC<{ collection: NFTCollection }> = ({ collection })
       <CardFooter className="flex justify-between text-sm border-t border-gray-800 mt-auto pt-3">
         <div>
           <p className="text-gray-400">Floor</p>
-          <p className="font-medium">{collection.floorPrice || '—'} ETH</p>
+          <p className="font-medium">{collection.floor_price || '—'} ETH</p>
         </div>
         <div>
           <p className="text-gray-400">Items</p>
-          <p className="font-medium">{collection.totalSupply || 0}</p>
+          <p className="font-medium">{collection.item_count || 0}</p>
         </div>
         <Link to={`/nft/collections/${collection.id}`}>
           <Button variant="outline" className="text-xs h-9">

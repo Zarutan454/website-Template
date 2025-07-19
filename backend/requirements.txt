@@ -13,14 +13,24 @@ dj-rest-auth==5.0.1
 psycopg2-binary==2.9.9
 dj-database-url==2.1.0
 
-# Celery
-celery==5.3.6
-django-celery-beat==2.6.0
-redis==5.0.1
-
 # Web3 & Blockchain
 web3==6.13.0
 eth-account==0.10.0
+
+# WebSocket & Real-time
+channels==4.2.2
+channels-redis==4.2.1
+daphne==4.2.1
+
+# Redis & Caching
+redis==6.2.0
+aioredis==2.0.1
+
+# Background Tasks
+celery==5.3.6
+
+# Cryptography & Security
+cryptography==45.0.5
 
 # API Documentation
 drf-yasg==1.21.7
@@ -35,6 +45,7 @@ pytest-cov==4.1.0
 factory-boy==3.3.0
 black==24.1.1
 flake8==7.0.0
+django-extensions==3.2.3
 
 # Environment & Configuration
 python-dotenv==1.0.1

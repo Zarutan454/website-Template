@@ -8,7 +8,7 @@ import AdvancedOptionsStep from './AdvancedOptionsStep';
 import ReviewStep from './ReviewStep';
 import DeploymentStep from './DeploymentStep';
 import SuccessStep from './SuccessStep';
-import { useTokenCreation } from '../context/TokenCreationContext';
+import { useTokenCreation } from '../context/TokenCreationContext.utils';
 
 interface StepContentProps {
   step: number;

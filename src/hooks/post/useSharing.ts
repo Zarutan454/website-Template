@@ -1,6 +1,5 @@
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 /**
@@ -15,13 +14,7 @@ export const useSharing = (postId: string, onShare?: () => void) => {
   const handleShare = async () => {
     try {
       // Increment shares count through RPC function
-      const { error } = await supabase.rpc('increment_shares', {
-        post_id: postId
-      });
-
-      if (error) throw error;
-      
-      setSharesCount(prev => prev + 1);
+      // TODO: Django-API-Migration: useSharing auf Django-API umstellen
       toast.success('Beitrag geteilt');
       onShare?.();
       return true;
@@ -50,14 +43,7 @@ export const useSharing = (postId: string, onShare?: () => void) => {
    */
   const fetchSharesCount = async () => {
     try {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('shares_count')
-        .eq('id', postId)
-        .single();
-        
-      if (error) throw error;
-      
+      // TODO: Django-API-Migration: useSharing auf Django-API umstellen
       setSharesCount(data?.shares_count || 0);
       return data?.shares_count || 0;
     } catch (error) {

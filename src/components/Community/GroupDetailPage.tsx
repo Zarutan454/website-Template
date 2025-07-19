@@ -247,7 +247,7 @@ const GroupDetailPage: React.FC = () => {
   const {
     data: membersData,
     isLoading: membersTabLoading,
-    error: membersError,
+    error: membersTabError,
   } = useQuery<{ results: GroupMemberData[]; next?: string }>(
     ['group-members', id, membersPage],
     () => groupAPI.getGroupMembers(id!, membersPage),
@@ -608,7 +608,7 @@ const GroupDetailPage: React.FC = () => {
           <div className="flex justify-center items-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ) : membersError ? (
+        ) : membersTabError ? (
           <div className="text-center text-red-400">Fehler beim Laden der Mitglieder.</div>
         ) : filterUniqueById(memberCardData, 'Member').length === 0 ? (
           <div className="text-center text-muted-foreground">Keine Mitglieder gefunden.</div>

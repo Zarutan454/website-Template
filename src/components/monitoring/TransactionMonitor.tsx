@@ -33,34 +33,34 @@ const TransactionMonitor: React.FC<TransactionMonitorProps> = ({ tokenId, wallet
   const fetchTransactions = async () => {
     setIsLoading(true);
     try {
-      const query = supabase
+      let query = supabase
         .from('transactions')
         .select('*');
     
-      // Apply filters based on available parameters
-      if (tokenId) {
-        const { data, error } = await query.eq('token_id', tokenId);
-        
-        if (error) throw error;
-        setTransactions(data || []);
-      } else if (walletAddress) {
-        const { data, error } = await query.eq('sender_address', walletAddress);
-        
-        if (error) throw error;
-        setTransactions(data || []);
-      } else {
-        const { data, error } = await query.limit(10);
-        
-        if (error) throw error;
-        setTransactions(data || []);
-      }
-    } catch (err) {
-      console.error('Error fetching transactions:', err);
-      setError('Failed to load transaction history');
-    } finally {
-      setIsLoading(false);
+    // Apply filters based on available parameters
+    if (tokenId) {
+      const { data, error } = await query.eq('token_id', tokenId);
+      
+      if (error) throw error;
+      setTransactions(data || []);
+    } else if (walletAddress) {
+      const { data, error } = await query.eq('sender_address', walletAddress);
+      
+      if (error) throw error;
+      setTransactions(data || []);
+    } else {
+      const { data, error } = await query.limit(10);
+      
+      if (error) throw error;
+      setTransactions(data || []);
     }
-  };
+  } catch (err) {
+    console.error('Error fetching transactions:', err);
+    setError('Failed to load transaction history');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   useEffect(() => {
     if (tokenId || walletAddress) {

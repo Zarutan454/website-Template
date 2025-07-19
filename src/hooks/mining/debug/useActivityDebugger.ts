@@ -1,7 +1,6 @@
 
 import { useState, useCallback } from 'react';
 import { MiningActivity, ActivityResult } from '../types';
-import { supabase } from '@/lib/supabase';
 
 /**
  * Hook für das Debugging von Mining-Aktivitäten
@@ -36,24 +35,8 @@ export const useActivityDebugger = (userId: string | undefined) => {
   const getRawActivityData = useCallback(async (limit = 10) => {
     if (!userId) return [];
     
-    try {
-      const { data, error } = await supabase
-        .from('mining_activities')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-        
-      if (error) {
-        logDbError('getRawActivityData', error);
-        return [];
-      }
-      
-      return data;
-    } catch (err) {
-      logDbError('getRawActivityData', err);
-      return [];
-    }
+    // TODO: Django-API-Migration: Activity-Debugger auf Django-API umstellen
+    return [];
   }, [userId, logDbError]);
   
   // Aktivitätsverarbeitung überwachen

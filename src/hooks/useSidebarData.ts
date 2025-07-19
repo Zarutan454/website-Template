@@ -32,14 +32,14 @@ interface MiningProgress {
 }
 
 export function useSidebarData() {
-  const { user: profile } = useAuth();
+  const { profile } = useAuth();
   const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([]);
   const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
   const [miningProgress, setMiningProgress] = useState<MiningProgress>({ current: 0, max: 100 });
-  const [loadingTopics, setLoadingTopics] = useState(true);
-  const [loadingUsers, setLoadingUsers] = useState(true);
-  const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
+  const [loadingTopics, setLoadingTopics] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
 
   // Funktion zum Generieren zufälliger Farben für Avatare
   const getRandomAvatarColor = () => {
@@ -60,18 +60,17 @@ export function useSidebarData() {
     const fetchTrendingTopics = async () => {
       try {
         setLoadingTopics(true);
-        
-        const data = await apiClient.get<TrendingTopic[]>('/hashtags/trending/');
+        const data = await apiClient.get<TrendingTopic[]>('/posts/trending/');
         setTrendingTopics(data || []);
       } catch (error) {
         console.error('Error in fetchTrendingTopics:', error);
-        // Fallback zu Dummy-Daten im Fehlerfall
+        // Fallback-Daten
         setTrendingTopics([
-          { id: '1', name: 'blockchain', count: 128 },
-          { id: '2', name: 'crypto', count: 94 },
-          { id: '3', name: 'nft', count: 72 },
-          { id: '4', name: 'defi', count: 57 },
-          { id: '5', name: 'web3', count: 43 }
+          { id: '1', name: '#BSN', count: 1256 },
+          { id: '2', name: '#Blockchain', count: 987 },
+          { id: '3', name: '#Crypto', count: 756 },
+          { id: '4', name: '#DeFi', count: 543 },
+          { id: '5', name: '#NFT', count: 432 }
         ]);
       } finally {
         setLoadingTopics(false);
@@ -81,18 +80,17 @@ export function useSidebarData() {
     const fetchSuggestedUsers = async () => {
       try {
         setLoadingUsers(true);
-        
-        if (!profile) return;
-        
         const data = await apiClient.get<SuggestedUser[]>('/users/suggested/');
         setSuggestedUsers(data || []);
       } catch (error) {
         console.error('Error in fetchSuggestedUsers:', error);
-        // Fallback zu Dummy-Daten
+        // Fallback-Daten
         setSuggestedUsers([
-          { id: '1', name: 'Alice Chen', username: '@alicechen', avatar: null, avatarColor: getRandomAvatarColor() },
-          { id: '2', name: 'Bob Smith', username: '@bobsmith', avatar: null, avatarColor: getRandomAvatarColor() },
-          { id: '3', name: 'Clara Jung', username: '@clarajung', avatar: null, avatarColor: getRandomAvatarColor() }
+          { id: '1', name: 'Thomas Lee', avatar: null, avatarColor: getRandomAvatarColor(), mutualFriends: 3 },
+          { id: '2', name: 'Sarah Kim', avatar: null, avatarColor: getRandomAvatarColor(), mutualFriends: 2 },
+          { id: '3', name: 'Max Weber', avatar: null, avatarColor: getRandomAvatarColor(), mutualFriends: 5 },
+          { id: '4', name: 'Lisa Torres', avatar: null, avatarColor: getRandomAvatarColor(), mutualFriends: 1 },
+          { id: '5', name: 'Alex Chen', avatar: null, avatarColor: getRandomAvatarColor(), mutualFriends: 4 }
         ]);
       } finally {
         setLoadingUsers(false);
@@ -124,13 +122,21 @@ export function useSidebarData() {
       try {
         if (!profile) return;
         
+        // Check if user is authenticated before making API call
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          console.log('No authentication token found, skipping mining progress fetch');
+          setMiningProgress({ current: 0, max: 100 });
+          return;
+        }
+        
         const data = await apiClient.get<{ daily_points: number }>('/mining/stats/');
         const points = data?.daily_points || 0;
         setMiningProgress({ current: points, max: 100 });
       } catch (error) {
         console.error('Error in fetchMiningProgress:', error);
         // Fallback-Werte
-        setMiningProgress({ current: 25, max: 100 });
+        setMiningProgress({ current: 0, max: 100 });
       }
     };
 

@@ -5,17 +5,11 @@ import { Command, CommandInput, CommandList, CommandItem, CommandGroup } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-interface HashtagResult {
-  id: string;
-  name: string;
-  post_count: number;
-}
-
 interface HashtagSearchProps {
   showPopover: boolean;
   setShowPopover: (show: boolean) => void;
   isSearching: boolean;
-  searchResults: HashtagResult[];
+  searchResults: any[];
   onSelectHashtag: (tag: string) => void;
   children: React.ReactNode;
 }

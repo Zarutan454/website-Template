@@ -48,16 +48,7 @@ const PostListHeader: React.FC<PostListHeaderProps> = ({
           </Button>
         )}
         
-        <Button 
-          variant={showFilters ? "default" : "outline"} 
-          size="sm" 
-          onClick={toggleFilters}
-          className={showFilters ? "bg-primary-700 hover:bg-primary-600" : ""}
-        >
-          <Filter className="h-4 w-4 mr-1.5" />
-          Filter
-          <ChevronDown className={`h-4 w-4 ml-1.5 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} />
-        </Button>
+        {/* Alle Filter-Buttons und UI entfernt */}
       </div>
     </div>
   );

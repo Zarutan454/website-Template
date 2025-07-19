@@ -1,9 +1,8 @@
 
 import React from 'react';
 import { FeedStateRenderer, FeedFilterSection } from '../common';
-import PostListHeader from '../PostListHeader';
-import { useFeedData, FeedType } from '@/hooks/feed/useFeedData';
-import { useFeedActions } from '@/hooks/feed/useFeedActions';
+import { FeedType } from '@/hooks/feed/useFeedData';
+import { useUnifiedFeedState } from '@/hooks/feed/useUnifiedFeedState';
 import { useFilterControl } from '@/hooks/feed/useFilterControl';
 import { useTheme } from '@/components/ThemeProvider';
 import { useNavigate } from 'react-router-dom';
@@ -17,9 +16,6 @@ interface UnifiedPostListProps {
   enableAutoRefresh?: boolean;
 }
 
-/**
- * Einheitliche Komponente zum Anzeigen von Beiträgen mit Filtern und Aktionen
- */
 const UnifiedPostList: React.FC<UnifiedPostListProps> = ({ 
   feedType = 'recent',
   showFilters = true,
@@ -30,121 +26,57 @@ const UnifiedPostList: React.FC<UnifiedPostListProps> = ({
   const { theme } = useTheme();
   const navigate = useNavigate();
   const isDarkMode = theme === 'dark';
-  
-  // Setup filter controls
   const { showFilterMenu, selectedFilter, toggleFilters, handleFilterSelect } = useFilterControl();
-  
-  // Setup feed data
-  const { 
-    adaptedPosts, 
-    isLoading, 
-    error, 
-    fetchPosts, 
-    profileLoading, 
-    isAuthenticated, 
-    profile,
-    likePost,
-    deletePost,
-    createComment,
-    getPostComments,
-    sharePost
-  } = useFeedData({ feedType, selectedFilter, enableAutoRefresh });
-  
-  // Setup feed actions with all required properties
+
+  // Zentrale Feed-Logik: ALLE States und Handler kommen aus useUnifiedFeedState
   const {
+    profile,
+    isAuthenticated,
+    profileLoading,
+    adaptedPosts,
+    isLoading,
+    error,
+    isDarkMode: feedDarkMode,
+    lastRefresh,
+    hasNewPosts,
+    handleRefresh,
     handleLikePost,
     handleDeletePost,
     handleCreateComment,
     handleGetComments,
     handleSharePost,
-    handleReportPost
-  } = useFeedActions({ 
-    fetchPosts, 
-    likePost, 
-    deletePost, 
-    createComment, 
-    getPostComments, 
-    sharePost,
-    feedType
+    handleReportPost,
+    handleCreatePost,
+    fetchPosts
+  } = useUnifiedFeedState({
+    feedType,
+    showMiningRewards,
+    enableAutoRefresh
   });
-  
-  // Handle retry loading posts
-  const handleRetry = () => fetchPosts();
-  
-  // Handle login redirect
+
+  const handleRetry = () => fetchPosts(feedType);
   const handleLoginRedirect = () => navigate('/login');
-  
-  // Check if user is not authenticated
+
   if (!isAuthenticated && !profileLoading) {
     return (
       <div className="pt-6">
-        <FeedStateRenderer
-          isLoading={false}
-          error={new Error("Bitte melde dich an, um Beiträge zu sehen")}
-          posts={[]}
-          profile={null}
-          isEmpty={true}
-          onLike={handleLikePost}
-          onDelete={handleDeletePost}
-          onComment={handleCreateComment}
-          onGetComments={handleGetComments}
-          onShare={handleSharePost}
-          onReport={handleReportPost}
-          onRetry={handleLoginRedirect}
-          onLoginRedirect={handleLoginRedirect}
-          isDarkMode={isDarkMode}
-          showMiningRewards={showMiningRewards}
-        />
+        <div className="text-red-500">Fehler: Bitte melde dich an, um Beiträge zu sehen</div>
       </div>
     );
   }
-  
-  // Check if profile is still loading
+
   if (profileLoading) {
     return (
       <div className="pt-6">
-        <FeedStateRenderer
-          isLoading={true}
-          error={null}
-          posts={[]}
-          profile={null}
-          isEmpty={false}
-          onLike={handleLikePost}
-          onDelete={handleDeletePost}
-          onComment={handleCreateComment}
-          onGetComments={handleGetComments}
-          onShare={handleSharePost}
-          onReport={handleReportPost}
-          onRetry={handleRetry}
-          onLoginRedirect={handleLoginRedirect}
-          isDarkMode={isDarkMode}
-          showMiningRewards={showMiningRewards}
-        />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-2 text-muted-foreground">Lade Feed...</p>
       </div>
     );
   }
-  
+
   return (
-    <div className="space-y-6">
-      {showHeader && (
-        <Tabs defaultValue="filters" className="w-full">
-          <PostListHeader 
-            toggleFilters={toggleFilters} 
-            showFilters={showFilterMenu} 
-            selectedFilter={selectedFilter} 
-          />
-          
-          {showFilters && (
-            <FeedFilterSection
-              showFilters={showFilterMenu}
-              selectedFilter={selectedFilter}
-              handleFilterSelect={handleFilterSelect}
-              feedType={feedType}
-            />
-          )}
-        </Tabs>
-      )}
-      
+    <div className="space-y-4">
+      {/* Filter Section entfernt */}
       <FeedStateRenderer
         isLoading={isLoading}
         error={error}

@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import { GradientText } from '@/components/ui/gradient-text';
-import { useLanguage } from '@/components/LanguageProvider';
+import { useLanguage } from '@/components/LanguageProvider.utils';
 
 const getRoadmapItems = (language: string) => [
   {

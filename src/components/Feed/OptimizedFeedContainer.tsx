@@ -115,44 +115,7 @@ const OptimizedFeedContainer: React.FC<OptimizedFeedContainerProps> = ({
         )}
         
         {/* Filter-Kontrollen */}
-        {showFilters && (
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <div className="text-sm text-muted-foreground">
-                {adaptedPosts.length} Beiträge gefunden
-              </div>
-              <div className="flex gap-2">
-                <button 
-                  onClick={toggleFilters}
-                  className="text-sm text-primary hover:underline"
-                >
-                  {filterMenuVisible ? 'Filter ausblenden' : 'Filter anzeigen'}
-                </button>
-                
-                {hasNewPosts && (
-                  <button 
-                    onClick={() => {
-                      refreshFeed();
-                      setHasNewPosts(false);
-                    }}
-                    className="text-sm bg-primary text-primary-foreground px-2 py-1 rounded-md hover:bg-primary/90 transition-colors"
-                  >
-                    Neue Beiträge anzeigen
-                  </button>
-                )}
-              </div>
-            </div>
-            
-            {filterMenuVisible && (
-              <FeedFilterOptimized 
-                feedType={feedType as FeedType}
-                showFilters={filterMenuVisible}
-                selectedFilter={selectedFilter}
-                handleFilterSelect={handleFilterSelect}
-              />
-            )}
-          </div>
-        )}
+        {/* Alle Filter-UI und zugehörige Buttons entfernt */}
         
         {/* Feed-Inhalt */}
         <FeedStateRenderer

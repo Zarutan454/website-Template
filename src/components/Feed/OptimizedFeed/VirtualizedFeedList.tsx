@@ -1,10 +1,10 @@
-import React, { useCallback, useRef, useState, useMemo, useEffect } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import * as React from 'react';
+import { useCallback, useRef, useState, useMemo, useEffect } from 'react';
+import { useVirtualizer, VirtualItem } from '@tanstack/react-virtual';
 import { useTheme } from '@/components/ThemeProvider';
 import { useInView } from 'react-intersection-observer';
 import { toast } from 'sonner';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
-import { Post } from '@/types/post';
 
 // Import unserer optimierten Komponenten
 import PostRenderer from './PostRenderer';
@@ -15,22 +15,16 @@ import ScrollToTopButton from './ScrollToTopButton';
 import LoadMoreTrigger from './LoadMoreTrigger';
 import ScrollOptimizer from './ScrollOptimizer';
 
-interface User {
-  id: string;
-  username: string;
-  display_name?: string;
-  avatar_url?: string;
-  is_verified?: boolean;
-}
-
-interface FeedComment {
+interface Post {
   id: string;
   content: string;
-  author: User;
-  created_at: string;
-  likes_count: number;
-  is_liked: boolean;
-  author_id?: string; // Optional für Kompatibilität
+  likesCount: number;
+  commentsCount: number;
+  isLiked: boolean;
+  media_url?: string;
+  image_url?: string;
+  media_type?: string;
+  video_url?: string;
 }
 
 interface VirtualizedFeedListProps {
@@ -40,12 +34,12 @@ interface VirtualizedFeedListProps {
   onLoadMore: () => void;
   onLike: (postId: string) => Promise<boolean>;
   onDelete: (postId: string) => Promise<boolean>;
-  onComment: (postId: string, content: string) => Promise<FeedComment>;
-  onGetComments: (postId: string) => Promise<FeedComment[]>;
+  onComment: (postId: string, content: string) => Promise<unknown>;
+  onGetComments: (postId: string) => Promise<unknown[]>;
   onShare: (postId: string) => Promise<boolean>;
   onReport?: (postId: string, reason: string) => Promise<boolean>;
   showMiningRewards?: boolean;
-  currentUser: User;
+  currentUser: unknown;
   error?: Error | null;
   onRetry?: () => void;
 }
@@ -131,12 +125,12 @@ const VirtualizedFeedList: React.FC<VirtualizedFeedListProps> = ({
       }
       
       // Zusätzliche Höhe für Medien
-      if (post.image_url) {
+      if (post.media_url || post.image_url) {
         estimatedHeight += 300;
       }
       
       // Zusätzliche Höhe für Video/YouTube
-      if (post.content?.includes('youtube.com')) {
+      if (post.media_type === 'video' || post.video_url || post.content?.includes('youtube.com')) {
         estimatedHeight += 350;
       }
       
@@ -171,7 +165,7 @@ const VirtualizedFeedList: React.FC<VirtualizedFeedListProps> = ({
         currentlyVisible.add(post.id);
         
         // Intelligenteres Preload-Fenster basierend auf Scroll-Richtung und Geschwindigkeit
-        const preloadWindow = scrollY > (rowVirtualizer as { scrollOffset: number }).scrollOffset ? 5 : 2;
+        const preloadWindow = scrollY > (rowVirtualizer as unknown as { scrollOffset: number }).scrollOffset ? 5 : 2;
         for (let i = 1; i <= preloadWindow; i++) {
           const preloadIndex = virtualRow.index + i;
           if (preloadIndex < posts.length) {
@@ -198,10 +192,10 @@ const VirtualizedFeedList: React.FC<VirtualizedFeedListProps> = ({
   }, [posts, rowVirtualizer, visiblePostIds, preloadedPostIds]);
   
   // Debounced trackVisiblePosts für bessere Performance
-  const debouncedTrackRef = useRef<NodeJS.Timeout | null>(null);
+  const debouncedTrackRef = useRef<unknown>(null);
   const trackVisiblePosts = useCallback((scrollY: number) => {
     if (debouncedTrackRef.current) {
-      clearTimeout(debouncedTrackRef.current);
+      clearTimeout(debouncedTrackRef.current as number);
     }
     debouncedTrackRef.current = setTimeout(() => {
       trackVisiblePostsDebounced(scrollY);
@@ -212,7 +206,7 @@ const VirtualizedFeedList: React.FC<VirtualizedFeedListProps> = ({
   useEffect(() => {
     return () => {
       if (debouncedTrackRef.current) {
-        clearTimeout(debouncedTrackRef.current);
+        clearTimeout(debouncedTrackRef.current as number);
       }
     };
   }, []);
@@ -263,7 +257,7 @@ const VirtualizedFeedList: React.FC<VirtualizedFeedListProps> = ({
     });
   }, [rowVirtualizer, posts]);
 
-  // Scroll to top function - moved before conditional returns
+  // Define scrollToTop before early returns
   const scrollToTop = useCallback(() => {
     const scrollElement = document.querySelector('[data-testid="scroll-optimizer"]');
     if (scrollElement) {
@@ -302,6 +296,7 @@ const VirtualizedFeedList: React.FC<VirtualizedFeedListProps> = ({
       className="w-full"
     >
       <div
+        aria-live="polite"
         data-testid="virtualized-feed-container"
       >
         {/* Virtualized items container */}
@@ -324,8 +319,8 @@ const VirtualizedFeedList: React.FC<VirtualizedFeedListProps> = ({
               currentUser={currentUser}
               onLike={onLike}
               onDelete={onDelete}
-              onComment={onComment as any}
-              onGetComments={onGetComments as any}
+              onComment={onComment}
+              onGetComments={onGetComments}
               onShare={onShare}
               onReport={onReport}
               onMeasureHeight={(height) => measurePostHeight(post.id, height)}

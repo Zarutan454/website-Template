@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FeedLayout } from '@/components/Feed/FeedLayout';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -13,8 +13,9 @@ import { formatRelativeTime } from '@/utils/dateUtils';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import type { Post, Comment, UserProfile } from '@/lib/django-api-new';
+import { getAvatarUrl } from '../utils/api';
 
-const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:8000';
+const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:8080';
 
 const PostDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,14 +31,7 @@ const PostDetail: React.FC = () => {
   const [likeCount, setLikeCount] = useState(0);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      loadPost();
-      loadComments();
-    }
-  }, [id]);
-
-  const loadPost = async () => {
+  const loadPost = useCallback(async () => {
     if (!id) return;
     
     try {
@@ -53,9 +47,9 @@ const PostDetail: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
 
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     if (!id) return;
     
     try {
@@ -64,7 +58,14 @@ const PostDetail: React.FC = () => {
     } catch (err) {
       console.error('Error loading comments:', err);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      loadPost();
+      loadComments();
+    }
+  }, [id, loadPost, loadComments]);
 
   const handleLike = async () => {
     if (!post) return;
@@ -129,12 +130,6 @@ const PostDetail: React.FC = () => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
     return `${MEDIA_BASE_URL}${url}`;
-  };
-
-  const getAvatarUrl = (avatarUrl?: string): string => {
-    if (!avatarUrl) return '';
-    if (avatarUrl.startsWith('http')) return avatarUrl;
-    return `${MEDIA_BASE_URL}${avatarUrl}`;
   };
 
   if (isLoading) {

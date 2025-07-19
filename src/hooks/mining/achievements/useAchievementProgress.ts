@@ -1,6 +1,5 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useMining } from '@/hooks/useMining';
 import { ActivityType } from '@/hooks/mining/types';
@@ -26,6 +25,7 @@ export const useAchievementProgress = () => {
       setIsUpdating(true);
       
       // First, get the achievement details to check requirements
+      // TODO: Django-API-Migration: useAchievementProgress auf Django-API umstellen
       const { data: achievement, error: achievementError } = await supabase
         .from('achievements')
         .select('*')
@@ -39,6 +39,7 @@ export const useAchievementProgress = () => {
       }
       
       // Then, get or create the user achievement record
+      // TODO: Django-API-Migration: useAchievementProgress auf Django-API umstellen
       const { data: userAchievement, error: userAchievementError } = await supabase
         .from('user_achievements')
         .select('*')
@@ -173,7 +174,6 @@ export const useAchievementProgress = () => {
         await updateAchievementProgress(userId, achievementId, 1);
       }
     } catch (error) {
-      console.error('Error tracking social activity:', error);
     }
   }, [updateAchievementProgress]);
   

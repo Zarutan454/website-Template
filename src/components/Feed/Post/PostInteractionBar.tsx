@@ -91,7 +91,6 @@ const PostInteractionBar: React.FC<PostInteractionBarProps> = ({
         toast.success("👍 +5 Punkte für deinen Like!");
       }
     } catch (error) {
-      console.error("Fehler bei Like-Aktion:", error);
     } finally {
       setIsLikeProcessing(false);
     }
@@ -109,7 +108,6 @@ const PostInteractionBar: React.FC<PostInteractionBarProps> = ({
         toast.success("🔄 +8 Punkte für das Teilen!");
       }
     } catch (error) {
-      console.error("Fehler bei Share-Aktion:", error);
     } finally {
       setIsShareProcessing(false);
     }

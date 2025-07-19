@@ -1,12 +1,13 @@
 
-import React, { Suspense, useRef, useMemo, useEffect, useCallback } from 'react';
+import * as React from 'react';
+import { Suspense, useRef, useMemo, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { EffectComposer, Bloom, ChromaticAberration } from '@react-three/postprocessing';
 import { PerspectiveCamera, Environment, useTexture, MeshDistortMaterial } from '@react-three/drei';
 import { motion } from 'framer-motion';
 import * as THREE from 'three';
 
-type ParticleFieldProps = Record<never, never>;
+type ParticleFieldProps = Record<string, never>;
 
 const ParticleField: React.FC<ParticleFieldProps> = () => {
   const particles = useRef<THREE.Points>(null);
@@ -114,7 +115,7 @@ const ParticleField: React.FC<ParticleFieldProps> = () => {
   );
 };
 
-type GridFloorProps = Record<never, never>;
+type GridFloorProps = Record<string, never>;
 
 const GridFloor: React.FC<GridFloorProps> = () => {
   const grid = useRef<THREE.Mesh>(null);
@@ -301,7 +302,7 @@ const NetworkVisualization: React.FC<NetworkVisualizationProps> = ({ nodeCount =
     }
   }, [nodes]);
   
-  useEffect(() => {
+  React.useEffect(() => {
     const interval = setInterval(() => {
       simulateTransaction();
     }, 2000);

@@ -37,7 +37,7 @@ export const usePostsFetch = () => {
       setError(null);
       
       // Verwende die neue socialAPI
-      let fetchedPosts: any[] = [];
+      let fetchedPosts: unknown[] | { results: unknown[] } = [];
       
       if (username) {
         // KORREKTUR: Nur author-Parameter verwenden, da nur dieser im Backend unterstützt wird
@@ -99,9 +99,14 @@ export const usePostsFetch = () => {
       // Sicherstellen, dass fetchedPosts ein Array ist (PaginatedResponse oder Array)
       let postsArray: Post[] = [];
       if (Array.isArray(fetchedPosts)) {
-        postsArray = fetchedPosts;
-      } else if (fetchedPosts && Array.isArray((fetchedPosts as any).results)) {
-        postsArray = (fetchedPosts as any).results;
+        postsArray = fetchedPosts as Post[];
+      } else if (
+        fetchedPosts &&
+        typeof fetchedPosts === 'object' &&
+        'results' in fetchedPosts &&
+        Array.isArray((fetchedPosts as { results: unknown[] }).results)
+      ) {
+        postsArray = (fetchedPosts as { results: Post[] }).results;
       } else {
         console.error('[usePostsFetch][DEBUG] fetchedPosts ist kein Array und hat keine results:', fetchedPosts);
       }

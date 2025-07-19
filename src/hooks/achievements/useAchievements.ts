@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
 
 export interface AchievementCriteria {
@@ -66,7 +66,7 @@ export const useAchievements = (
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAchievements = async () => {
+  const fetchAchievements = useCallback(async () => {
     try {
       const token = localStorage.getItem('access_token');
       const params = new URLSearchParams({
@@ -102,12 +102,12 @@ export const useAchievements = (
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, pageSize, search, category, status]);
 
   useEffect(() => {
     setLoading(true);
     fetchAchievements();
-  }, [page, pageSize, search, category, status]);
+  }, [fetchAchievements]);
 
   return {
     achievements: data?.results || [],

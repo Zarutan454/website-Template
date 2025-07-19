@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useUserRelationships } from '@/hooks/useUserRelationships';
 import { useProfile } from '@/hooks/useProfile';
@@ -16,18 +16,18 @@ const BlockedUsers: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<{[key: string]: boolean}>({});
   
-  useEffect(() => {
-    if (profile?.id) {
-      loadBlockedUsers();
-    }
-  }, [profile]);
-  
-  const loadBlockedUsers = async () => {
+  const loadBlockedUsers = useCallback(async () => {
     setLoading(true);
     const data = await getBlockedUsers();
     setBlockedUsers(data);
     setLoading(false);
-  };
+  }, [getBlockedUsers]);
+  
+  useEffect(() => {
+    if (profile?.id) {
+      loadBlockedUsers();
+    }
+  }, [profile, loadBlockedUsers]);
   
   const handleUnblock = async (userId: string) => {
     setActionLoading(prev => ({ ...prev, [userId]: true }));

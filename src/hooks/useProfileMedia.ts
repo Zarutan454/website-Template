@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { socialAPI } from '@/lib/django-api-new';
+import { apiClient } from '@/lib/django-api-new';
 import { toast } from 'sonner';
 import { Media } from '@/types/media';
 
@@ -44,10 +44,7 @@ export const useProfileMedia = (
       
       if (type === 'posts') {
         // Lade ALLE Posts des Benutzers (nicht nur mit Medien)
-        console.log('[useProfileMedia] Fetching posts for user:', userId);
-        const response = await socialAPI.getFeed({ author: userId.toString() });
-        console.log('[useProfileMedia] Response:', response);
-        
+        const response = await apiClient.get(`/posts/?author=${userId}`);
         if (response && response.results) {
           fetchedMedia = response.results.map((post: any) => ({
             id: post.id.toString(),
@@ -58,23 +55,15 @@ export const useProfileMedia = (
             type: post.media_type || 'text',
             authorId: post.author?.id?.toString() || userId.toString(),
             media_urls: post.media_urls || [],
-            // Korrigiertes Mapping für Likes/Kommentare - verwende is_liked_by_user vom Backend
-            likes_count: post.likes_count || post.like_count || 0,
-            comments_count: post.comments_count || post.comment_count || 0,
-            like_count: post.likes_count || post.like_count || 0,
-            comment_count: post.comments_count || post.comment_count || 0,
-            is_liked: post.is_liked_by_user || post.is_liked || false,
-            is_liked_by_user: post.is_liked_by_user || post.is_liked || false,
-            is_bookmarked: post.is_bookmarked_by_user || post.is_bookmarked || false,
-            is_bookmarked_by_user: post.is_bookmarked_by_user || post.is_bookmarked || false
+            like_count: post.like_count || 0,
+            comment_count: post.comment_count || 0,
+            is_liked: post.is_liked || false,
+            is_bookmarked: post.is_bookmarked || false
           }));
-          console.log('[useProfileMedia] Mapped posts:', fetchedMedia.length);
-        } else {
-          console.warn('[useProfileMedia] No results in response or invalid response structure');
         }
       } else if (type === 'saved' && isOwnProfile) {
         // Lade gespeicherte Posts mit Medien
-        const response = await socialAPI.getFeed({ bookmarked_by: userId.toString(), has_media: 'true' });
+        const response = await apiClient.get(`/posts/?bookmarked_by=${userId}&has_media=true`);
         if (response && response.results) {
           fetchedMedia = response.results
             .filter((post: any) => post.media_url || (post.media_urls && post.media_urls.length > 0))
@@ -91,7 +80,7 @@ export const useProfileMedia = (
         }
       } else if (type === 'liked' && isOwnProfile) {
         // Lade gelikte Posts mit Medien
-        const response = await socialAPI.getFeed({ liked_by: userId.toString(), has_media: 'true' });
+        const response = await apiClient.get(`/posts/?liked_by=${userId}&has_media=true`);
         if (response && response.results) {
           fetchedMedia = response.results
             .filter((post: any) => post.media_url || (post.media_urls && post.media_urls.length > 0))
@@ -109,7 +98,7 @@ export const useProfileMedia = (
       } else if (type === 'collections') {
         // Lade Alben/Collections (falls implementiert)
         // Für jetzt verwenden wir Posts als Collections
-        const response = await socialAPI.getFeed({ author: userId.toString(), has_media: 'true', limit: '20' });
+        const response = await apiClient.get(`/posts/?author=${userId}&has_media=true&limit=20`);
         if (response && response.results) {
           fetchedMedia = response.results
             .filter((post: any) => post.media_url || (post.media_urls && post.media_urls.length > 0))
@@ -126,7 +115,7 @@ export const useProfileMedia = (
         }
       } else if (type === 'media') {
         // Kombiniere alle Medien des Benutzers
-        const response = await socialAPI.getFeed({ author: userId.toString(), has_media: 'true' });
+        const response = await apiClient.get(`/posts/?author=${userId}&has_media=true`);
         if (response && response.results) {
           fetchedMedia = response.results
             .filter((post: any) => post.media_url || (post.media_urls && post.media_urls.length > 0))

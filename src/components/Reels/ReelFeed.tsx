@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Loader2 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
@@ -6,6 +6,12 @@ import { useReels } from '../../hooks/useReels';
 import { useAuth } from '@/hooks/useAuth';
 import ReelCard from './ReelCard';
 import ReelCreator from './ReelCreator';
+
+// Define Reel type if not already imported
+interface Reel {
+  id: string;
+  // Add other properties as needed
+}
 
 interface ReelFeedProps {
   className?: string;
@@ -16,7 +22,7 @@ const ReelFeed: React.FC<ReelFeedProps> = ({ className = '', userId }) => {
   const { reels, isLoadingReels, getUserReels, activeReelIndex, setActiveReelIndex } = useReels();
   const { user: profile } = useAuth();
   const [isReelCreatorOpen, setIsReelCreatorOpen] = useState(false);
-  const [userReels, setUserReels] = useState<any[]>([]);
+  const [userReels, setUserReels] = useState<Reel[]>([]);
   const [isLoadingUserReels, setIsLoadingUserReels] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   

@@ -9,7 +9,6 @@ export { default as DeploymentProgress } from './DeploymentProgress';
 
 // Hooks exportieren
 export { useTokenCreation } from './context/TokenCreationContext';
-export { useTokenForm } from './hooks/useTokenForm';
 
 // Typen exportieren
 export * from './types';

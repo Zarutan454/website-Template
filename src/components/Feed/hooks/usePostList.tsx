@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react';
+import { useProfile } from '@/hooks/useProfile';
+import { usePosts } from '@/hooks/usePosts';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { usePosts } from '@/hooks/post/usePostsFetch';
+import { toast } from "sonner";
 import { useTheme } from '@/components/ThemeProvider';
 import { postRepository } from '@/repositories/PostRepository';
-import { toast } from 'sonner';
-import { Post } from '@/types/post';
 
 export const usePostList = (feedType: 'foryou' | 'following' | 'recent' | 'popular' | 'nfts' = 'foryou') => {
-  const { user: profile, isAuthenticated, isLoading: profileLoading } = useAuth();
   const { theme } = useTheme();
+  const { profile, isAuthenticated, isLoading: profileLoading } = useProfile();
   const [showFilters, setShowFilters] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string | null>("Neueste");
-  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<any[]>([]);
   const navigate = useNavigate();
   
   const { 
@@ -32,8 +31,6 @@ export const usePostList = (feedType: 'foryou' | 'following' | 'recent' | 'popul
 
   useEffect(() => {
     if (posts.length > 0 && adaptedPosts.length === 0) {
-      // Handle case where posts exist but adaptedPosts is empty
-      console.log('Posts available but adaptedPosts empty');
     }
   }, [posts, adaptedPosts, isLoading, error, isAuthenticated, profileLoading]);
 
@@ -56,39 +53,8 @@ export const usePostList = (feedType: 'foryou' | 'following' | 'recent' | 'popul
   }, [feedType, isAuthenticated, profileLoading, fetchPosts]);
 
   useEffect(() => {
-    if (posts && posts.length > 0) {
-      let filtered = [...posts];
-      
-      if (feedType === 'nfts') {
-        filtered = filtered.filter(post => {
-          const nftKeywords = ['nft', 'opensea', 'rarible', 'bored ape', 'cryptopunk', 'digital art', 'nfts', 'digitale kunst'];
-          const content = post.content?.toLowerCase() || '';
-          return nftKeywords.some(keyword => content.includes(keyword));
-        });
-      }
-      
-      if (selectedFilter === 'Neueste') {
-        filtered = filtered.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-      } else if (selectedFilter === 'Beliebt') {
-        filtered = filtered.sort((a, b) => 
-          (b.likes_count || 0) - (a.likes_count || 0)
-        );
-      } else if (selectedFilter === 'Trending') {
-        filtered = filtered.sort((a, b) => 
-          ((b.comments_count || 0) + (b.likes_count || 0) + (b.shares_count || 0)) - 
-          ((a.comments_count || 0) + (a.likes_count || 0) + (a.shares_count || 0))
-        );
-      } else if (selectedFilter === 'Meine Follows' && profile) {
-        filtered = filtered.filter(() => Math.random() > 0.3);
-      }
-      
-      setFilteredPosts(filtered);
-    } else {
-      setFilteredPosts([]);
-    }
-  }, [posts, selectedFilter, profile, feedType]);
+    setFilteredPosts(posts || []);
+  }, [posts]);
 
   const handleLikePost = async (postId: string) => {
     if (!isAuthenticated) {

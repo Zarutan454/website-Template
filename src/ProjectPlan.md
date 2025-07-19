@@ -2,12 +2,15 @@
 # BSN (Blockchain Social Network) - Projektplan
 
 ## Fortschrittslegende
+
 🟢 Abgeschlossen  
 🟡 In Arbeit  
 🔴 Noch nicht begonnen  
 
 ## 1. Aktueller Gesamtfortschritt (April 2025)
+
 **Fertiggestellt:**
+
 - Grundlagen & Design
 - Feed & Beiträge
 - Mining-System (mit Geschwindigkeitsboost-Mechanismus)
@@ -21,6 +24,7 @@
 - UI/UX Design-System mit 3D-Elementen
 
 **In Arbeit:**
+
 - Token-Erstellung
 - Wallet-Integration
 - Beziehungssystem
@@ -30,6 +34,7 @@
 - Sicherheitsaudits
 
 **Nächste Meilensteine:**
+
 - Erweiterte Token- und NFT-Funktionen
 - DAO-Governance-System
 - Mobile App Beta-Launch
@@ -38,8 +43,11 @@
 - Skalierungsstrategie für erhöhten Nutzerverkehr
 
 ## 2. Funktionsbereiche
+
 ### 2.1. Nutzer & Community
+
 #### 2.1.1. Account & Authentifizierung
+
 🟢 Registrierung und Login mit E-Mail/Passwort
 🟢 Profilerstellung und -bearbeitung
 🟢 Benutzerdefinierte Profilbilder
@@ -51,6 +59,7 @@
 🔴 Dezentrale Identität (DID) mit ENS/Polygon ID
 
 #### 2.1.2. Social Feed & Beiträge
+
 🟢 Beiträge erstellen, liken und kommentieren
 🟢 Medien-Uploads (Bilder, Videos, Audio)
 🟢 YouTube-Videos einbetten mit optimiertem Rendering
@@ -62,6 +71,7 @@
 🔴 KI-Moderation für Inhalte
 
 #### 2.1.3. Nutzer-Interaktionen
+
 🟢 Anderen Nutzern folgen/entfolgen
 🟢 Nutzerprofile anzeigen und durchsuchen
 🟢 Benutzersuche mit Vorschlägen
@@ -72,6 +82,7 @@
 🔴 Token-basierte Reputationspunkte
 
 #### 2.1.4. Messaging-System
+
 🟢 Private Nachrichten senden
 🟢 Konversationsübersicht
 🟢 Nachrichtenbenachrichtigungen
@@ -82,6 +93,7 @@
 🔴 Sprachnachrichten
 
 #### 2.1.5. Benachrichtigungssystem
+
 🟢 Benachrichtigungen für Likes, Kommentare, Follows
 🟢 Echtzeit-Aktualisierungen
 🟢 Markieren als gelesen/ungelesen
@@ -90,6 +102,7 @@
 🔴 Push-Benachrichtigungen
 
 #### 2.1.6. Beziehungssystem
+
 🟢 Blockierungssystem für Nutzer
 🟢 Freundschaftsanfragen senden/annehmen
 🟢 Beziehungsstatus anzeigen
@@ -101,22 +114,27 @@
 🔴 Social Graph Analyse
 
 ### 2.2. Mining & Belohnungen
+
 #### 2.2.1. Mining-System
+
 🟢 Tägliches Mining von BSN-Token
 🟢 Aktivitätsbasierte Geschwindigkeitsboosts statt direkter Belohnungen
 🟢 Statistik-Dashboard mit Echtzeit-Aktualisierung
 🟢 Leaderboards (Tages- und Wochenranglisten)
 🟢 Combo-System für erhöhte Belohnungen
 🟢 Aktivitätsspezifische Begrenzungen:
-  - Maximal 5 belohnte Aktivitäten pro Typ pro Tag
-  - Maximal 10 BSN pro Tag gesamt bei voller Mining-Geschwindigkeit
+
+- Maximal 5 belohnte Aktivitäten pro Typ pro Tag
+- Maximal 10 BSN pro Tag gesamt bei voller Mining-Geschwindigkeit
 🟢 Automatische Inaktivitätserkennung (5 Minuten Timeout)
 🟢 Heartbeat-System zur Aktivitätsüberwachung
 🔴 Staking-Rewards
 🔴 Delegiertes Mining
 
 ### 2.3. Blockchain & Token
+
 #### 2.3.1. Wallet & Finanzen
+
 🟢 Wallet-Übersicht mit Token-Balances
 🟢 BSN-Token Unterstützung
 🟢 Ethereum-Integration
@@ -131,6 +149,7 @@
 🔴 WalletConnect v2 Integration
 
 #### 2.3.2. Token-Erstellung
+
 🟡 Token-Erstellungs-Wizard
 🟢 Token-Typ-Auswahl
 🟢 Netzwerk-Auswahl
@@ -142,6 +161,7 @@
 🔴 Token-Factory für Custom Contracts
 
 #### 2.3.3. Smart Contract Integration
+
 🟡 Automatisierter Deployment-Prozess
 🟡 Speicherung der Deployment-Daten
 🟡 Status-Tracking & Benachrichtigungen
@@ -157,6 +177,7 @@
 🔴 Upgradeable Contracts
 
 #### 2.3.4. NFT-Funktionen
+
 🔴 NFT-Erstellungsformular
 🔴 NFT-Kollektionsseiten
 🔴 NFT-Marktplatz
@@ -166,6 +187,7 @@
 🔴 Royalty Management
 
 #### 2.3.5. Erweiterte Token-Utility
+
 🔴 Token-gated Content
 🔴 Staking für Premium-Features
 🔴 Cross-Chain Bridging (Arbitrum/Optimism)
@@ -174,13 +196,16 @@
 🔴 Token-streaming für Abonnements
 
 #### 2.3.6. Infrastruktur
+
 🔴 IPFS-Speicherung für Medien
 🔴 The Graph Indexing
 🔴 Covalent API Integration
 🔴 Offline-Modus für Mobile
 
 ### 2.4. UI/UX & Design
+
 #### 2.4.1. Design-System
+
 🟢 Responsives Design für Desktop und Mobile
 🟢 Dunkles Farbschema mit roten/pinken Akzenten
 🟢 Vollständiger Dark/Light-Modus
@@ -190,6 +215,7 @@
 🔴 3D-Asset Viewer
 
 #### 2.4.2. Navigation & Layout
+
 🟢 Hauptnavigation
 🟢 Dropdown-Menüs für Benutzeroptionen
 🟢 Benachrichtigungen-Dropdown
@@ -198,6 +224,7 @@
 🔴 Command Palette für Schnellzugriff
 
 #### 2.4.3. Spezielle UI-Komponenten
+
 🟢 Interaktive Roadmap-Komponente
 🟢 Mining-Widget
 🟡 Token-Dashboard
@@ -205,6 +232,7 @@
 🔴 DAO-Governance Dashboard
 
 #### 2.4.4. Onboarding & Tutorial
+
 🟡 Interaktives Tutorial für Erstnutzer
 🟡 Fortschrittsanzeige für Onboarding-Prozess
 🟡 Kontextbezogene Hilfestellungen
@@ -213,7 +241,9 @@
 🔴 Mentoring-System für neue Nutzer
 
 ### 2.5. Community & Gruppen
+
 #### 2.5.1. Gruppen-System
+
 🟢 Gruppen-Übersicht
 🟢 Gruppen-Detailseite
 🟢 Gruppen-Beiträge
@@ -223,6 +253,7 @@
 🔴 Token-gated Gruppen
 
 #### 2.5.2. Community-Features
+
 🔴 Achievements und Abzeichen-System
 🔴 Community-Events
 🔴 Community-Abstimmungen
@@ -230,13 +261,16 @@
 🔴 Gemeinschafts-Treasuries
 
 ### 2.6. Analyse & Monitoring
+
 #### 2.6.1. Nutzer-Analytics
+
 🔴 Nutzeraktivitäts-Dashboard
 🔴 Community-Wachstumsanalyse
 🔴 Engagement-Metriken
 🔴 Social Graph Visualisierung
 
 #### 2.6.2. Token-Analytics
+
 🔴 Token-Statistiken Dashboard
 🔴 Handelsvolumen
 🔴 Preisdiagramme
@@ -244,13 +278,16 @@
 🔴 Liquiditäts-Analyse
 
 #### 2.6.3. Performance-Monitoring
+
 🔴 Performance-Tracking
 🔴 Fehler-Monitoring
 🔴 Nutzerfeedback-System
 🔴 Smart Contract Monitoring
 
 ### 2.7. Entwicklung & QA
+
 #### 2.7.1. Technische Infrastruktur
+
 🟢 Supabase Integration (Auth/DB/Storage)
 🟢 React/TypeScript Implementierung
 🟢 State Management mit Zustand
@@ -261,6 +298,7 @@
 🔴 IPFS-Node
 
 #### 2.7.2. Sicherheit
+
 🟡 Regelmäßige Sicherheitsaudits
 🟡 Penetrationstests
 🟡 Code-Reviews für sicherheitskritische Komponenten
@@ -270,6 +308,7 @@
 🔴 Compliance mit regulatorischen Anforderungen
 
 #### 2.7.3. Skalierbarkeit
+
 🟡 Lastverteilungs-Strategie
 🟡 Leistungs-Benchmarking
 🟡 Optimierung der Datenbankabfragen
@@ -278,11 +317,13 @@
 🔴 Sharding-Strategien für große Datenmengen
 
 #### 2.7.4. Testing
+
 🟢 Unit-Tests für Kernkomponenten:
-  - Mining-System Tests
-  - Wallet-Service Tests
-  - Hook-Tests
-  - Datenbankdienste Tests
+
+- Mining-System Tests
+- Wallet-Service Tests
+- Hook-Tests
+- Datenbankdienste Tests
 🟢 Testautomatisierung
 🟡 Integration Tests
 🔴 E2E-Tests
@@ -290,6 +331,7 @@
 🔴 Load Testing
 
 #### 2.7.5. Deployment & CI/CD
+
 🟢 CI/CD Pipeline eingerichtet (GitHub Actions)
 🟢 Produktion auf Vercel
 🟢 Staging-Umgebung für Tests
@@ -297,7 +339,9 @@
 🔴 Multi-Cloud Deployment
 
 ## Neue Funktionen
+
 ### Social Features
+
 1. **Story-Funktion**
    🟢 Abgeschlossen
    - 24h expirende Inhalte
@@ -319,6 +363,7 @@
    - Token-gated Kommentare
 
 ### Blockchain-Erweiterungen
+
 1. **Multi-Chain Ecosystem**
    🔴 Geplant für Q3 2025
    - Arbitrum, Optimism, Polygon Support
@@ -335,9 +380,9 @@
    - Token Streaming
 
 ## Roadmap 2025
+
 | Quartal | Fokusbereich          | Key Features                                       |
 |---------|-----------------------|---------------------------------------------------|
 | Q2      | Creator Tools & Security | Token-gating, Tips, Staking, 2FA, Sicherheitsaudits |
 | Q3      | Multi-Chain Expansion | Bridging, Cross-Chain NFTs, Internationalisierung |
 | Q4      | Community Governance  | DAOs, Reputation Systems, Skalierungsinfrastruktur |
-

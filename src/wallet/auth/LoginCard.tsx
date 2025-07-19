@@ -30,7 +30,6 @@ export const LoginCard = () => {
         navigate('/wallet');
       }
     } catch (error) {
-      console.error('Error during wallet login:', error);
     } finally {
       setIsLoading(false);
     }

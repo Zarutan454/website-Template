@@ -7,7 +7,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useTokenCreation } from "./hooks/useTokenCreation";
+import { useTokenCreation } from "./context/TokenCreationContext.utils";
 
 // Update the form schema to match TokenFormData
 const formSchema = z.object({

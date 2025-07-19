@@ -1,5 +1,4 @@
 
-import { supabase } from '@/lib/supabase';
 import { formatDateForDatabase } from '../../utils';
 
 /**
@@ -10,6 +9,7 @@ export const createSessionSafely = async (userId: string) => {
     const currentTimestamp = formatDateForDatabase(new Date());
     
     // Direkte INSERT-Operation ohne RLS-Abhängigkeit
+    // TODO: Django-API-Migration: sessionHelpers auf Django-API umstellen
     const { data, error } = await supabase
       .from('mining_sessions')
       .insert({
@@ -44,6 +44,7 @@ export const updateMiningStatsSafely = async (
     const currentTimestamp = formatDateForDatabase(new Date());
     
     // Prüfen ob Mining-Stats bereits existieren
+    // TODO: Django-API-Migration: sessionHelpers auf Django-API umstellen
     const { data: existingStats } = await supabase
       .from('mining_stats')
       .select('*')
@@ -111,6 +112,7 @@ export const updateMiningStatsSafely = async (
     
     if (tokens > 0) {
       // Aktualisiere direkt die gemeinten Tokens in users-Tabelle
+      // TODO: Django-API-Migration: sessionHelpers auf Django-API umstellen
       const { error: userError } = await supabase
         .from('users')
         .update({

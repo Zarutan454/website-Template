@@ -161,10 +161,6 @@ export function useOptimizedMiningStatus(
           }
         }
       } catch (error) {
-        console.error('Error processing activity queue:', error);
-        // Revert optimistic update if there was an error
-        const totalTokens = activityQueue.reduce((sum, act) => sum + act.tokens, 0);
-        setTotalEarnings(prev => prev - totalTokens);
       } finally {
         setIsProcessingQueue(false);
       }
@@ -188,7 +184,6 @@ export function useOptimizedMiningStatus(
           setTimeElapsed(0);
         }
       } catch (error) {
-        console.error('Error stopping mining:', error);
       }
     } else {
       setIsStarting(true);
@@ -203,7 +198,6 @@ export function useOptimizedMiningStatus(
           setStartError('Mining konnte nicht gestartet werden.');
         }
       } catch (error) {
-        console.error('Error starting mining:', error);
         setStartError('Ein Fehler ist aufgetreten.');
       } finally {
         setIsStarting(false);
@@ -237,7 +231,6 @@ export function useOptimizedMiningStatus(
       
       return true;
     } catch (error) {
-      console.error('Error in interaction:', error);
       return false;
     } finally {
       setIsPerformingAction(null);
@@ -252,12 +245,10 @@ export function useOptimizedMiningStatus(
       syncStateFn().then(result => {
         if (result !== undefined && result !== null && result === false) {
           // If sync returns false, it means mining state has changed externally
-          console.log('Mining state changed externally');
         }
         
         if (result !== undefined && result !== null && result === true) {
           // If sync returns true, it means sync was successful
-          console.log('Mining state sync successful');
         }
       });
     }, 30000); // Sync every 30 seconds

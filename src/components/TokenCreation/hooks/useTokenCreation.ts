@@ -87,46 +87,50 @@ export const useTokenCreation = () => {
       throw new Error("Wallet not connected");
     }
     
-    // Get user from Supabase
-    // const { data: userData } = await supabase.auth.getUser();
-    
-    if (!address) {
-      throw new Error("User not authenticated");
+    try {
+      // Get user from Supabase
+      // const { data: userData } = await supabase.auth.getUser();
+      
+      if (!address) {
+        throw new Error("User not authenticated");
+      }
+      
+      // Create token record in database
+      // const { data, error } = await supabase
+      //   .from('tokens')
+      //   .insert({
+      //     name: formData.name,
+      //     symbol: formData.symbol,
+      //     description: '',
+      //     network: formData.network,
+      //     total_supply: parseFloat(formData.supply),
+      //     decimals: parseInt(formData.decimals),
+      //     creator_id: userData.user.id,
+      //     features: [
+      //       formData.features.mintable ? 'mintable' : null,
+      //       formData.features.burnable ? 'burnable' : null,
+      //       formData.features.pausable ? 'pausable' : null,
+      //     ].filter(Boolean)
+      //   })
+      //   .select()
+      //   .single();
+      
+      // if (error) {
+      //   throw error;
+      // }
+      
+      // Create verification record for this token
+      // await supabase
+      //   .from('token_verification_status')
+      //   .insert({
+      //     token_id: data.id,
+      //     verification_status: 'unverified'
+      //   });
+      
+      return 'mockTokenId';
+    } catch (error) {
+      throw error;
     }
-    
-    // Create token record in database
-    // const { data, error } = await supabase
-    //   .from('tokens')
-    //   .insert({
-    //     name: formData.name,
-    //     symbol: formData.symbol,
-    //     description: '',
-    //     network: formData.network,
-    //     total_supply: parseFloat(formData.supply),
-    //     decimals: parseInt(formData.decimals),
-    //     creator_id: userData.user.id,
-    //     features: [
-    //       formData.features.mintable ? 'mintable' : null,
-    //       formData.features.burnable ? 'burnable' : null,
-    //       formData.features.pausable ? 'pausable' : null,
-    //     ].filter(Boolean)
-    //   })
-    //   .select()
-    //   .single();
-    
-    // if (error) {
-    //   throw error;
-    // }
-    
-    // Create verification record for this token
-    // await supabase
-    //   .from('token_verification_status')
-    //   .insert({
-    //     token_id: data.id,
-    //     verification_status: 'unverified'
-    //   });
-    
-    return 'mockTokenId';
   };
   
   const deployTokenContract = async () => {

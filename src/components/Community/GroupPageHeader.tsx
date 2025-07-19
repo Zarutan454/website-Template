@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,20 +18,23 @@ const GroupPageHeader: React.FC<GroupPageHeaderProps> = ({
   const navigate = useNavigate();
 
   const handleCreateGroup = () => {
-    navigate('/community/create-group');
+    navigate('/create-group');
   };
 
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div>
-        <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+        <h1 className="text-2xl font-bold text-white">
           {title}
         </h1>
-        <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+        <p className="text-sm text-gray-400">
           {description}
         </p>
       </div>
-      <Button onClick={handleCreateGroup} className="flex items-center gap-2">
+      <Button 
+        onClick={handleCreateGroup} 
+        className="bsn-button-primary flex items-center gap-2"
+      >
         <Plus size={16} />
         <span>Gruppe erstellen</span>
       </Button>

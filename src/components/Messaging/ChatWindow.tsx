@@ -7,11 +7,25 @@ import { de } from 'date-fns/locale';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+interface Message {
+  id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  [key: string]: unknown;
+}
+interface UserProfile {
+  id: string;
+  username: string;
+  display_name?: string;
+  avatar_url?: string;
+  [key: string]: unknown;
+}
 interface ChatWindowProps {
-  messages: any[];
-  currentUser: any;
-  partnerProfile: any;
-  error?: any;
+  messages: Message[];
+  currentUser: UserProfile;
+  partnerProfile: UserProfile;
+  error?: unknown;
   onRetry?: () => void;
 }
 
@@ -42,7 +56,7 @@ const ChatWindow = forwardRef<HTMLDivElement, ChatWindowProps>(({
   };
 
   // Gruppenweise Nachrichten nach Absender
-  const groupedMessages = messages && messages.length > 0 ? messages.reduce((acc: any[], message: any, index: number) => {
+  const groupedMessages = messages && messages.length > 0 ? messages.reduce((acc: { sender_id: string; messages: Message[] }[], message: Message, index: number) => {
     const prevMessage = messages[index - 1];
     
     if (index === 0 || prevMessage.sender_id !== message.sender_id) {
@@ -116,7 +130,7 @@ const ChatWindow = forwardRef<HTMLDivElement, ChatWindowProps>(({
             )}
             
             <div className={`flex flex-col max-w-[75%] ${isCurrentUser ? 'items-end' : 'items-start'}`}>
-              {group.messages.map((message: any, messageIndex: number) => (
+              {group.messages.map((message: Message, messageIndex: number) => (
                 <div 
                   key={message.id || `message-${groupIndex}-${messageIndex}`}
                   className={`

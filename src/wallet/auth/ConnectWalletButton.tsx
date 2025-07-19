@@ -56,9 +56,10 @@ export const ConnectWalletButton: React.FC<ConnectWalletButtonProps> = ({
       }
 
       setIsModalOpen(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Fehler bei der Wallet-Verbindung:', error);
-      toast.error(`Verbindungsfehler: ${error.message || 'Unbekannter Fehler'}`);
+      const err = error as { message?: string };
+      toast.error(`Verbindungsfehler: ${err.message || 'Unbekannter Fehler'}`);
     }
   };
   

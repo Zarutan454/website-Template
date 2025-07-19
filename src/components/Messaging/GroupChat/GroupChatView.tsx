@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-// import { useGroupChat } from '../../../hooks/useGroupChat';
+import { useMessaging } from '../../../hooks/useMessaging';
 // TODO: Diese Komponente muss auf Django-API migriert werden. useGroupChat wurde entfernt.
 import { Spinner } from '../../ui/spinner';
 import { Button } from '../../ui/button';
@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from '../../ui/dropdown-menu';
-import { useProfile } from '../../../hooks/useProfile';
 import { ScrollArea } from '../../ui/scroll-area';
 import { Badge } from '../../ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../ui/tooltip';
@@ -20,7 +19,10 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import EnhancedMessageInput from '../EnhancedMessageInput';
 import MessageBubble from '../MessageBubble';
-import { UploadResult } from '../../../utils/storageUtils';
+import { useAuth } from '@/hooks/useAuth';
+import type { GroupMember } from '@/hooks/useGroups';
+import type { Message } from '@/hooks/useMessaging';
+import type { UploadResult } from '../../../utils/storageUtils';
 // import { Message } from '../../../hooks/useMessages';
 // TODO: Diese Komponente muss auf Django-API migriert werden. useMessages wurde entfernt.
 import { toast } from 'sonner';
@@ -32,53 +34,114 @@ interface GroupChatViewProps {
 }
 
 const GroupChatView: React.FC<GroupChatViewProps> = ({ groupId }) => {
-  // const { 
-  //   messages, 
-  //   isLoadingMessages, 
-  //   members, 
-  //   isLoadingMembers,
-  //   sendGroupMessage,
-  //   removeMember,
-  //   updateMemberRole,
-  //   isAdmin,
-  //   getUserRole
-  // } = useGroupChat(groupId);
-  
-  const { user: profile } = useAuth()();
+  const { user: profile } = useAuth(); // useAuth korrekt verwenden
+  const {
+    getGroupMembers,
+    promoteGroupMember,
+    demoteGroupMember,
+    kickGroupMember,
+    uploadGroupFile,
+    downloadGroupFile,
+    searchGroupMessages,
+    getGroupMessages,
+    sendGroupMessage,
+  } = useMessaging();
+  const [members, setMembers] = React.useState<GroupMember[]>([]);
+  const [messages, setMessages] = React.useState<Message[]>([]);
+  const [isLoadingMembers, setIsLoadingMembers] = React.useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = React.useState(true);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchResults, setSearchResults] = React.useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = React.useState(false);
-  
-  const group = members && members.length > 0 
-    ? { id: groupId, name: 'Group Chat' } as ChatGroup 
-    : null;
-  
+
+  // Mitglieder laden
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    setIsLoadingMembers(true);
+    getGroupMembers(groupId).then(setMembers).finally(() => setIsLoadingMembers(false));
+  }, [groupId, getGroupMembers]);
+
+  // Nachrichten laden
+  const loadMessages = React.useCallback(() => {
+    setIsLoadingMessages(true);
+    getGroupMessages(groupId).then(setMessages).finally(() => setIsLoadingMessages(false));
+  }, [groupId, getGroupMessages]);
+
+  useEffect(() => {
+    loadMessages();
+  }, [loadMessages]);
+
+  // Nachrichtensuche
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    const results = await searchGroupMessages(groupId, searchQuery.trim());
+    setSearchResults(results);
+  };
+
+  // File Upload
+  const handleFileUpload = async (file: File) => {
+    try {
+      await uploadGroupFile(groupId, file);
+      loadMessages(); // Nach Upload Nachrichten neu laden
+    } catch (error) {
+      toast.error('Fehler beim Hochladen der Datei');
     }
-  }, [messages]);
-  
+  };
+
+  // Nachricht senden
   const handleSendMessage = async (content: string, attachment?: UploadResult) => {
     if (!content.trim() && !attachment) return;
-    
     try {
-      // await sendGroupMessage.mutateAsync({
-      //   content: content.trim(),
-      //   attachment_url: attachment?.url,
-      //   message_type: attachment ? getMessageTypeFromAttachment(attachment) : 'text',
-      //   attachment_name: attachment?.name,
-      //   attachment_size: attachment?.size,
-      //   attachment_type: attachment?.type
-      // });
+      await sendGroupMessage(
+        groupId,
+        content.trim(),
+        attachment ? getMessageTypeFromAttachment(attachment) : 'text',
+        attachment?.url,
+        attachment?.name,
+        attachment?.size,
+        attachment?.type
+      );
+      loadMessages();
     } catch (error) {
-      console.error('Error sending message:', error);
       toast.error('Fehler beim Senden der Nachricht');
     }
   };
-  
+
+  // Admin Controls
+  const handlePromote = async (userId: string) => {
+    try {
+      await promoteGroupMember(groupId, userId);
+      getGroupMembers(groupId).then(setMembers);
+    } catch (error) {
+      toast.error('Fehler beim Befördern');
+    }
+  };
+  const handleDemote = async (userId: string) => {
+    try {
+      await demoteGroupMember(groupId, userId);
+      getGroupMembers(groupId).then(setMembers);
+    } catch (error) {
+      toast.error('Fehler beim Herabstufen');
+    }
+  };
+  const handleKick = async (userId: string) => {
+    try {
+      await kickGroupMember(groupId, userId);
+      getGroupMembers(groupId).then(setMembers);
+    } catch (error) {
+      toast.error('Fehler beim Entfernen');
+    }
+  };
+
+  // Hilfsfunktion für Rollenprüfung
+  const isAdmin = () => {
+    const me = members.find(m => m.user.id === profile?.id);
+    return me?.role === 'admin' || false;
+  };
+
+  // Hilfsfunktion für Attachment-Typ
   const getMessageTypeFromAttachment = (attachment: UploadResult): 'text' | 'image' | 'video' | 'audio' | 'file' => {
     const type = attachment.type.split('/')[0];
-    
     switch (type) {
       case 'image':
         return 'image';
@@ -90,47 +153,25 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({ groupId }) => {
         return 'file';
     }
   };
-  
-  const handleRemoveMember = async (userId: string) => {
-    if (!confirm('Möchtest du dieses Mitglied wirklich entfernen?')) return;
-    
-    try {
-      // await removeMember.mutateAsync({ groupId, userId });
-    } catch (error) {
-      console.error('Error removing member:', error);
-      toast.error('Fehler beim Entfernen des Mitglieds');
-    }
-  };
-  
-  const handleUpdateRole = async (userId: string, newRole: 'admin' | 'member') => {
-    try {
-      // await updateMemberRole.mutateAsync({ groupId, userId, role: newRole });
-    } catch (error) {
-      console.error('Error updating role:', error);
-      toast.error('Fehler beim Aktualisieren der Rolle');
-    }
-  };
-  
+
+  // Member-Rendering angepasst an GroupMember-Interface
   const renderMemberItem = (member: GroupMember) => {
-    const isCurrentUser = member.user_id === profile?.id;
+    const isCurrentUser = String(member.user.id) === String(profile?.id);
     const memberRole = member.role;
-    
     return (
       <div key={member.id} className="flex items-center justify-between py-2">
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={member.avatar_url || ''} alt={member.username || ''} />
+            <AvatarImage src={member.user.avatar_url || ''} alt={member.user.username || ''} />
             <AvatarFallback>
-              {member.display_name?.charAt(0) || member.username?.charAt(0) || '?'}
+              {member.user.username?.charAt(0) || '?'}
             </AvatarFallback>
           </Avatar>
-          
           <div className="flex flex-col">
             <span className="text-sm font-medium">
-              {member.display_name || member.username || 'Unbekannt'}
+              {member.user.username || 'Unbekannt'}
               {isCurrentUser && <span className="text-xs text-muted-foreground ml-1">(Du)</span>}
             </span>
-            
             <div className="flex items-center">
               {memberRole === 'admin' ? (
                 <Badge variant="outline" className="text-xs px-1 py-0 h-4 gap-1">
@@ -146,7 +187,6 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({ groupId }) => {
             </div>
           </div>
         </div>
-        
         {isAdmin() && !isCurrentUser && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -156,12 +196,12 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({ groupId }) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {memberRole === 'member' ? (
-                <DropdownMenuItem onClick={() => handleUpdateRole(member.user_id, 'admin')}>
+                <DropdownMenuItem onClick={() => handlePromote(member.user.id)}>
                   <Shield className="mr-2 h-4 w-4" />
                   Zum Admin machen
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onClick={() => handleUpdateRole(member.user_id, 'member')}>
+                <DropdownMenuItem onClick={() => handleDemote(member.user.id)}>
                   <User className="mr-2 h-4 w-4" />
                   Zum Mitglied machen
                 </DropdownMenuItem>
@@ -169,7 +209,7 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({ groupId }) => {
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="text-destructive focus:text-destructive" 
-                onClick={() => handleRemoveMember(member.user_id)}
+                onClick={() => handleKick(member.user.id)}
               >
                 <UserMinus className="mr-2 h-4 w-4" />
                 Entfernen
@@ -181,6 +221,14 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({ groupId }) => {
     );
   };
   
+  // Ersatz für group-Objekt (da keine eigene Group-API geladen wird)
+  const group = {
+    id: groupId,
+    name: 'Group Chat',
+    avatar_url: null,
+    membersCount: members.length
+  };
+
   if (isLoadingMessages || isLoadingMembers) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -198,7 +246,7 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({ groupId }) => {
   }
   
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" role="region" aria-label="Gruppenchat">
       {/* Group Header */}
       <div className="p-3 border-b flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -218,21 +266,13 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({ groupId }) => {
         </div>
         
         <div className="flex items-center gap-1">
-          {isAdmin() && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => setIsAddMemberModalOpen(true)}
-                  >
-                    <UserPlus className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Mitglied hinzufügen</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          {profile && (
+            <EnhancedMessageInput 
+              onSendMessage={handleSendMessage}
+              onFileUpload={handleFileUpload}
+              isDisabled={!profile}
+              placeholder="Nachricht an Gruppe schreiben..."
+            />
           )}
           
           <DropdownMenu>
@@ -246,7 +286,7 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({ groupId }) => {
                 <Users className="mr-2 h-4 w-4" />
                 Mitglieder anzeigen
               </DropdownMenuItem>
-              {isAdmin() && (
+              {profile && (
                 <>
                   <DropdownMenuItem onClick={() => {}}>
                     <Settings className="mr-2 h-4 w-4" />
@@ -270,30 +310,33 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({ groupId }) => {
       <div className="flex flex-1 overflow-hidden">
         {/* Messages */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <ScrollArea className="flex-1 p-3">
+          <ScrollArea className="flex-1 p-3" role="log" aria-label="Nachrichtenliste" aria-live="polite" aria-relevant="additions">
             {messages && messages.length > 0 ? (
-              <div className="space-y-3">
+              <div role="list" className="space-y-3">
                 {messages.map((message: Message) => (
-                  <MessageBubble 
-                    key={message.id} 
-                    message={message} 
-                    isGroupChat={true}
-                  />
+                  <div key={message.id} role="listitem" aria-label={`Nachricht von ${message.sender.display_name || message.sender.username || 'Unbekannt'}`}>
+                    <MessageBubble 
+                      key={message.id} 
+                      message={message} 
+                      isGroupChat={true}
+                    />
+                  </div>
                 ))}
                 <div ref={messagesEndRef} />
               </div>
             ) : (
-              <div className="h-full flex items-center justify-center text-muted-foreground">
-                <p>Keine Nachrichten in dieser Gruppe</p>
-              </div>
+              <div className="text-center text-muted-foreground py-8">Noch keine Nachrichten</div>
             )}
           </ScrollArea>
           
-          <EnhancedMessageInput 
-            onSendMessage={handleSendMessage}
-            isDisabled={!profile}
-            placeholder="Nachricht an Gruppe schreiben..."
-          />
+          {profile && (
+            <EnhancedMessageInput 
+              onSendMessage={handleSendMessage}
+              onFileUpload={handleFileUpload}
+              isDisabled={!profile}
+              placeholder="Nachricht an Gruppe schreiben..."
+            />
+          )}
         </div>
         
         {/* Members Sidebar */}
